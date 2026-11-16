@@ -2,7 +2,12 @@
 
 A Florida fishing-and-sneaking game that runs in the browser. You start in Port Mullet with a garage-sale rod and $30. Every pond, canal, storm drain and fancy reflecting pool in town has fish in it, and half of them say NO FISHING.
 
-## Play
+## Two versions
+
+- **Browser** (`index.html`): the complete game. Open it in any browser.
+- **Desktop** (`godot/`): the Godot 4 port in progress, for a higher-quality Windows version. See `godot/README.md`.
+
+## Play the browser version
 
 Open `index.html` in a browser. Everything is in that one file. Your progress saves in the browser.
 

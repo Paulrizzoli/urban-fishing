@@ -1,0 +1,1649 @@
+{
+ "1": {
+  "name": "Maple Park Pond",
+  "access": "Open to everyone. Kids, retirees, ducks.",
+  "fish": [
+   {
+    "n": "Bluegill",
+    "w": [
+     0.2,
+     1.1
+    ],
+    "pp": 4,
+    "pull": 0.15,
+    "r": 40
+   },
+   {
+    "n": "Tilapia",
+    "w": [
+     0.5,
+     3
+    ],
+    "pp": 3,
+    "pull": 0.3,
+    "r": 30
+   },
+   {
+    "n": "Largemouth Bass",
+    "w": [
+     1,
+     6
+    ],
+    "pp": 4,
+    "pull": 0.5,
+    "r": 18
+   },
+   {
+    "n": "Channel Catfish",
+    "w": [
+     2,
+     12
+    ],
+    "pp": 2.5,
+    "pull": 0.55,
+    "r": 14,
+    "t": [
+     "night",
+     "low"
+    ]
+   },
+   {
+    "n": "Soggy Flip-Flop",
+    "w": [
+     0.3,
+     0.4
+    ],
+    "flat": 0,
+    "pull": 0.05,
+    "r": 8,
+    "junk": true
+   },
+   {
+    "n": "Old Whiskers",
+    "w": [
+     38,
+     61
+    ],
+    "pp": 6,
+    "pull": 0.92,
+    "r": 3,
+    "t": [
+     "night"
+    ],
+    "legend": true,
+    "note": "The neighborhood legend. Kids say he once ate a duck."
+   }
+  ]
+ },
+ "2": {
+  "name": "Mullet Canal",
+  "access": "Public banks and bridges. Fish right off the bridge.",
+  "fish": [
+   {
+    "n": "Mullet",
+    "w": [
+     1,
+     4
+    ],
+    "pp": 2,
+    "pull": 0.4,
+    "r": 30
+   },
+   {
+    "n": "Peacock Bass",
+    "w": [
+     1,
+     8
+    ],
+    "pp": 5,
+    "pull": 0.6,
+    "r": 18,
+    "t": [
+     "day",
+     "low"
+    ]
+   },
+   {
+    "n": "Snook",
+    "w": [
+     4,
+     20
+    ],
+    "pp": 4,
+    "pull": 0.7,
+    "r": 10,
+    "t": [
+     "low",
+     "night"
+    ]
+   },
+   {
+    "n": "Tarpon",
+    "w": [
+     20,
+     90
+    ],
+    "pp": 2,
+    "pull": 0.88,
+    "r": 3,
+    "t": [
+     "low"
+    ]
+   },
+   {
+    "n": "Shopping Cart",
+    "w": [
+     28,
+     34
+    ],
+    "flat": 8,
+    "pull": 0.35,
+    "r": 6,
+    "junk": true
+   },
+   {
+    "n": "Bicycle",
+    "w": [
+     18,
+     24
+    ],
+    "flat": 5,
+    "pull": 0.3,
+    "r": 4,
+    "junk": true
+   },
+   {
+    "n": "Burmese Python",
+    "w": [
+     30,
+     95
+    ],
+    "flat": 50,
+    "pull": 0.78,
+    "r": 2.5,
+    "note": "Florida pays a bounty on these. Lou handles the paperwork and refuses to touch it."
+   },
+   {
+    "n": "The Bridge Troll",
+    "w": [
+     120,
+     170
+    ],
+    "pp": 3,
+    "pull": 1,
+    "r": 2,
+    "t": [
+     "night"
+    ],
+    "legend": true,
+    "bridge": true,
+    "note": "A tarpon the size of a canoe that lives under the Canal Road bridge."
+   }
+  ]
+ },
+ "3": {
+  "name": "Pelican Point Lake",
+  "access": "Private. The groundskeeper patrols 6 AM to 7 PM. A golf polo gets you past him by day.",
+  "fish": [
+   {
+    "n": "Largemouth Bass",
+    "w": [
+     2,
+     9
+    ],
+    "pp": 5,
+    "pull": 0.55,
+    "r": 30
+   },
+   {
+    "n": "Bowfin",
+    "w": [
+     2,
+     10
+    ],
+    "pp": 3,
+    "pull": 0.7,
+    "r": 12
+   },
+   {
+    "n": "Peacock Bass",
+    "w": [
+     2,
+     7
+    ],
+    "pp": 5,
+    "pull": 0.6,
+    "r": 10,
+    "t": [
+     "day",
+     "low"
+    ]
+   },
+   {
+    "n": "Dozen Golf Balls",
+    "w": [
+     1,
+     1.2
+    ],
+    "flat": 9,
+    "pull": 0.05,
+    "r": 25,
+    "junk": true
+   },
+   {
+    "n": "The Lunker of the 7th",
+    "w": [
+     14,
+     19.5
+    ],
+    "pp": 30,
+    "pull": 0.9,
+    "r": 3,
+    "t": [
+     "low"
+    ],
+    "legend": true,
+    "note": "A largemouth so big the members call it a water hazard."
+   }
+  ]
+ },
+ "4": {
+  "name": "Sunrise Koi Pond",
+  "access": "Security walks the plaza day and night. A lanyard gets you in during business hours, but nobody fishes the koi pond.",
+  "fish": [
+   {
+    "n": "Goldfish",
+    "w": [
+     0.2,
+     1
+    ],
+    "pp": 10,
+    "pull": 0.1,
+    "r": 30
+   },
+   {
+    "n": "Koi",
+    "w": [
+     3,
+     12
+    ],
+    "pp": 12,
+    "pull": 0.45,
+    "r": 40
+   },
+   {
+    "n": "Butterfly Koi",
+    "w": [
+     4,
+     10
+    ],
+    "pp": 18,
+    "pull": 0.5,
+    "r": 15
+   },
+   {
+    "n": "Mr. Chairman",
+    "w": [
+     30,
+     41
+    ],
+    "pp": 25,
+    "pull": 0.82,
+    "r": 3,
+    "t": [
+     "day"
+    ],
+    "legend": true,
+    "note": "A giant koi that has outlasted four CEOs."
+   }
+  ]
+ },
+ "5": {
+  "name": "Storm Drain",
+  "access": "Needs a flashlight and waders. Pitch dark down there.",
+  "fish": [
+   {
+    "n": "American Eel",
+    "w": [
+     1,
+     6
+    ],
+    "pp": 6,
+    "pull": 0.65,
+    "r": 30
+   },
+   {
+    "n": "Walking Catfish",
+    "w": [
+     1,
+     4
+    ],
+    "pp": 4,
+    "pull": 0.4,
+    "r": 25
+   },
+   {
+    "n": "Cracked Phone",
+    "w": [
+     0.4,
+     0.5
+    ],
+    "flat": 3,
+    "pull": 0.05,
+    "r": 15,
+    "junk": true,
+    "note": "Four missed calls from MOM."
+   },
+   {
+    "n": "Baby Gator",
+    "w": [
+     6,
+     20
+    ],
+    "flat": 0,
+    "pull": 0.6,
+    "r": 10,
+    "t": [
+     "night",
+     "low"
+    ],
+    "release": true,
+    "rep": 3
+   },
+   {
+    "n": "The Sewer King",
+    "w": [
+     290,
+     340
+    ],
+    "flat": 0,
+    "pull": 1,
+    "r": 2,
+    "t": [
+     "night"
+    ],
+    "legend": true,
+    "release": true,
+    "rep": 40,
+    "note": "An alligator older than the storm drain. You let him go. He let you go."
+   }
+  ]
+ },
+ "6": {
+  "name": "Power Station Outflow",
+  "access": "Fenced, guarded and on camera, with a floodlight at night. Warm water, mutant fish, crowds of manatees. Bring a Geiger counter.",
+  "fish": [
+   {
+    "n": "Giant Tilapia",
+    "w": [
+     5,
+     15
+    ],
+    "pp": 3,
+    "pull": 0.5,
+    "r": 30
+   },
+   {
+    "n": "Jack Crevalle",
+    "w": [
+     5,
+     25
+    ],
+    "pp": 3,
+    "pull": 0.85,
+    "r": 20
+   },
+   {
+    "n": "Snook XL",
+    "w": [
+     15,
+     40
+    ],
+    "pp": 5,
+    "pull": 0.8,
+    "r": 15
+   },
+   {
+    "n": "Glowing Bass",
+    "w": [
+     3,
+     10
+    ],
+    "pp": 25,
+    "pull": 0.6,
+    "r": 8,
+    "t": [
+     "night"
+    ],
+    "glow": true,
+    "mutant": true,
+    "note": "It hums."
+   },
+   {
+    "n": "Three-Eyed Tilapia",
+    "w": [
+     2,
+     8
+    ],
+    "pp": 12,
+    "pull": 0.45,
+    "r": 10,
+    "t": [
+     "night"
+    ],
+    "glow": true,
+    "mutant": true,
+    "note": "The third eye follows you around the room."
+   },
+   {
+    "n": "Two-Headed Catfish",
+    "w": [
+     5,
+     22
+    ],
+    "pp": 8,
+    "pull": 0.72,
+    "r": 8,
+    "t": [
+     "night"
+    ],
+    "mutant": true,
+    "note": "The heads disagree about everything, including which way to swim."
+   },
+   {
+    "n": "Glow-in-the-Dark Shrimp",
+    "w": [
+     0.1,
+     0.3
+    ],
+    "flat": 18,
+    "pull": 0.1,
+    "r": 7,
+    "t": [
+     "night"
+    ],
+    "glow": true,
+    "mutant": true,
+    "note": "Reads 40 on the Geiger counter. Lou keeps it in a coffee can, far from the other coffee can."
+   },
+   {
+    "n": "Tri-County Hard Hat",
+    "w": [
+     1,
+     1.2
+    ],
+    "flat": 6,
+    "pull": 0.15,
+    "r": 6,
+    "junk": true,
+    "note": "It says SAFETY FIRST. Somebody didn't."
+   },
+   {
+    "n": "The Isotope",
+    "w": [
+     30,
+     48
+    ],
+    "pp": 30,
+    "pull": 0.95,
+    "r": 2,
+    "t": [
+     "night"
+    ],
+    "legend": true,
+    "glow": true,
+    "mutant": true,
+    "note": "A forty-pound eel that glows bright enough to read by. It shows up on the plant's own security cameras."
+   },
+   {
+    "n": "Reactor Goliath",
+    "w": [
+     250,
+     410
+    ],
+    "flat": 1500,
+    "pull": 1,
+    "r": 2,
+    "legend": true,
+    "glow": true,
+    "note": "A glowing goliath grouper. A guy from the university paid cash and asked no questions."
+   }
+  ]
+ },
+ "7": {
+  "name": "Low Street (king tide)",
+  "access": "Only during a king tide: every fourth day, 10 AM to 2 PM.",
+  "fish": [
+   {
+    "n": "Mullet",
+    "w": [
+     1,
+     3
+    ],
+    "pp": 2,
+    "pull": 0.4,
+    "r": 30
+   },
+   {
+    "n": "Blue Crab",
+    "w": [
+     0.5,
+     1
+    ],
+    "pp": 8,
+    "pull": 0.2,
+    "r": 20
+   },
+   {
+    "n": "Snook",
+    "w": [
+     3,
+     15
+    ],
+    "pp": 4,
+    "pull": 0.7,
+    "r": 15
+   },
+   {
+    "n": "Stingray",
+    "w": [
+     5,
+     25
+    ],
+    "pp": 2,
+    "pull": 0.7,
+    "r": 15
+   },
+   {
+    "n": "Parking Lot Tarpon",
+    "w": [
+     60,
+     110
+    ],
+    "pp": 4,
+    "pull": 0.95,
+    "r": 4,
+    "legend": true,
+    "note": "Caught between a mailbox and a minivan."
+   }
+  ]
+ },
+ "8": {
+  "name": "Manholes",
+  "access": "Anywhere in the street, with a pry bar from Lou's. You never know what's down there.",
+  "fish": [
+   {
+    "n": "Rubber Duck",
+    "w": [
+     0.1,
+     0.2
+    ],
+    "flat": 1,
+    "pull": 0.05,
+    "r": 20,
+    "junk": true,
+    "note": "It squeaks. Sadly."
+   },
+   {
+    "n": "Single Sneaker",
+    "w": [
+     1,
+     1.6
+    ],
+    "flat": 2,
+    "pull": 0.15,
+    "r": 18,
+    "junk": true,
+    "note": "Left foot. There is never a right foot."
+   },
+   {
+    "n": "Toy Alligator",
+    "w": [
+     0.3,
+     0.6
+    ],
+    "flat": 4,
+    "pull": 0.1,
+    "r": 12,
+    "junk": true
+   },
+   {
+    "n": "Lost Retainer",
+    "w": [
+     0.05,
+     0.1
+    ],
+    "flat": 1,
+    "pull": 0.05,
+    "r": 9,
+    "junk": true,
+    "note": "Gross."
+   },
+   {
+    "n": "Somebody's Car Keys",
+    "w": [
+     0.2,
+     0.3
+    ],
+    "flat": 15,
+    "pull": 0.1,
+    "r": 12,
+    "junk": true,
+    "note": "Somebody at the grocery store is having a terrible day."
+   },
+   {
+    "n": "\"Florida Man's Greatest Hits\" VHS",
+    "w": [
+     0.5,
+     0.6
+    ],
+    "flat": 6,
+    "pull": 0.1,
+    "r": 8,
+    "junk": true,
+    "note": "Volume 3. Lou says he already owns it."
+   },
+   {
+    "n": "Message in a Bottle",
+    "w": [
+     0.8,
+     1
+    ],
+    "flat": 3,
+    "pull": 0.2,
+    "r": 6,
+    "junk": true,
+    "bottle": true
+   },
+   {
+    "n": "American Eel",
+    "w": [
+     1,
+     5
+    ],
+    "pp": 6,
+    "pull": 0.65,
+    "r": 14
+   },
+   {
+    "n": "Sewer Rat",
+    "w": [
+     0.5,
+     1.2
+    ],
+    "flat": 0,
+    "pull": 0.35,
+    "r": 8,
+    "t": [
+     "night",
+     "low"
+    ],
+    "release": true,
+    "rep": 1,
+    "note": "It was holding the line, not biting it. Respect."
+   },
+   {
+    "n": "Gold Tooth",
+    "w": [
+     0.01,
+     0.02
+    ],
+    "flat": 60,
+    "pull": 0.05,
+    "r": 4,
+    "junk": true,
+    "note": "Lou knows a guy."
+   },
+   {
+    "n": "Wedding Ring",
+    "w": [
+     0.02,
+     0.05
+    ],
+    "flat": 120,
+    "pull": 0.05,
+    "r": 3,
+    "junk": true,
+    "note": "Engraved: 'FOREVER, BARB.' Lou knows a guy."
+   },
+   {
+    "n": "The Key to the City",
+    "w": [
+     2.5,
+     3.2
+    ],
+    "flat": 250,
+    "pull": 0.8,
+    "r": 1.5,
+    "legend": true,
+    "note": "Missing since the parade of '98. The mayor would like it back. So would Lou."
+   }
+  ]
+ },
+ "9": {
+  "name": "Back Canal",
+  "access": "Public banks along the south side. A mangrove creek connects it to Mullet Canal. Pythons.",
+  "fish": [
+   {
+    "n": "Mullet",
+    "w": [
+     1,
+     4
+    ],
+    "pp": 2,
+    "pull": 0.4,
+    "r": 25
+   },
+   {
+    "n": "Tilapia",
+    "w": [
+     0.5,
+     3
+    ],
+    "pp": 3,
+    "pull": 0.3,
+    "r": 18
+   },
+   {
+    "n": "Redfish",
+    "w": [
+     3,
+     15
+    ],
+    "pp": 4,
+    "pull": 0.7,
+    "r": 14,
+    "t": [
+     "day",
+     "low"
+    ]
+   },
+   {
+    "n": "Snook",
+    "w": [
+     4,
+     18
+    ],
+    "pp": 4,
+    "pull": 0.7,
+    "r": 12,
+    "t": [
+     "low",
+     "night"
+    ]
+   },
+   {
+    "n": "Florida Gar",
+    "w": [
+     2,
+     8
+    ],
+    "pp": 2,
+    "pull": 0.6,
+    "r": 16
+   },
+   {
+    "n": "Burmese Python",
+    "w": [
+     30,
+     95
+    ],
+    "flat": 50,
+    "pull": 0.78,
+    "r": 5,
+    "note": "Florida pays a bounty on these. Lou handles the paperwork and refuses to touch it."
+   },
+   {
+    "n": "Lost Kayak Paddle",
+    "w": [
+     2,
+     2.5
+    ],
+    "flat": 8,
+    "pull": 0.2,
+    "r": 5,
+    "junk": true
+   }
+  ]
+ },
+ "10": {
+  "name": "Sunsplash Lagoon",
+  "access": "Theme park, open 9 AM to 6 PM, $8. Staff sweep the park at closing. Hide in the restroom and the lagoon is yours.",
+  "fish": [
+   {
+    "n": "Tilapia",
+    "w": [
+     0.5,
+     3
+    ],
+    "pp": 3,
+    "pull": 0.3,
+    "r": 28
+   },
+   {
+    "n": "Oscar",
+    "w": [
+     0.5,
+     2.2
+    ],
+    "pp": 8,
+    "pull": 0.35,
+    "r": 18,
+    "note": "Somebody dumped their aquarium."
+   },
+   {
+    "n": "Peacock Bass",
+    "w": [
+     1,
+     7
+    ],
+    "pp": 5,
+    "pull": 0.6,
+    "r": 15,
+    "t": [
+     "day",
+     "low"
+    ]
+   },
+   {
+    "n": "Pacu",
+    "w": [
+     5,
+     25
+    ],
+    "pp": 4,
+    "pull": 0.72,
+    "r": 10,
+    "note": "It has teeth like a person. Lou won't look at it."
+   },
+   {
+    "n": "Animatronic Fish Part",
+    "w": [
+     3,
+     4
+    ],
+    "flat": 20,
+    "pull": 0.3,
+    "r": 8,
+    "junk": true,
+    "note": "It still blinks."
+   },
+   {
+    "n": "Lost Sunglasses",
+    "w": [
+     0.1,
+     0.1
+    ],
+    "flat": 5,
+    "pull": 0.05,
+    "r": 10,
+    "junk": true
+   },
+   {
+    "n": "The Volcano Pacu",
+    "w": [
+     40,
+     62
+    ],
+    "pp": 8,
+    "pull": 0.92,
+    "r": 2.5,
+    "t": [
+     "night"
+    ],
+    "legend": true,
+    "note": "Lives under the fake volcano. The park says it isn't real. The bite marks on the boats say otherwise."
+   },
+   {
+    "n": "Something From Another Dimension",
+    "w": [
+     1,
+     400
+    ],
+    "flat": 777,
+    "pull": 1,
+    "r": 6,
+    "t": [
+     "night"
+    ],
+    "legend": true,
+    "alien": true,
+    "note": "It weighed something different every time you looked at it, and the photo shows only a blur. Lou paid cash and locked the door."
+   }
+  ]
+ },
+ "11": {
+  "name": "Heron Lakes Pond",
+  "access": "Gated community. Slip in behind a resident's car, or paddle up the back channel. The HOA president walks the pond 7 AM to 9 PM.",
+  "fish": [
+   {
+    "n": "Bluegill",
+    "w": [
+     0.3,
+     1.3
+    ],
+    "pp": 4,
+    "pull": 0.15,
+    "r": 28
+   },
+   {
+    "n": "Largemouth Bass",
+    "w": [
+     2,
+     10
+    ],
+    "pp": 5,
+    "pull": 0.55,
+    "r": 24
+   },
+   {
+    "n": "Grass Carp",
+    "w": [
+     8,
+     30
+    ],
+    "pp": 2,
+    "pull": 0.65,
+    "r": 15,
+    "note": "The HOA stocks them to eat the weeds. Allegedly."
+   },
+   {
+    "n": "Escaped Koi",
+    "w": [
+     3,
+     10
+    ],
+    "pp": 12,
+    "pull": 0.45,
+    "r": 8
+   },
+   {
+    "n": "HOA Violation Notice",
+    "w": [
+     0.05,
+     0.05
+    ],
+    "flat": 0,
+    "pull": 0.05,
+    "r": 6,
+    "junk": true,
+    "note": "It's addressed to you. Already."
+   },
+   {
+    "n": "The Board President",
+    "w": [
+     55,
+     76
+    ],
+    "pp": 4,
+    "pull": 0.9,
+    "r": 2.5,
+    "t": [
+     "day"
+    ],
+    "legend": true,
+    "note": "A grass carp that has chaired every HOA meeting since 1994."
+   }
+  ]
+ },
+ "12": {
+  "name": "Airport Drainage Canal",
+  "access": "Fenced. Patrol truck, gate guard, and a tower spotlight at night. When a jet comes over, nobody's watching.",
+  "fish": [
+   {
+    "n": "Florida Gar",
+    "w": [
+     2,
+     9
+    ],
+    "pp": 2,
+    "pull": 0.6,
+    "r": 24
+   },
+   {
+    "n": "Bowfin",
+    "w": [
+     2,
+     10
+    ],
+    "pp": 3,
+    "pull": 0.7,
+    "r": 15
+   },
+   {
+    "n": "Bullseye Snakehead",
+    "w": [
+     2,
+     12
+    ],
+    "pp": 6,
+    "pull": 0.72,
+    "r": 15,
+    "note": "Invasive. The state says remove it. Lou says sell it."
+   },
+   {
+    "n": "Walking Catfish",
+    "w": [
+     1,
+     4
+    ],
+    "pp": 4,
+    "pull": 0.4,
+    "r": 15
+   },
+   {
+    "n": "Luggage Tag (Cleveland)",
+    "w": [
+     0.05,
+     0.05
+    ],
+    "flat": 2,
+    "pull": 0.05,
+    "r": 10,
+    "junk": true
+   },
+   {
+    "n": "Bag of Airline Peanuts",
+    "w": [
+     0.1,
+     0.1
+    ],
+    "flat": 1,
+    "pull": 0.05,
+    "r": 8,
+    "junk": true,
+    "note": "Unopened. Still a better meal than the flight."
+   },
+   {
+    "n": "The Runway Gar",
+    "w": [
+     150,
+     215
+    ],
+    "pp": 3,
+    "pull": 1,
+    "r": 2.5,
+    "t": [
+     "night"
+    ],
+    "legend": true,
+    "near": "runway",
+    "note": "An alligator gar that lives in the culvert under the runway. Pilots call it the speed bump."
+   }
+  ]
+ },
+ "13": {
+  "name": "Downtown River",
+  "access": "Public river walk through downtown, from the airport canal to the bay. Bars, bridges and boat traffic.",
+  "fish": [
+   {
+    "n": "Mangrove Snapper",
+    "w": [
+     0.5,
+     4
+    ],
+    "pp": 6,
+    "pull": 0.5,
+    "r": 24
+   },
+   {
+    "n": "Ladyfish",
+    "w": [
+     1,
+     4
+    ],
+    "pp": 3,
+    "pull": 0.6,
+    "r": 16
+   },
+   {
+    "n": "Mayan Cichlid",
+    "w": [
+     0.3,
+     1.5
+    ],
+    "pp": 5,
+    "pull": 0.3,
+    "r": 14
+   },
+   {
+    "n": "Snook",
+    "w": [
+     4,
+     22
+    ],
+    "pp": 4,
+    "pull": 0.7,
+    "r": 14,
+    "t": [
+     "low",
+     "night"
+    ]
+   },
+   {
+    "n": "Tarpon",
+    "w": [
+     20,
+     100
+    ],
+    "pp": 2,
+    "pull": 0.88,
+    "r": 4,
+    "t": [
+     "low",
+     "night"
+    ]
+   },
+   {
+    "n": "Lost Valet Ticket",
+    "w": [
+     0.01,
+     0.01
+    ],
+    "flat": 2,
+    "pull": 0.05,
+    "r": 8,
+    "junk": true,
+    "note": "Somebody's sports car is still parked at the River Room."
+   },
+   {
+    "n": "Sunken Scooter",
+    "w": [
+     60,
+     80
+    ],
+    "flat": 12,
+    "pull": 0.4,
+    "r": 3,
+    "junk": true,
+    "note": "It still has the rental QR code. It's still charging somebody."
+   },
+   {
+    "n": "The Night Manager",
+    "w": [
+     38,
+     55
+    ],
+    "pp": 8,
+    "pull": 0.93,
+    "r": 2.5,
+    "t": [
+     "night"
+    ],
+    "legend": true,
+    "note": "A snook as long as the bar. It lives under the River Room's dock lights, and the bartenders throw it lime wedges."
+   }
+  ]
+ },
+ "14": {
+  "name": "Mullet Bay",
+  "access": "Public: the Municipal Pier, Mullet Beach and the seawall. The marina docks are private after 9 PM. Kayaks stay inside the channel markers.",
+  "fish": [
+   {
+    "n": "Pinfish",
+    "w": [
+     0.1,
+     0.6
+    ],
+    "pp": 4,
+    "pull": 0.1,
+    "r": 20
+   },
+   {
+    "n": "Spotted Seatrout",
+    "w": [
+     1,
+     7
+    ],
+    "pp": 4,
+    "pull": 0.5,
+    "r": 24
+   },
+   {
+    "n": "Mangrove Snapper",
+    "w": [
+     0.5,
+     5
+    ],
+    "pp": 6,
+    "pull": 0.5,
+    "r": 18
+   },
+   {
+    "n": "Sheepshead",
+    "w": [
+     1,
+     8
+    ],
+    "pp": 4,
+    "pull": 0.55,
+    "r": 15
+   },
+   {
+    "n": "Redfish",
+    "w": [
+     3,
+     18
+    ],
+    "pp": 4,
+    "pull": 0.7,
+    "r": 12,
+    "t": [
+     "day",
+     "low"
+    ]
+   },
+   {
+    "n": "Barracuda",
+    "w": [
+     5,
+     30
+    ],
+    "pp": 3,
+    "pull": 0.82,
+    "r": 9
+   },
+   {
+    "n": "Bonnethead Shark",
+    "w": [
+     5,
+     20
+    ],
+    "pp": 3,
+    "pull": 0.72,
+    "r": 8
+   },
+   {
+    "n": "Stingray",
+    "w": [
+     5,
+     25
+    ],
+    "pp": 2,
+    "pull": 0.7,
+    "r": 8
+   },
+   {
+    "n": "Tourist's Selfie Stick",
+    "w": [
+     0.4,
+     0.5
+    ],
+    "flat": 4,
+    "pull": 0.1,
+    "r": 8,
+    "junk": true,
+    "note": "The last photo on the phone still clipped to it is of this exact pier."
+   },
+   {
+    "n": "Cruise Ship Deck Chair",
+    "w": [
+     15,
+     18
+    ],
+    "flat": 10,
+    "pull": 0.35,
+    "r": 4,
+    "junk": true
+   },
+   {
+    "n": "Pirate Doubloon",
+    "w": [
+     0.05,
+     0.06
+    ],
+    "flat": 180,
+    "pull": 0.05,
+    "r": 1.2,
+    "junk": true,
+    "note": "Real gold. Lou bites it and loses a filling."
+   },
+   {
+    "n": "The Gray Ghost",
+    "w": [
+     11,
+     16
+    ],
+    "pp": 30,
+    "pull": 0.9,
+    "r": 3,
+    "t": [
+     "day",
+     "low"
+    ],
+    "legend": true,
+    "near": "island",
+    "note": "A bonefish so spooky it has never been photographed. Until now."
+   },
+   {
+    "n": "The Dock Monster",
+    "w": [
+     280,
+     420
+    ],
+    "flat": 0,
+    "pull": 1,
+    "r": 2.5,
+    "t": [
+     "night"
+    ],
+    "legend": true,
+    "near": "marina",
+    "release": true,
+    "rep": 30,
+    "note": "A goliath grouper that has lived under the marina docks since the marina was a fish camp. Protected. You get a photo and a sore back."
+   }
+  ]
+ },
+ "15": {
+  "name": "Offshore",
+  "access": "Deep blue water past the channel markers. Skiff only. Squid, big rods, big fish.",
+  "fish": [
+   {
+    "n": "Mahi-Mahi",
+    "w": [
+     8,
+     40
+    ],
+    "pp": 4,
+    "pull": 0.8,
+    "r": 24
+   },
+   {
+    "n": "Kingfish",
+    "w": [
+     10,
+     45
+    ],
+    "pp": 3,
+    "pull": 0.82,
+    "r": 18
+   },
+   {
+    "n": "Blackfin Tuna",
+    "w": [
+     10,
+     35
+    ],
+    "pp": 5,
+    "pull": 0.86,
+    "r": 14
+   },
+   {
+    "n": "Sailfish",
+    "w": [
+     40,
+     90
+    ],
+    "flat": 0,
+    "pull": 0.95,
+    "r": 6,
+    "release": true,
+    "rep": 8,
+    "note": "Catch and release, and a photo you'll show people for the rest of your life."
+   },
+   {
+    "n": "Bull Shark",
+    "w": [
+     100,
+     300
+    ],
+    "pp": 1,
+    "pull": 0.97,
+    "r": 5,
+    "t": [
+     "low",
+     "night"
+    ]
+   },
+   {
+    "n": "Goliath Grouper",
+    "w": [
+     100,
+     400
+    ],
+    "flat": 0,
+    "pull": 1,
+    "r": 4,
+    "release": true,
+    "rep": 6,
+    "note": "Protected. It looks at you like you owe it money."
+   },
+   {
+    "n": "Weather Balloon",
+    "w": [
+     2,
+     3
+    ],
+    "flat": 15,
+    "pull": 0.2,
+    "r": 3,
+    "junk": true,
+    "note": "Property of the National Weather Service. Lou sells it to a kid as a UFO."
+   },
+   {
+    "n": "Message in a Bottle",
+    "w": [
+     0.8,
+     1
+    ],
+    "flat": 3,
+    "pull": 0.2,
+    "r": 3,
+    "junk": true,
+    "bottle": true
+   },
+   {
+    "n": "Old Glory",
+    "w": [
+     480,
+     880
+    ],
+    "flat": 0,
+    "pull": 1,
+    "r": 2.5,
+    "t": [
+     "day",
+     "low"
+    ],
+    "legend": true,
+    "near": "far",
+    "release": true,
+    "rep": 60,
+    "note": "A blue marlin with a scar shaped like Florida. Trent Marlowe has chased her for eleven seasons."
+   },
+   {
+    "n": "Ol' Sawtooth",
+    "w": [
+     300,
+     500
+    ],
+    "flat": 0,
+    "pull": 1,
+    "r": 1.5,
+    "t": [
+     "night"
+    ],
+    "legend": true,
+    "release": true,
+    "rep": 50,
+    "note": "An endangered sawfish older than the pier. You let it go, with a photo the size of a billboard."
+   }
+  ]
+ },
+ "16": {
+  "name": "Marlowe Tower Pool",
+  "access": "Private plaza downtown. A lobby guard until 10 PM, a patrol and cameras all night. A suit gets you past the patrol in business hours.",
+  "fish": [
+   {
+    "n": "Goldfish",
+    "w": [
+     0.2,
+     1
+    ],
+    "pp": 10,
+    "pull": 0.1,
+    "r": 22
+   },
+   {
+    "n": "Koi",
+    "w": [
+     3,
+     12
+    ],
+    "pp": 12,
+    "pull": 0.45,
+    "r": 30
+   },
+   {
+    "n": "Platinum Ogon Koi",
+    "w": [
+     4,
+     11
+    ],
+    "pp": 22,
+    "pull": 0.5,
+    "r": 12
+   },
+   {
+    "n": "Silver Arowana",
+    "w": [
+     3,
+     9
+    ],
+    "pp": 15,
+    "pull": 0.65,
+    "r": 10
+   },
+   {
+    "n": "Lucky Penny",
+    "w": [
+     0.01,
+     0.01
+    ],
+    "flat": 1,
+    "pull": 0.05,
+    "r": 12,
+    "junk": true,
+    "note": "Somebody wished for something. Now you have their penny."
+   },
+   {
+    "n": "Executive's Rolex",
+    "w": [
+     0.3,
+     0.4
+    ],
+    "flat": 220,
+    "pull": 0.1,
+    "r": 2.5,
+    "junk": true,
+    "note": "Engraved: 'TO TRENT, FROM TRENT.' Lou knows a guy."
+   },
+   {
+    "n": "Fintastic Stock Certificate",
+    "w": [
+     0.02,
+     0.02
+    ],
+    "flat": 0,
+    "pull": 0.05,
+    "r": 6,
+    "junk": true,
+    "note": "Ten thousand shares. Worth exactly what Lou paid for it."
+   },
+   {
+    "n": "The Golden Arowana",
+    "w": [
+     8,
+     12.5
+    ],
+    "pp": 60,
+    "pull": 0.88,
+    "r": 3,
+    "legend": true,
+    "note": "Trent Marlowe paid forty thousand dollars for it at an auction in Singapore. It's worth more to you as a story."
+   }
+  ]
+ },
+ "17": {
+  "name": "Bayfront Park Fountain",
+  "access": "Public park downtown. Nobody minds. The ibises might.",
+  "fish": [
+   {
+    "n": "Tilapia",
+    "w": [
+     0.5,
+     3
+    ],
+    "pp": 3,
+    "pull": 0.3,
+    "r": 28
+   },
+   {
+    "n": "Mayan Cichlid",
+    "w": [
+     0.3,
+     1.5
+    ],
+    "pp": 5,
+    "pull": 0.3,
+    "r": 18
+   },
+   {
+    "n": "Peacock Bass",
+    "w": [
+     1,
+     6
+    ],
+    "pp": 5,
+    "pull": 0.6,
+    "r": 12,
+    "t": [
+     "day",
+     "low"
+    ]
+   },
+   {
+    "n": "Walking Catfish",
+    "w": [
+     1,
+     4
+    ],
+    "pp": 4,
+    "pull": 0.4,
+    "r": 12,
+    "t": [
+     "night",
+     "low"
+    ]
+   },
+   {
+    "n": "Wishing Coins",
+    "w": [
+     0.3,
+     0.5
+    ],
+    "flat": 3,
+    "pull": 0.05,
+    "r": 16,
+    "junk": true,
+    "note": "About three dollars in quarters. You feel bad. You keep them."
+   },
+   {
+    "n": "The Mayor's Pet",
+    "w": [
+     15,
+     24
+    ],
+    "pp": 12,
+    "pull": 0.85,
+    "r": 3,
+    "t": [
+     "night"
+    ],
+    "legend": true,
+    "note": "An albino catfish the mayor released in 1989 'as a symbol of civic renewal.' Nobody has told the mayor."
+   }
+  ]
+ }
+}

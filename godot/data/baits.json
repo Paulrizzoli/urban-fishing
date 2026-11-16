@@ -1,0 +1,31 @@
+[
+ {
+  "id": "worms",
+  "n": "Worms"
+ },
+ {
+  "id": "shrimp",
+  "n": "Live shrimp",
+  "gear": "bait"
+ },
+ {
+  "id": "lure",
+  "n": "Spinner lure",
+  "gear": "lure"
+ },
+ {
+  "id": "hotdog",
+  "n": "Hot dogs",
+  "gear": "hotdog"
+ },
+ {
+  "id": "bread",
+  "n": "White bread",
+  "gear": "bread"
+ },
+ {
+  "id": "squid",
+  "n": "Frozen squid",
+  "gear": "squid"
+ }
+]

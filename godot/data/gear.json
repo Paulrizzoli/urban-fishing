@@ -1,0 +1,153 @@
+[
+ {
+  "id": "rod1",
+  "n": "Bait-shop special rod",
+  "ds": "Tension builds slower and you reel faster.",
+  "price": 60,
+  "req": null,
+  "rod": 1
+ },
+ {
+  "id": "rod2",
+  "n": "Graphite pro rod",
+  "ds": "Good enough for a legend.",
+  "price": 150,
+  "req": "rod1",
+  "rod": 2
+ },
+ {
+  "id": "rod3",
+  "n": "Surf rod of legend",
+  "ds": "Lou swears it's the one from the photo behind the counter.",
+  "price": 320,
+  "req": "rod2",
+  "rod": 3
+ },
+ {
+  "id": "bait",
+  "n": "Live shrimp",
+  "ds": "Bait. Snook, tarpon and the saltwater crowd love it.",
+  "price": 25
+ },
+ {
+  "id": "cooler",
+  "n": "Bigger cooler",
+  "ds": "Holds 5 more fish. Up to 20.",
+  "price": 50,
+  "multi": true
+ },
+ {
+  "id": "camera",
+  "n": "Camera phone",
+  "ds": "Every catch gets a photo. Makes your stories believable.",
+  "price": 40
+ },
+ {
+  "id": "polo",
+  "n": "Golf polo and visor",
+  "ds": "The groundskeeper takes you for a member. Fishing still gets you noticed.",
+  "price": 45
+ },
+ {
+  "id": "lanyard",
+  "n": "Lanyard",
+  "ds": "Walk Sunrise Executive Park on business hours, 8 AM to 6 PM, like you work there.",
+  "price": 35
+ },
+ {
+  "id": "flashlight",
+  "n": "Flashlight",
+  "ds": "Lights the storm drain. Also useful at night.",
+  "price": 20
+ },
+ {
+  "id": "waders",
+  "n": "Waders",
+  "ds": "Keeps the storm drain off you. Mostly.",
+  "price": 60
+ },
+ {
+  "id": "geiger",
+  "n": "Pawn-shop Geiger counter",
+  "ds": "Ticks near anything hot and tracks your dose. Waders cut your dose in half.",
+  "price": 35
+ },
+ {
+  "id": "prybar",
+  "n": "Pry bar",
+  "ds": "Lifts manhole covers. Fish the sewer straight from the street.",
+  "price": 15
+ },
+ {
+  "id": "lure",
+  "n": "Spinner lure",
+  "ds": "Bait. Bass, peacocks, gar and anything that chases.",
+  "price": 30
+ },
+ {
+  "id": "hotdog",
+  "n": "Pack of hot dogs",
+  "ds": "Bait. Catfish, gators, pythons and the ugly stuff love them.",
+  "price": 5
+ },
+ {
+  "id": "bread",
+  "n": "Loaf of white bread",
+  "ds": "Bait. Koi, carp, mullet and tilapia can't resist it.",
+  "price": 3
+ },
+ {
+  "id": "kayak",
+  "n": "Kayak",
+  "ds": "Paddle the canals, slip under bridges, and come in from the water side. Press K at the bank.",
+  "price": 120
+ },
+ {
+  "id": "bigtank",
+  "n": "Big tank",
+  "ds": "Your home aquarium holds 12 fish of any size.",
+  "price": 150
+ },
+ {
+  "id": "suit",
+  "n": "Thrift-store business suit",
+  "ds": "Walk the Marlowe Tower plaza in business hours, 8 AM to 6 PM, like you work there. The lobby guard still knows better.",
+  "price": 70
+ },
+ {
+  "id": "skiff",
+  "n": "Used skiff (the COFFEE CAN)",
+  "ds": "A 16-foot skiff with an outboard. Fast, and the only way past the channel markers. Launch it from the bay or the downtown river with K.",
+  "price": 450,
+  "where": "marina"
+ },
+ {
+  "id": "squid",
+  "n": "Frozen squid",
+  "ds": "Bait. Mahi, kingfish, tuna, sharks, groupers and marlin.",
+  "price": 20,
+  "where": "marina"
+ },
+ {
+  "id": "rod4",
+  "n": "Big-game rod",
+  "ds": "For blue-water monsters. Without one, the big offshore fish pull a lot harder.",
+  "price": 600,
+  "req": "rod2",
+  "where": "marina"
+ },
+ {
+  "id": "mcooler",
+  "n": "Marine cooler",
+  "ds": "Holds 10 more fish.",
+  "price": 120,
+  "where": "marina"
+ },
+ {
+  "id": "shades",
+  "n": "Polarized sunglasses",
+  "ds": "Cut the glare. In daylight you can tell what the shadows near you are.",
+  "price": 55,
+  "where": "marina"
+ }
+]
