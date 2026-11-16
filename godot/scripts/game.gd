@@ -3,6 +3,11 @@ extends Node
 
 signal news(text: String)
 signal hint(text: String)
+signal new_day
+
+var hoa_open := false
+var orders: Array = []
+var tips2: Array = []
 
 const SAVE_PATH := "user://urban_fishing_save.json"
 const TS := 32.0                      # pixels per tile
@@ -29,6 +34,8 @@ func _ready() -> void:
 	baitpref = _load_json("res://data/baitpref.json")
 	baits = _load_json("res://data/baits.json")
 	tips = _load_json("res://data/tips.json")
+	tips2 = _load_json("res://data/tips2.json")
+	orders = _load_json("res://data/orders.json")
 	load_game()
 
 func _load_json(path: String) -> Variant:
@@ -37,7 +44,9 @@ func _load_json(path: String) -> Variant:
 
 func fresh() -> Dictionary:
 	return { "day": 1, "min": 6 * 60 + 30.0, "cash": 30, "rep": 0, "x": 48.5, "y": 33.2, "face": PI / 2, "gear": {}, "cooler_cap": 5,
-		"cooler": [], "journal": {}, "bait": "worms", "started": false, "news": [] }
+		"cooler": [], "journal": {}, "bait": "worms", "started": false, "news": [],
+		"boat": false, "boat_kind": "kayak", "offenses": {}, "order": {}, "park_day": 0, "swept_day": 0, "story": {}, "story_day": 0, "story_told": false,
+		"tips_heard": 0, "rosa": 0, "visited": {}, "busts": 0 }
 
 func load_game() -> void:
 	S = fresh()
@@ -78,7 +87,42 @@ func advance(dt: float) -> void:
 	S.min += dt * MINUTES_PER_SECOND
 	if int(S.min / 1440.0) != int(before / 1440.0):
 		S.day += 1
-		emit_signal("news", "Day %d. The Gazette hits the driveway at 6 AM sharp." % S.day)
+		new_day.emit()
+
+# ---------- the king tide floods Low Street every fourth day, 10 AM to 2 PM ----------
+func tide_day() -> bool: return int(S.day) % 4 == 3
+func flood_level() -> float:
+	if not tide_day(): return 0.0
+	var h := hour()
+	if h < 9.5 or h > 14.5: return 0.0
+	if h < 10: return (h - 9.5) * 2
+	if h > 14: return (14.5 - h) * 2
+	return 1.0
+func flooded() -> bool: return flood_level() > 0.5
+
+# ---------- Lou's daily order ----------
+func cur_order() -> Variant:
+	if S.order.is_empty() or int(S.order.day) != int(S.day): return null
+	return orders[int(S.order.i)]
+func new_order() -> void:
+	var pool := []
+	for i in orders.size():
+		var o: Dictionary = orders[i]
+		var need: String = o.get("need", "")
+		if need == "" or (need == "downtown" and S.visited.has("dt")) or S.gear.has(need): pool.append(i)
+	S.order = { "day": S.day, "i": pool.pick_random(), "done": false }
+func order_match(o: Dictionary, c: Dictionary) -> bool:
+	var m: Dictionary = o.match
+	if m.has("name") and c.n != m.name: return false
+	if m.has("has") and not (m.has in c.n): return false
+	if m.has("minw") and (c.junk or c.w < m.minw): return false
+	if m.has("spot") and int(c.spot) != int(m.spot): return false
+	if m.get("nojunk", false) and c.junk: return false
+	return true
+func order_matches() -> Array:
+	var o = cur_order()
+	if o == null: return []
+	return S.cooler.filter(func(c): return order_match(o, c))
 
 # ---------- helpers ----------
 func money(n: float) -> String:

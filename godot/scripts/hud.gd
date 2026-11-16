@@ -5,6 +5,7 @@ extends CanvasLayer
 
 signal action_pressed
 signal action_released
+signal boat_pressed
 
 const PAPER := Color("#fbf3e2")
 const PAPER2 := Color("#f3e6c9")
@@ -24,6 +25,10 @@ var modal: Control
 var card_box: VBoxContainer
 var fishing: Fishing
 var hint_t := 0.0
+var boat_text := ""
+var chips: Array = []
+var boat_btn: Button
+var chip_box: VBoxContainer
 
 func _ready() -> void:
 	layer = 10
@@ -63,11 +68,26 @@ func _ready() -> void:
 	dock.add_theme_constant_override("separation", 10)
 	dock.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(dock)
+	chip_box = VBoxContainer.new()
+	chip_box.position = Vector2(16, 66)
+	chip_box.add_theme_constant_override("separation", 6)
+	chip_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(chip_box)
+	boat_btn = Button.new()
+	boat_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	boat_btn.focus_mode = Control.FOCUS_NONE
+	boat_btn.add_theme_font_size_override("font_size", 14)
+	var tb: StyleBoxFlat = theme_.get_stylebox("normal", "Button").duplicate()
+	tb.bg_color = TEAL
+	boat_btn.add_theme_stylebox_override("normal", tb); boat_btn.add_theme_stylebox_override("hover", tb)
+	for k in ["font_color", "font_hover_color", "font_pressed_color"]: boat_btn.add_theme_color_override(k, Color.WHITE)
+	boat_btn.pressed.connect(func(): boat_pressed.emit())
 	meters = Control.new()
 	meters.custom_minimum_size = Vector2(460, 112)
 	meters.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	meters.draw.connect(_draw_meters)
 	dock.add_child(meters)
+	dock.add_child(boat_btn)
 	hint = Label.new()
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -157,7 +177,9 @@ func refresh(near: String) -> void:
 	var label := ""
 	var col := SUN
 	match st:
-		"idle": label = { "fish": "Cast", "shop": "Enter Lou's", "home": "Go inside" }.get(near, "")
+		"idle":
+			label = { "fish": "Cast", "shop": "Enter Lou's", "home": "Go inside", "marina": "Enter the marina", "oldtimer": "Talk to the old-timer", "rosa": "Talk to Rosa" }.get(near, "")
+			if near in ["oldtimer", "rosa", "marina"]: col = TEAL
 		"power": label = "Release!"
 		"wait": label = "Retrieving…" if fishing.holding else "Twitch the lure"; col = PAPER
 		"nibble": label = "Wait for it…"; col = PAPER
@@ -175,7 +197,7 @@ func refresh(near: String) -> void:
 	else:
 		var m := ""
 		match st:
-			"idle": m = { "fish": "Cooler's full. Sell at Lou's." if S.cooler.size() >= S.cooler_cap else "Press F or Space to cast. B switches bait.", "shop": "Lou's Bait & Tackle. Press E or F to go in.", "home": "Home. Press E or F to go inside." }.get(near, "")
+			"idle": m = { "fish": "Cooler's full. Sell at Lou's." if S.cooler.size() >= S.cooler_cap else "Press F or Space to cast. B switches bait.", "shop": "Lou's Bait & Tackle. Press E or F to go in.", "home": "Home. Press E or F to go inside.", "marina": "Mullet Bay Marina. Press E to go in.", "oldtimer": "Press E to talk.", "rosa": "Press E to talk." }.get(near, "")
 			"power": m = "Release in the green to land right on the fish. ◀ ▶ or click the water to aim." if fishing.tgt != null else "No fish in line. ◀ ▶ to aim at a shadow, or click the water."
 			"wait": m = "Something's coming over…" if fishing.target != null else "Tap to twitch the lure. Hold to reel it back in."
 			"nibble": m = "It's nibbling… wait for the big dip."
@@ -184,7 +206,27 @@ func refresh(near: String) -> void:
 		hint.text = m
 	hint.visible = hint.text != ""
 	meters.visible = st == "power" or st == "reel"
+	boat_btn.visible = boat_text != ""
+	boat_btn.text = boat_text
+	_update_chips()
 	meters.queue_redraw()
+
+func _update_chips() -> void:
+	while chip_box.get_child_count() < chips.size():
+		var l := Label.new()
+		l.add_theme_font_size_override("font_size", 13)
+		l.add_theme_font_override("font", Game.font_bold)
+		chip_box.add_child(l)
+	for i in chip_box.get_child_count():
+		var l: Label = chip_box.get_child(i)
+		l.visible = i < chips.size()
+		if not l.visible: continue
+		var c: Array = chips[i]
+		if l.text != c[0] or l.get_meta("style", "") != c[1]:
+			l.text = c[0]; l.set_meta("style", c[1])
+			var bg: Color = { "paper": PAPER, "sea": Color("#2b7ea6"), "ink": INK, "coral": CORAL }[c[1]]
+			l.add_theme_stylebox_override("normal", _box(bg, INK, 8, 2, Vector4.ZERO, Color.TRANSPARENT, 10, 5))
+			l.add_theme_color_override("font_color", INK if c[1] == "paper" else Color.WHITE)
 
 func flash(text: String) -> void:
 	hint.text = text; hint.visible = true; hint_t = 2.6

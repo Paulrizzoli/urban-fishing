@@ -1,0 +1,502 @@
+{
+ "watchers": [
+  {
+   "id": "keeper",
+   "kind": "cart",
+   "zone": 1,
+   "path": [
+    [
+     78,
+     8
+    ],
+    [
+     98,
+     8
+    ],
+    [
+     98,
+     20.6
+    ],
+    [
+     78,
+     20.6
+    ]
+   ],
+   "speed": 2.4,
+   "hours": [
+    6,
+    19
+   ],
+   "home": [
+    73.5,
+    27.5
+   ],
+   "r": 7,
+   "fov": 80,
+   "disguise": "polo",
+   "caught": "\"Sir. SIR. This is a private course. And that is not a putter.\"",
+   "who": "The groundskeeper"
+  },
+  {
+   "id": "security",
+   "kind": "guard",
+   "zone": 2,
+   "path": [
+    [
+     12.6,
+     40.55
+    ],
+    [
+     23.4,
+     40.55
+    ],
+    [
+     23.4,
+     46.6
+    ],
+    [
+     12.6,
+     46.6
+    ]
+   ],
+   "speed": 1.35,
+   "r": 6,
+   "rNight": 4.5,
+   "fov": 78,
+   "disguise": "lanyard",
+   "dHours": [
+    8,
+    18
+   ],
+   "caught": "\"Buddy. The koi are company property. So is that bench you were hiding behind.\"",
+   "who": "Security"
+  },
+  {
+   "id": "booth",
+   "kind": "booth",
+   "zone": 3,
+   "fixed": [
+    64.2,
+    66.5
+   ],
+   "dir": 3.141592653589793,
+   "r": 5.5,
+   "fov": 80,
+   "caught": "\"You can't be in here. This is a regulated facility. Is that a fishing rod?\"",
+   "who": "The gate guard"
+  },
+  {
+   "id": "cam1",
+   "kind": "cam",
+   "zone": 3,
+   "fixed": [
+    63.6,
+    57.6
+   ],
+   "sweep": [
+    0.1,
+    1.45
+   ],
+   "period": 7,
+   "r": 10,
+   "fov": 38,
+   "caught": "A speaker crackles: \"Person by the turbine hall, stay where you are.\" Security walks you out.",
+   "who": "A camera"
+  },
+  {
+   "id": "cam2",
+   "kind": "cam",
+   "zone": 3,
+   "fixed": [
+    105.2,
+    57.6
+   ],
+   "sweep": [
+    1.7,
+    3.05
+   ],
+   "period": 8,
+   "r": 10,
+   "fov": 38,
+   "caught": "A speaker crackles: \"Person by the outflow, stay where you are.\" Security walks you out.",
+   "who": "A camera"
+  },
+  {
+   "id": "plantguard",
+   "kind": "guard",
+   "zone": 3,
+   "path": [
+    [
+     85,
+     59.5
+    ],
+    [
+     104.4,
+     59.5
+    ],
+    [
+     104.4,
+     71.5
+    ],
+    [
+     85,
+     71.5
+    ]
+   ],
+   "speed": 1.5,
+   "r": 6,
+   "rNight": 4.5,
+   "fov": 78,
+   "hours": [
+    2.5,
+    2
+   ],
+   "home": [
+    83.5,
+    69.3
+   ],
+   "caught": "\"Third time this month somebody's tried to fish the outflow. Out.\"",
+   "who": "Plant security"
+  },
+  {
+   "id": "flood",
+   "kind": "cam",
+   "zone": 3,
+   "fixed": [
+    78.4,
+    66.9
+   ],
+   "sweep": [
+    -0.7,
+    0.75
+   ],
+   "period": 10,
+   "r": 12,
+   "fov": 26,
+   "hours": [
+    20,
+    5
+   ],
+   "caught": "A floodlight swings onto you and a siren whoops once. \"Stay right there, fisherman.\"",
+   "who": "The night floodlight"
+  },
+  {
+   "id": "staff",
+   "kind": "staff",
+   "zone": 5,
+   "path": [
+    [
+     5,
+     93
+    ],
+    [
+     28,
+     93
+    ],
+    [
+     28,
+     107
+    ],
+    [
+     5,
+     107
+    ]
+   ],
+   "speed": 1.4,
+   "hours": [
+    9,
+    18.4
+   ],
+   "r": 6,
+   "fov": 80,
+   "caught": "\"Sir, the lagoon is an attraction, not a fishing hole. Please exit through the gift shop.\"",
+   "who": "Park staff"
+  },
+  {
+   "id": "nightguard",
+   "kind": "guard",
+   "zone": 5,
+   "path": [
+    [
+     28,
+     107
+    ],
+    [
+     5,
+     107
+    ],
+    [
+     5,
+     93
+    ],
+    [
+     28,
+     93
+    ]
+   ],
+   "speed": 1.2,
+   "hours": [
+    19,
+    6
+   ],
+   "r": 6,
+   "rNight": 5,
+   "fov": 70,
+   "caught": "\"The park closed hours ago. How did you even get in here?\"",
+   "who": "The night guard"
+  },
+  {
+   "id": "hoa",
+   "kind": "hoa",
+   "zone": 6,
+   "path": [
+    [
+     52,
+     95.6
+    ],
+    [
+     70,
+     95.6
+    ],
+    [
+     70,
+     106.6
+    ],
+    [
+     52,
+     106.6
+    ]
+   ],
+   "speed": 1,
+   "hours": [
+    7,
+    21
+   ],
+   "r": 5.5,
+   "fov": 90,
+   "caught": "\"That is a VIOLATION. Section 4, paragraph 9: fishing is for RESIDENTS.\" She writes you up in triplicate.",
+   "who": "The HOA president"
+  },
+  {
+   "id": "truck",
+   "kind": "truck",
+   "zone": 7,
+   "path": [
+    [
+     85,
+     93.5
+    ],
+    [
+     109,
+     93.5
+    ],
+    [
+     109,
+     103.8
+    ],
+    [
+     85,
+     103.8
+    ]
+   ],
+   "speed": 2.6,
+   "r": 7,
+   "rNight": 5.5,
+   "fov": 70,
+   "caught": "\"Airport operations. You're on airport property, sir. With a rod.\"",
+   "who": "The airport patrol"
+  },
+  {
+   "id": "agate",
+   "kind": "booth",
+   "zone": 7,
+   "fixed": [
+    97.6,
+    87.8
+   ],
+   "dir": -1.5707963267948966,
+   "r": 5,
+   "fov": 90,
+   "caught": "\"Badge?\" You don't have a badge. You have a cooler.",
+   "who": "The gate guard"
+  },
+  {
+   "id": "spot",
+   "kind": "cam",
+   "zone": 7,
+   "fixed": [
+    102.5,
+    89.6
+   ],
+   "sweep": [
+    0.4,
+    2.7
+   ],
+   "period": 9,
+   "r": 12,
+   "fov": 28,
+   "hours": [
+    19,
+    6
+   ],
+   "caught": "A searchlight pins you. Over the loudspeaker: \"Stay where you are.\"",
+   "who": "The tower spotlight"
+  },
+  {
+   "id": "lobby",
+   "kind": "desk",
+   "zone": 8,
+   "fixed": [
+    64,
+    127.7
+   ],
+   "dir": 1.5707963267948966,
+   "r": 5.5,
+   "fov": 110,
+   "hours": [
+    7,
+    22
+   ],
+   "caught": "\"Sir, this is a lobby, not a lake. Mr. Marlowe's arowana is not for you.\"",
+   "who": "The lobby guard"
+  },
+  {
+   "id": "plazasec",
+   "kind": "guard",
+   "zone": 8,
+   "path": [
+    [
+     45.5,
+     120.6
+    ],
+    [
+     76.4,
+     120.6
+    ],
+    [
+     76.4,
+     133.8
+    ],
+    [
+     45.5,
+     133.8
+    ]
+   ],
+   "speed": 1.3,
+   "r": 6,
+   "rNight": 4.5,
+   "fov": 80,
+   "disguise": "suit",
+   "dHours": [
+    8,
+    18
+   ],
+   "caught": "\"Marlowe Tower security. Fishing in the water feature is a violation of, like, everything.\"",
+   "who": "Tower security"
+  },
+  {
+   "id": "tcam1",
+   "kind": "cam",
+   "zone": 8,
+   "fixed": [
+    44.5,
+    134.5
+   ],
+   "sweep": [
+    -1.25,
+    -0.1
+   ],
+   "period": 8,
+   "r": 9,
+   "fov": 34,
+   "caught": "A speaker under the palm crackles: \"Plaza camera three. Sir. Put the rod down.\"",
+   "who": "A tower camera"
+  },
+  {
+   "id": "tcam2",
+   "kind": "cam",
+   "zone": 8,
+   "fixed": [
+    77.5,
+    134.5
+   ],
+   "sweep": [
+    -3.04,
+    -1.9
+   ],
+   "period": 9,
+   "r": 9,
+   "fov": 34,
+   "caught": "A speaker crackles: \"Plaza camera four. We can see you. We can see the bucket.\"",
+   "who": "A tower camera"
+  },
+  {
+   "id": "watchman",
+   "kind": "dog",
+   "zone": 9,
+   "path": [
+    [
+     84,
+     158.5
+    ],
+    [
+     109.5,
+     158.5
+    ]
+   ],
+   "speed": 1.1,
+   "hours": [
+    21,
+    5
+   ],
+   "r": 5.5,
+   "fov": 90,
+   "caught": "A watchman and a very small dog. The dog spotted you first. \"Docks are for boat owners after dark, pal.\"",
+   "who": "The marina watchman"
+  }
+ ],
+ "exit": {
+  "1": [
+   70.5,
+   33.6
+  ],
+  "2": [
+   18.5,
+   37.6
+  ],
+  "3": [
+   57.5,
+   66.5
+  ],
+  "5": [
+   20.5,
+   85.4
+  ],
+  "6": [
+   61.5,
+   85.4
+  ],
+  "7": [
+   96.5,
+   85.4
+  ],
+  "8": [
+   60.5,
+   119.5
+  ],
+  "9": [
+   92.5,
+   154.5
+  ]
+ },
+ "zname": {
+  "1": "the golf course",
+  "2": "Sunrise Executive Park",
+  "3": "the power station",
+  "5": "Sunsplash Jungle Park",
+  "6": "Heron Lakes",
+  "7": "the airport",
+  "8": "Marlowe Tower",
+  "9": "the marina"
+ }
+}

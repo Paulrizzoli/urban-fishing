@@ -4,6 +4,11 @@ extends Node2D
 const TS := Game.TS
 const LOU_DOOR := Vector2(48.5, 32.4)
 const HOME_DOOR := Vector2(8.75, 10.5)
+const MARINA_DOOR := Vector2(88.5, 145.3)
+const OLDTIMER := Vector2(37.4, 49.4)
+const ROSA := Vector2(34.4, 165.6)
+const STORY_LINES_OK := ["Lou whistles. The regulars nod.", "Somebody buys you a soda.", "Lou writes it on the whiteboard."]
+const STORY_LINES_NO := ["Lou laughs so hard he has to sit down.", "A regular holds his hands two inches apart.", "\"Sure it was, buddy.\""]
 const WATER_SHADER := """
 shader_type canvas_item;
 uniform sampler2D water_mask : filter_linear;
@@ -34,7 +39,11 @@ var glow_node: Drawer
 var sky_nodes: Array = []
 var save_t := 0.0
 var near := ""
-var latch := { "shop": false, "home": false }
+var latch := { "shop": false, "home": false, "marina": false }
+var guards: Guards
+var prev_zone := 0
+var prev_pos := Vector2.ZERO
+var last_sale := 0
 var pending_catch = null
 var shop_tab := "sell"
 # test hook: godot --path . -- --at=x,y,hour --shot=out.png [--open=shop]
@@ -47,6 +56,8 @@ func _ready() -> void:
 			var v := a.substr(5).split(",")
 			Game.S.x = float(v[0]); Game.S.y = float(v[1]); Game.S.min = float(v[2]) * 60.0; Game.S.started = true
 		if a.begins_with("--shot="): test_shot = a.substr(7)
+		if a.begins_with("--boat="): Game.S.boat = true; Game.S.boat_kind = a.substr(7); Game.S.gear.kayak = 1; Game.S.gear.skiff = 1
+		if a.begins_with("--day="): Game.S.day = int(a.substr(6)); Game.S.min += (Game.S.day - 1) * 1440.0
 	RenderingServer.set_default_clear_color(Color("#0b1a3a"))
 	world = Node2D.new()
 	world.scale = Vector2(TS, TS)
@@ -114,6 +125,26 @@ func _ready() -> void:
 	player = Player.new()
 	ents.add_child(player)
 	fishing.player = player
+	ents.add_child(Drawer.make(func(ci):
+		ci.draw_rect(Rect2(ROSA.x + 0.25, ROSA.y - 0.05, 0.36, 0.3), Color("#e9e4d8"))
+		Art.person(ci, ROSA, PI / 2 + 0.35, Color("#e2583e"), Color("#fbf3e2"), true)
+		ci.draw_circle(ROSA + Vector2(-0.42, 0.1), 0.14, Color("#9aa6ad")), ROSA.y))
+	ents.add_child(Drawer.make(func(ci): ci.draw_rect(Rect2(OLDTIMER.x - 0.5, OLDTIMER.y + 0.15, 0.3, 0.3), Color("#2c5f8a")), OLDTIMER.y + 0.01))
+	guards = Guards.new()
+	guards.player = player
+	guards.fishing = fishing
+	guards.z_index = -4
+	world.add_child(guards)
+	guards.setup(ents)
+	var overlay := Drawer.make(guards.draw_overlay, 0, true)
+	overlay.z_index = 7
+	world.add_child(overlay)
+	var flood := Drawer.make(_draw_flood, 0, true)
+	flood.z_index = -6
+	world.add_child(flood)
+	guards.busted.connect(_busted)
+	Game.new_day.connect(_on_new_day)
+	if Game.cur_order() == null: Game.new_order()
 	var line := Drawer.make(fishing.draw_line_layer, 0, true)
 	line.z_index = 5
 	world.add_child(line)
@@ -160,6 +191,7 @@ func _ready() -> void:
 	add_child(hud)
 	hud.action_pressed.connect(_action_down)
 	hud.action_released.connect(func(): fishing.action_up())
+	hud.boat_pressed.connect(_toggle_boat)
 	fishing.message.connect(hud.flash)
 	fishing.landed.connect(_on_landed)
 	get_viewport().size_changed.connect(_fit_zoom)
@@ -168,6 +200,10 @@ func _ready() -> void:
 	for a in OS.get_cmdline_user_args():
 		if a == "--open=shop": open_shop()
 		if a == "--open=gear": shop_tab = "gear"; open_shop()
+		if a == "--open=order": shop_tab = "order"; open_shop()
+		if a == "--open=marina": open_marina()
+		if a == "--busted": _busted(guards.watchers[0])
+		if a == "--rosa": talk_rosa()
 		if a == "--cast": fishing.start_cast()
 		if a == "--land": fishing.fish = Game.spots[1].fish[5]; fishing.fw = 44.2; fishing.spot = 1; fishing._land()
 
@@ -193,12 +229,27 @@ func _process(dt: float) -> void:
 		fishing.turn = int(r) - int(l)
 		fishing.pull = int(r) - int(l)
 		fishing.update(dt)
+		guards.update(dt)
+		if guards.plane_hint: guards.plane_hint = false; hud.flash("A jet roars overhead. Nobody's looking!")
 		_doors()
+		_park(dt)
+		if player.position.y > 115 and not Game.S.visited.has("dt"): Game.S.visited.dt = 1; hud.flash("Downtown Port Mullet. The bay is at the bottom of the street.")
 	near = ""
 	if fishing.state == "idle":
-		if player.position.distance_to(LOU_DOOR) < 1.3: near = "shop"
+		if player.in_boat(): near = "fish"
+		elif player.position.distance_to(LOU_DOOR) < 1.3: near = "shop"
 		elif player.position.distance_to(HOME_DOOR) < 1.0: near = "home"
+		elif player.position.distance_to(MARINA_DOOR) < 1.3: near = "marina"
+		elif player.position.distance_to(OLDTIMER) < 1.8: near = "oldtimer"
+		elif player.position.distance_to(ROSA) < 1.6: near = "rosa"
 		elif fishing.near_water(): near = "fish"
+	hud.boat_text = ""
+	if fishing.state == "idle":
+		if player.in_boat(): hud.boat_text = ("Tie up the skiff (K)" if player.boat_kind() == "skiff" else "Beach the kayak (K)") if player.beach_spot() != null else ""
+		else:
+			var ls = player.launch_spot()
+			if ls != null: hud.boat_text = "Launch the skiff (K)" if ls[1] == "skiff" else "Launch kayak (K)"
+	hud.chips = _chips()
 	cam.position = player.position * TS
 	_lighting()
 	for pair in sky_nodes:
@@ -217,13 +268,15 @@ func _process(dt: float) -> void:
 	if save_t > 10: save_t = 0; Game.save_game()
 
 func _doors() -> void:
-	for k in ["shop", "home"]:
-		var door: Vector2 = LOU_DOOR if k == "shop" else HOME_DOOR
+	if player.in_boat(): return
+	for k in ["shop", "home", "marina"]:
+		var door: Vector2 = { "shop": LOU_DOOR, "home": HOME_DOOR, "marina": MARINA_DOOR }[k]
 		var d := player.position.distance_to(door)
 		if d < 0.7 and not latch[k] and fishing.state == "idle":
 			latch[k] = true; player.path.clear()
 			if k == "shop": open_shop()
-			else: open_home()
+			elif k == "home": open_home()
+			else: open_marina()
 		if d > 1.6: latch[k] = false
 
 func _lighting() -> void:
@@ -252,6 +305,7 @@ func _unhandled_input(e: InputEvent) -> void:
 			if e.pressed: _action_down()
 			else: fishing.action_up()
 		elif e.pressed and k == KEY_B: _cycle_bait()
+		elif e.pressed and k == KEY_K: _toggle_boat()
 		elif e.pressed and fishing.state == "wait" and (k == KEY_LEFT or k == KEY_A or k == KEY_RIGHT or k == KEY_D): fishing.action_down(); fishing.action_up()
 	elif e is InputEventMouseButton and e.button_index == MOUSE_BUTTON_LEFT:
 		if not e.pressed:
@@ -272,9 +326,20 @@ func _action_down() -> void:
 	if fishing.state == "idle":
 		if near == "shop": open_shop()
 		elif near == "home": open_home()
+		elif near == "marina": open_marina()
+		elif near == "oldtimer": talk_oldtimer()
+		elif near == "rosa": talk_rosa()
 		elif near == "fish": fishing.start_cast()
 		return
 	fishing.action_down()
+
+func _toggle_boat() -> void:
+	if fishing.state != "idle": return
+	var m := player.toggle_boat()
+	if m != "": hud.flash(m); Game.save_game()
+	elif player.in_boat(): hud.flash("Get close to a bank to land.")
+	elif Game.S.gear.has("kayak") or Game.S.gear.has("skiff"): hud.flash("Stand right at the edge of a canal, the river or the bay to launch.")
+	else: hud.flash("You don't have a boat. Lou sells kayaks; the marina downtown sells a skiff.")
 
 func _cycle_bait() -> void:
 	var o := Game.owned_baits()
@@ -319,49 +384,201 @@ func _release() -> void:
 
 func open_shop() -> void:
 	var S := Game.S
-	var tabs := [["Sell", func(): shop_tab = "sell"; open_shop(), shop_tab == "sell"], ["Gear", func(): shop_tab = "gear"; open_shop(), shop_tab == "gear"]]
+	var tabs := []
+	for td in [["sell", "Sell"], ["order", "Today's order"], ["gear", "Gear"], ["story", "Tell a story"]]:
+		var key: String = td[0]
+		tabs.append([td[1], func(): shop_tab = key; open_shop(), shop_tab == key])
 	var parts := [["h3", "Lou's Bait & Tackle · since 1977"], ["h2", "\"%s\"" % ["What'd you catch?", "Wipe your feet.", "Back again?", "Don't touch the shrimp.", "Tell me it's a big one."].pick_random()], ["tabs", tabs]]
-	if shop_tab == "sell":
-		if S.cooler.is_empty():
-			parts.append(["sub", "Your cooler is empty. Lou buys anything with fins, and some things without."])
-		else:
-			var total := 0
-			for c in S.cooler:
-				total += int(c.value)
-				parts.append(["item", c.n + (" ★" if c.legend else ""), "%s lb · %s" % [str(c.w), Game.spots[int(c.spot)].name], Game.money(c.value), func(): pass, false])
-			parts.append(["row", [["Sell everything for " + Game.money(total), _sell_all, true, "go"]]])
-	else:
-		for g in Game.gear:
-			if g.has("where"): continue
-			var gid: String = g.id
-			var owned: bool = S.cooler_cap >= 20 if gid == "cooler" else S.gear.has(gid)
-			var locked: bool = g.get("req") != null and not S.gear.has(g.get("req"))
-			var price: int = g.price
-			var btn := "Owned" if owned else "Needs the last rod" if locked else Game.money(price)
-			parts.append(["item", g.n + (" (%d now)" % S.cooler_cap if gid == "cooler" else ""), g.ds, btn, func(): _buy(gid, price), not owned and not locked and S.cash >= price])
-		parts.append(["sub", "Your rod: %s." % Game.rods[Game.rod_level()].name])
+	match shop_tab:
+		"sell":
+			if S.cooler.is_empty():
+				parts.append(["sub", ("Sold for %s. " % Game.money(last_sale) if last_sale else "") + "Your cooler is empty. Lou buys anything with fins, and some things without."])
+			else:
+				var total := 0
+				for c in S.cooler:
+					total += int(c.value)
+					parts.append(["item", c.n + (" ★" if c.legend else ""), "%s lb · %s" % [str(c.w), Game.spots[int(c.spot)].name], Game.money(c.value), func(): pass, false])
+				parts.append(["row", [["Sell everything for " + Game.money(total), _sell_all, true, "go"]]])
+			last_sale = 0
+		"order":
+			var o = Game.cur_order()
+			if o == null: parts.append(["sub", "No order today."])
+			elif S.order.done: parts.append(["sub", "You filled today's order. Lou: \"Same time tomorrow.\""])
+			else:
+				var have := Game.order_matches().size()
+				parts.append(["quote", "\"%s\"" % o.t])
+				parts.append(["p", "Pays %s and +3 rep, today only. You have %d of %d in your cooler." % [Game.money(o.pay), mini(have, int(o.count)), int(o.count)]])
+				parts.append(["row", [["Hand it over" if have >= o.count else "Not enough yet", _fill_order, have >= o.count, "go"]]])
+		"gear":
+			_gear_list(parts, Game.gear.filter(func(g): return not g.has("where")))
+			parts.append(["sub", "Your rod: %s." % Game.rods[Game.rod_level()].name + (" Boats, squid and big-game tackle are at the marina downtown." if S.visited.has("dt") else "")])
+		"story":
+			var s: Dictionary = S.story
+			if s.is_empty() or int(S.story_day) != int(S.day): parts.append(["sub", "Sell a fish today and Lou will want to hear how you caught it."])
+			elif S.story_told: parts.append(["sub", "You already told Lou about the %s today. Come back tomorrow with a new one." % s.n])
+			else:
+				var w: float = s.w
+				parts.append(["p", "Lou leans on the counter. \"So. That %s. How big was it really?\"" % s.n])
+				parts.append(["sub", "It weighed %s lb.%s" % [str(w), " You have a photo, which helps." if S.gear.has("camera") else " No photo. Stretch it too far and the regulars will laugh you out."]])
+				parts.append(["item", "Tell it straight", "Always believed. Small rep.", "\"%s lb\"" % str(w), func(): _tell_story(0), true])
+				parts.append(["item", "Round it up", ("Usually believed" if S.gear.has("camera") else "Coin flip") + ". Double rep, or lose some.", "\"%d lb\"" % roundi(w * 1.6), func(): _tell_story(1), true])
+				parts.append(["item", "Full Florida", ("Even with a photo it's a stretch" if S.gear.has("camera") else "Long shot") + ". Big rep if they buy it.", "\"%d lb\"" % roundi(w * 4), func(): _tell_story(2), true])
 	parts.append(["kv", [["Cash", Game.money(S.cash)], ["Rep", str(int(S.rep))], ["Cooler", "%d/%d" % [S.cooler.size(), S.cooler_cap]]]])
 	parts.append(["row", [["Back outside", func(): hud.close(), true, "hot"]]])
 	hud.open(parts)
 
+func _gear_list(parts: Array, list: Array) -> void:
+	var S := Game.S
+	var cmax := 20 + (10 if S.gear.has("mcooler") else 0)
+	for g in list:
+		var gid: String = g.id
+		var owned: bool = S.cooler_cap >= cmax if gid == "cooler" else S.gear.has(gid)
+		var locked: bool = g.get("req") != null and not S.gear.has(g.get("req"))
+		var price: int = g.price
+		var btn := "Owned" if owned else "Needs a better rod" if locked else Game.money(price)
+		parts.append(["item", g.n + (" (%d now)" % S.cooler_cap if gid == "cooler" else ""), g.ds, btn, func(): _buy(gid, price, g.has("where")), not owned and not locked and S.cash >= price])
+
 func _sell_all() -> void:
 	var total := 0
-	for c in Game.S.cooler: total += int(c.value)
+	var best = null
+	for c in Game.S.cooler:
+		total += int(c.value)
+		if not c.junk and (best == null or c.value > best.value or (c.legend and not best.legend)): best = c
 	Game.S.cash += total
+	if best != null and (Game.S.story.is_empty() or int(Game.S.story_day) != int(Game.S.day) or best.value > Game.S.story.value):
+		Game.S.story = best; Game.S.story_day = Game.S.day; Game.S.story_told = false
 	Game.S.cooler = []
+	last_sale = total
 	Game.save_game()
 	open_shop()
-	hud.flash("Lou counts it out: " + Game.money(total))
 
-func _buy(gid: String, price: int) -> void:
+func _fill_order() -> void:
+	var o = Game.cur_order()
+	if o == null or Game.S.order.done: return
+	var m := Game.order_matches()
+	m.sort_custom(func(a, b): return a.value < b.value)
+	if m.size() < o.count: return
+	for c in m.slice(0, int(o.count)): Game.S.cooler.erase(c)
+	Game.S.cash += int(o.pay); Game.S.rep += 3; Game.S.order.done = true
+	Game.save_game(); open_shop()
+	hud.flash("Lou pays %s. \"Same time tomorrow.\"" % Game.money(o.pay))
+
+func _tell_story(lv: int) -> void:
+	var S := Game.S
+	var s: Dictionary = S.story
+	var photo: bool = S.gear.has("camera")
+	var base: int = maxi(1, roundi(s.value / 12.0)) + (5 if s.legend else 0)
+	var odds: float = [1.0, 0.85 if photo else 0.5, 0.45 if photo else 0.18][lv]
+	var ok := randf() < odds
+	var claim: Variant = [s.w, roundi(s.w * 1.6), roundi(s.w * 4)][lv]
+	var gain: int = base * [1, 2, 5][lv] if ok else -base * [0, 1, 2][lv]
+	S.rep = maxi(0, S.rep + gain); S.story_told = true
+	Game.save_game()
+	hud.open([["h3", "Fish story"], ["h2", "\"It was %s pounds.\"" % str(claim)], ["quote", (STORY_LINES_OK if ok else STORY_LINES_NO).pick_random()],
+		["p", ("They bought it. +%d rep." % gain) if ok else ("Nobody bought it. %d rep." % gain) if gain else "Nobody's impressed, but nobody can argue."],
+		["row", [["Back outside", func(): hud.close(), true, "hot"]]]])
+
+func _buy(gid: String, price: int, at_marina := false) -> void:
 	if Game.S.cash < price: return
 	Game.S.cash -= price
-	if gid == "cooler": Game.S.cooler_cap = mini(20, Game.S.cooler_cap + 5)
+	if gid == "cooler": Game.S.cooler_cap = mini(20 + (10 if Game.S.gear.has("mcooler") else 0), Game.S.cooler_cap + 5)
+	elif gid == "mcooler": Game.S.gear.mcooler = 1; Game.S.cooler_cap += 10
 	else: Game.S.gear[gid] = 1
 	for b in Game.baits:
 		if b.get("gear", "") == gid: Game.S.bait = b.id
 	Game.save_game()
-	open_shop()
+	if at_marina: open_marina()
+	else: open_shop()
+
+func open_marina() -> void:
+	var S := Game.S
+	var parts := [["h3", "Mullet Bay Marina · fuel, ice, squid"], ["h2", "\"%s\"" % ["Mind the dock lines.", "No running on the docks.", "You smell like Lou's."].pick_random()]]
+	_gear_list(parts, Game.gear.filter(func(g): return g.get("where", "") == "marina"))
+	parts.append(["sub", "The skiff is tied up at the docks. Launch it from the bay or the river with K." if S.gear.has("skiff") else "Lou still buys the fish. We just sell the stuff to catch them."])
+	parts.append(["kv", [["Cash", Game.money(S.cash)], ["Rep", str(int(S.rep))], ["Cooler", "%d/%d" % [S.cooler.size(), S.cooler_cap]]]])
+	parts.append(["row", [["Back outside", func(): hud.close(), true, "hot"]]])
+	hud.open(parts)
+
+func talk_oldtimer() -> void:
+	var avail := Game.tips.filter(func(tp): return Game.S.rep >= tp.rep)
+	var fresh: bool = avail.size() > int(Game.S.tips_heard)
+	var tip: Dictionary = avail[int(Game.S.tips_heard)] if fresh else avail.pick_random()
+	if fresh: Game.S.tips_heard += 1
+	var nxt = null
+	for tp in Game.tips:
+		if tp.rep > Game.S.rep and (nxt == null or tp.rep < nxt.rep): nxt = tp
+	Game.save_game()
+	hud.open([["h3", "The old-timer under the bridge"], ["h2", "\"C'mere. I'll tell you something.\"" if fresh else "\"Like I said…\""], ["quote", tip.t],
+		["sub", ("He'll tell you more once you're better known around here (%d rep). Brag at Lou's to build a name." % nxt.rep) if nxt != null else "He's told you everything he knows. Probably."],
+		["row", [["Thanks, old-timer", func(): hud.close(), true, "hot"]]]])
+
+func talk_rosa() -> void:
+	var tip: String = Game.tips2[int(Game.S.rosa) % Game.tips2.size()]
+	var first: bool = int(Game.S.rosa) == 0
+	Game.S.rosa += 1; Game.save_game()
+	hud.open([["h3", "Rosa Delgado · end of the Municipal Pier"], ["h2", "\"Sit. You're scaring the snapper.\"" if first else "\"You again. Good.\""], ["quote", tip],
+		["sub", "Rosa has fished this pier every day since 1979. She has something new each time you ask."],
+		["row", [["Thanks, Rosa", func(): hud.close(), true, "hot"]]]])
+
+func _busted(w: Dictionary) -> void:
+	fishing.cancel(); player.path.clear()
+	var z := int(w.zone)
+	var off: Dictionary = Game.S.offenses
+	off[str(z)] = int(off.get(str(z), 0)) + 1
+	var n: int = off[str(z)]
+	var fine := 10 + 10 * n
+	var paid := mini(int(Game.S.cash), fine)
+	Game.S.cash -= paid; Game.S.busts += 1
+	Game.S.boat = false
+	player.position = guards.exits.get(z, player.position)
+	Game.save_game()
+	var zn: String = guards.znames.get(z, "private property")
+	hud.open([["h3", "Busted at " + zn], ["h2", w.who + " spotted you"], ["quote", w.caught],
+		["p", ("You paid a %s fine" % Game.money(fine) if paid >= fine else "You paid what you had, %s, and got a stern look" % Game.money(paid) if paid > 0 else "You were broke, so they let you off with a warning") + " and got walked back out. Your cooler is safe."],
+		["sub", "Offense #%d here. Fines go up each time. Try hiding in bushes, waiting for patrols to turn, or a disguise from Lou's." % n],
+		["row", [["Walk it off", func(): hud.close(), true, "hot"]]]])
+
+func _on_new_day() -> void:
+	Game.new_order()
+	if Game.tide_day(): hud.flash("King tide today: Low Street floods from 10 AM to 2 PM.")
+
+## Sunsplash Jungle: $8 admission from 9 to 6, and staff sweep the park at closing. The restroom is a good place to wait.
+func _park(_dt: float) -> void:
+	var z := Player.zone_of(player.position)
+	var h := Game.hour()
+	if z == 5 and prev_zone != 5 and not player.in_boat() and h >= 9 and h < 18 and int(Game.S.park_day) != int(Game.S.day):
+		if Game.S.cash >= 8: Game.S.cash -= 8; Game.S.park_day = Game.S.day; hud.flash("Paid $8 admission. The park closes at 6 PM.")
+		else: player.position = prev_pos; player.path.clear(); hud.flash("Admission is $8. Come back with cash.")
+	if h >= 18 and h < 18.4 and z == 5 and int(Game.S.swept_day) != int(Game.S.day):
+		var on_hide := Town.t_at(floori(player.position.x), floori(player.position.y)) == Town.T.HIDE
+		if on_hide: Game.S.swept_day = Game.S.day; hud.flash("Footsteps outside the restroom… then the lights go off.")
+		else:
+			Game.S.swept_day = Game.S.day; fishing.cancel(); Game.S.boat = false
+			player.position = guards.exits[5]; player.path.clear()
+			hud.open([["h3", "Sunsplash Jungle Park · 6:00 PM"], ["h2", "\"The park is now closed!\""], ["quote", "A cheerful teen in a safari hat walks you to the exit and wishes you a jungle-tastic evening."],
+				["sub", "Staff sweep the whole park at closing. They don't check the restroom."], ["row", [["Rats", func(): hud.close(), true, "hot"]]]])
+	prev_zone = Player.zone_of(player.position); prev_pos = player.position
+
+func _chips() -> Array:
+	var out := []
+	var o = Game.cur_order()
+	if o != null:
+		out.append(["Lou's order: done ✓" if Game.S.order.done else "Lou wants: %s (%d/%d)" % [o.s, mini(Game.order_matches().size(), int(o.count)), int(o.count)], "paper"])
+	if Game.tide_day():
+		out.append(["King tide! Low Street is flooded" if Game.flooded() else "King tide today, 10 AM to 2 PM" if Game.hour() < 10 else "King tide is over for today", "sea"])
+	else:
+		var d := 3 - int(Game.S.day) % 4
+		out.append(["Next king tide: " + ("in %d days" % (4 + d) if d <= 0 else "tomorrow" if d == 1 else "in %d days" % d), "sea"])
+	return out
+
+func _draw_flood(ci: CanvasItem) -> void:
+	var fl := Game.flood_level()
+	if fl <= 0: return
+	ci.draw_rect(Rect2(0, 62, 37, 4), Color(0.29, 0.65, 0.77, 0.93 * clampf(fl * 1.4, 0, 1)))
+	var t := Time.get_ticks_msec() / 1000.0
+	for k in 30:
+		var x := fmod(k * 7.3 + t * 0.4, 37.0)
+		ci.draw_rect(Rect2(x, 62.3 + fmod(k * 1.37, 3.4), 0.5, 0.05), Color(1, 1, 1, 0.3 * fl))
 
 func open_home() -> void:
 	var rest := func(h: float):

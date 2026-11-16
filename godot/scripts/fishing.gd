@@ -6,7 +6,7 @@ extends Node2D
 signal landed(c: Dictionary)
 signal message(text: String)
 
-const SHCOUNT := { 1: 5, 2: 16, 3: 6, 4: 4, 5: 5, 6: 6, 9: 12, 10: 6, 11: 6, 12: 7, 13: 10, 14: 24, 15: 18, 16: 6, 17: 5 }
+const SHCOUNT := { 1: 5, 7: 7, 2: 16, 3: 6, 4: 4, 5: 5, 6: 6, 9: 12, 10: 6, 11: 6, 12: 7, 13: 10, 14: 24, 15: 18, 16: 6, 17: 5 }
 const BAND := [0.22, 0.82]
 const MINR := 1.2
 const MAXR := 5.6
@@ -56,16 +56,28 @@ func _ready() -> void:
 				var r: int = Town.region[i]
 				if not regtiles.has(r): regtiles[r] = []
 				regtiles[r].append(Vector2i(x, y))
+			if Town.floodable[i]:
+				if not regtiles.has(7): regtiles[7] = []
+				regtiles[7].append(Vector2i(x, y))
 
-func is_water(p: Vector2) -> bool: return Town.is_water_t(Town.t_at(floori(p.x), floori(p.y)))
-func region_at(p: Vector2) -> int: return Town.region[Town.idx(floori(p.x), floori(p.y))] if Town.inb(floori(p.x), floori(p.y)) else 0
+func flooded_at(x: int, y: int) -> bool: return Town.inb(x, y) and Town.floodable[Town.idx(x, y)] and Game.flooded()
+func is_water(p: Vector2) -> bool:
+	var x := floori(p.x)
+	var y := floori(p.y)
+	return Town.is_water_t(Town.t_at(x, y)) or flooded_at(x, y)
+func region_at(p: Vector2) -> int:
+	var x := floori(p.x)
+	var y := floori(p.y)
+	if not Town.inb(x, y): return 0
+	return 7 if flooded_at(x, y) else Town.region[Town.idx(x, y)]
 
 func near_water() -> bool:
+	if player.in_boat(): return true
 	var px := floori(player.position.x)
 	var py := floori(player.position.y)
 	for dy in range(-2, 3):
 		for dx in range(-2, 3):
-			if Town.is_water_t(Town.t_at(px + dx, py + dy)) and Vector2(px + dx + 0.5, py + dy + 0.5).distance_to(player.position) < 1.75: return true
+			if is_water(Vector2(px + dx, py + dy)) and Vector2(px + dx + 0.5, py + dy + 0.5).distance_to(player.position) < 1.75: return true
 	return false
 
 # ---------- which fish ----------
@@ -132,13 +144,15 @@ func shadow_goal(s: Dictionary) -> void:
 
 func update_shadows(dt: float) -> void:
 	var band := Game.time_band()
+	var flood := Game.flooded()
 	for reg in SHCOUNT:
+		if reg == 7 and not flood: continue
 		var n := 0
 		for s in shadows:
 			if s.reg == reg and not s.leaving: n += 1
 		if n < SHCOUNT[reg] and randf() < dt * (3.0 if n < SHCOUNT[reg] / 2 else 0.5): spawn_shadow(reg)
 	for s in shadows:
-		if s.fish.has("t") and not (band in s.fish.t): s.leaving = true
+		if (s.fish.has("t") and not (band in s.fish.t)) or (s.reg == 7 and not flood): s.leaving = true
 		s.fade = s.fade - dt * 0.6 if s.leaving else minf(1.0, s.fade + dt * 0.5)
 		s.spook -= dt; s.wary -= dt
 		s.wob += dt * (14.0 if s.spook > 0 or s.hooked else 5.0)

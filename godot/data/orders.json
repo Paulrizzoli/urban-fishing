@@ -1,0 +1,209 @@
+[
+ {
+  "t": "Three mullet for the smoker.",
+  "s": "3 mullet",
+  "match": {
+   "name": "Mullet"
+  },
+  "count": 3,
+  "pay": 30
+ },
+ {
+  "t": "Four bluegill. My grandkid's science fair.",
+  "s": "4 bluegill",
+  "match": {
+   "name": "Bluegill"
+  },
+  "count": 4,
+  "pay": 25
+ },
+ {
+  "t": "A koi. Any koi. Don't ask who it's for.",
+  "s": "1 koi",
+  "match": {
+   "has": "Koi"
+  },
+  "count": 1,
+  "pay": 90
+ },
+ {
+  "t": "Two largemouth bass for the Friday fish fry.",
+  "s": "2 largemouth",
+  "match": {
+   "name": "Largemouth Bass"
+  },
+  "count": 2,
+  "pay": 55
+ },
+ {
+  "t": "A peacock bass. A customer wants a picture with one.",
+  "s": "1 peacock bass",
+  "match": {
+   "name": "Peacock Bass"
+  },
+  "count": 1,
+  "pay": 45
+ },
+ {
+  "t": "A catfish. The uglier the better.",
+  "s": "1 catfish",
+  "match": {
+   "has": "Catfish"
+  },
+  "count": 1,
+  "pay": 40
+ },
+ {
+  "t": "Two eels. Don't make it weird.",
+  "s": "2 eels",
+  "match": {
+   "name": "American Eel"
+  },
+  "count": 2,
+  "pay": 50
+ },
+ {
+  "t": "A dozen golf balls. I resell 'em to the club. Don't tell the club.",
+  "s": "golf balls",
+  "match": {
+   "name": "Dozen Golf Balls"
+  },
+  "count": 1,
+  "pay": 25
+ },
+ {
+  "t": "Anything over 10 pounds. I need something for the window.",
+  "s": "1 fish over 10 lb",
+  "match": {
+   "minw": 10
+  },
+  "count": 1,
+  "pay": 70
+ },
+ {
+  "t": "Two things out of a manhole. A guy collects them. Different guy.",
+  "s": "2 manhole finds",
+  "match": {
+   "spot": 8
+  },
+  "count": 2,
+  "pay": 35,
+  "need": "prybar"
+ },
+ {
+  "t": "A snook. The real kind, not the story kind.",
+  "s": "1 snook",
+  "match": {
+   "has": "Snook"
+  },
+  "count": 1,
+  "pay": 60
+ },
+ {
+  "t": "A grass carp from Heron Lakes. The HOA owes me money.",
+  "s": "1 grass carp",
+  "match": {
+   "name": "Grass Carp"
+  },
+  "count": 1,
+  "pay": 65
+ },
+ {
+  "t": "A python. The bounty office is buying and so am I.",
+  "s": "1 python",
+  "match": {
+   "name": "Burmese Python"
+  },
+  "count": 1,
+  "pay": 90
+ },
+ {
+  "t": "Two gar. Don't ask me why. Okay, it's for a bet.",
+  "s": "2 gar",
+  "match": {
+   "name": "Florida Gar"
+  },
+  "count": 2,
+  "pay": 45
+ },
+ {
+  "t": "An oscar from the theme park. My nephew lost his.",
+  "s": "1 oscar",
+  "match": {
+   "name": "Oscar"
+  },
+  "count": 1,
+  "pay": 50
+ },
+ {
+  "t": "Three seatrout off the pier. Restaurant downtown wants 'local.'",
+  "s": "3 seatrout",
+  "match": {
+   "name": "Spotted Seatrout"
+  },
+  "count": 3,
+  "pay": 60,
+  "need": "downtown"
+ },
+ {
+  "t": "Two mangrove snapper. Fry night at the VFW.",
+  "s": "2 snapper",
+  "match": {
+   "name": "Mangrove Snapper"
+  },
+  "count": 2,
+  "pay": 50,
+  "need": "downtown"
+ },
+ {
+  "t": "A sheepshead. I want to show people the teeth.",
+  "s": "1 sheepshead",
+  "match": {
+   "name": "Sheepshead"
+  },
+  "count": 1,
+  "pay": 40,
+  "need": "downtown"
+ },
+ {
+  "t": "A barracuda for the wall. A mean-looking one.",
+  "s": "1 barracuda",
+  "match": {
+   "name": "Barracuda"
+  },
+  "count": 1,
+  "pay": 70,
+  "need": "downtown"
+ },
+ {
+  "t": "A mahi. The real kind. Not the frozen kind Fintastic sells.",
+  "s": "1 mahi-mahi",
+  "match": {
+   "name": "Mahi-Mahi"
+  },
+  "count": 1,
+  "pay": 120,
+  "need": "skiff"
+ },
+ {
+  "t": "A blackfin tuna. Sushi guy owes me a favor. Now I owe him one.",
+  "s": "1 blackfin tuna",
+  "match": {
+   "name": "Blackfin Tuna"
+  },
+  "count": 1,
+  "pay": 140,
+  "need": "skiff"
+ },
+ {
+  "t": "Something from the Marlowe Tower pool. Anything. Just to make a point.",
+  "s": "1 Marlowe pool fish",
+  "match": {
+   "spot": 16,
+   "nojunk": true
+  },
+  "count": 1,
+  "pay": 110,
+  "need": "downtown"
+ }
+]

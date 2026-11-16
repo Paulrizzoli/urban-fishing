@@ -22,6 +22,7 @@ The first time you open it, Godot takes a few seconds to import the fonts.
 - **F / Space / E** to cast, hook, reel, and to go through doors
 - **◀ ▶** to aim a cast, twitch the lure, or pull against a running fish
 - **B** to switch bait
+- **K** to launch or land a kayak or skiff
 - **Esc** closes a menu
 
 ## What's ported so far
@@ -32,11 +33,15 @@ The first time you open it, Godot takes a few seconds to import the fonts.
 - [x] Fish shadows in every body of water, all 17 spots' fish and legends
 - [x] The fishing minigame: aim, cast power, twitching, nibble and bite, the reel fight
 - [x] Lou's shop (sell and gear), home (rest), saving
-- [ ] Guards, cameras and patrols
-- [ ] Lou's orders and fish stories, the old-timer
-- [ ] Kayak and skiff
+- [x] Guards, cameras, floodlights and patrols with vision cones, the detection meter and fines
+- [x] Hiding in bushes, disguises (polo, lanyard, suit), the HOA resident's car, jets over the airport
+- [x] Sunsplash Jungle's admission fee and closing sweep (hide in the restroom)
+- [x] The king tide flooding Low Street, with its own fish
+- [x] Lou's daily orders and fish stories, the old-timer's tips and Rosa on the pier
+- [x] Kayak and skiff (press K at the water), the marina shop
 - [ ] Story Act I and Act II
 - [ ] Weather, the Mullet Bay Slam, the bus, traffic and achievements
+- [ ] Manholes, the storm drain's darkness, the power station's Geiger counter, golf course gator, home aquarium
 - [ ] Map and journal, music and sound
 - [ ] Real art to replace the code-drawn shapes
 
