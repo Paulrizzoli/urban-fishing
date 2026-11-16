@@ -10,6 +10,10 @@ The desktop version of Urban Fishing, being ported from the browser game (`../in
 
 The first time you open it, Godot takes a few seconds to import the fonts.
 
+## Versions
+
+The current version is in `project.godot` (`config/version`) and shows on the title screen. See `../CHANGELOG.md` for what changed in each one. `../tools/build_windows.sh <godot binary> <folder>` exports the game and zips it as `UrbanFishing-v<version>-windows.zip`.
+
 ## Make a Windows .exe
 
 1. In Godot: **Project → Export… → Add… → Windows Desktop**.

@@ -10,6 +10,7 @@ signal toast(text: String, mast: String)
 var hoa_open := false
 var orders: Array = []
 var tips2: Array = []
+var version: String = ProjectSettings.get_setting("application/config/version", "dev")
 var skip_title := false   # set by New game, so the reload goes straight into the game
 var flashes := true       # lightning flashes (a setting)
 var wx := { "k": "sunny", "rain": 0.0, "cloud": 0.1, "storm": false }

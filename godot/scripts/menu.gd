@@ -121,7 +121,7 @@ func show_title() -> void:
 	box.add_child(_title_button("Settings", "", func(): show_settings()))
 	box.add_child(_title_button("Quit", "", func(): get_tree().quit()))
 	var foot := Label.new()
-	foot.text = "Esc for the menu any time · Fonts: Lilita One and Atkinson Hyperlegible (SIL OFL)"
+	foot.text = "v" + Game.version + " · Esc for the menu any time · Fonts: Lilita One and Atkinson Hyperlegible (SIL OFL)"
 	foot.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	foot.offset_left = 90; foot.offset_top = -40
 	foot.add_theme_font_size_override("font_size", 12)
@@ -169,7 +169,7 @@ func quit_to_title() -> void:
 
 # ---------- pause menu ----------
 func show_pause() -> void:
-	hud.open([["h3", "Paused · Day %d · %s" % [int(Game.S.day), Game.clock_text()]], ["h2", "Gone fishin'"],
+	hud.open([["h3", "Paused · Day %d · %s · v%s" % [int(Game.S.day), Game.clock_text(), Game.version]], ["h2", "Gone fishin'"],
 		["row", [["Resume", func(): hud.close(), true, "hot"]]],
 		["row", [["Controls", func(): show_controls(true)], ["Settings", func(): show_settings(true)]]],
 		["row", [["Journal", func(): hud.close(); get_parent().open_journal()], ["Map", func(): hud.close(); get_parent().open_map()]]],
