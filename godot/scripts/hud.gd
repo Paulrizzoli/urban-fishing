@@ -34,6 +34,8 @@ var toast_mast: Label
 var toast_head: Label
 var toast_q: Array = []
 var toast_t := 0.0
+var saved_label: Label
+var bar: PanelContainer
 
 func _ready() -> void:
 	layer = 10
@@ -44,7 +46,7 @@ func _ready() -> void:
 	root.theme = theme_
 	add_child(root)
 	# top bar
-	var bar := PanelContainer.new()
+	bar = PanelContainer.new()
 	bar.add_theme_stylebox_override("panel", _box(PAPER, INK, 0, 0, Vector4(0, 0, 0, 4), CORAL))
 	bar.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	root.add_child(bar)
@@ -123,6 +125,18 @@ func _ready() -> void:
 	tv.add_child(toast_mast); tv.add_child(rule); tv.add_child(toast_head)
 	toast_panel.add_child(tv)
 	root.add_child(toast_panel)
+	# the autosave indicator, bottom right
+	saved_label = Label.new()
+	saved_label.text = "✓ Saved"
+	saved_label.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	saved_label.offset_left = -120; saved_label.offset_top = -46; saved_label.offset_right = -16; saved_label.offset_bottom = -16
+	saved_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	saved_label.add_theme_font_override("font", Game.font_bold)
+	saved_label.add_theme_font_size_override("font_size", 13)
+	saved_label.add_theme_color_override("font_color", Color.WHITE)
+	saved_label.add_theme_stylebox_override("normal", _box(Color(INK, 0.8), Color(0, 0, 0, 0), 999, 0, Vector4.ZERO, Color.TRANSPARENT, 10, 4))
+	saved_label.modulate.a = 0
+	root.add_child(saved_label)
 	# modal card
 	modal = Control.new()
 	modal.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -231,6 +245,12 @@ func refresh(near: String) -> void:
 	_update_chips()
 	_update_toast()
 	meters.queue_redraw()
+
+func show_saved() -> void:
+	var tw := create_tween()
+	tw.tween_property(saved_label, "modulate:a", 1.0, 0.25)
+	tw.tween_interval(1.2)
+	tw.tween_property(saved_label, "modulate:a", 0.0, 0.6)
 
 func toast(text: String, mast: String) -> void:
 	toast_q.append([text, mast])
@@ -424,10 +444,25 @@ func open(parts: Array) -> void:
 					l.add_theme_stylebox_override("normal", _box(bg, SUN if st == "leg" else Color.TRANSPARENT, 999, 2 if st == "leg" else 0, Vector4.ZERO, Color.TRANSPARENT, 9, 3))
 					fl.add_child(l)
 				card_box.add_child(fl)
+			"keys":
+				var g := GridContainer.new(); g.columns = 2
+				g.add_theme_constant_override("h_separation", 14); g.add_theme_constant_override("v_separation", 8)
+				for kd in p[1]:
+					var kc := _label(kd[0], 14, INK); kc.add_theme_font_override("font", Game.font_bold)
+					kc.autowrap_mode = TextServer.AUTOWRAP_OFF; kc.custom_minimum_size = Vector2(150, 0)
+					kc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+					var ks := _box(Color.WHITE, INK, 6, 2, Vector4.ZERO, Color.TRANSPARENT, 8, 4)
+					ks.border_width_bottom = 4
+					kc.add_theme_stylebox_override("normal", ks)
+					var ka := _label(kd[1], 15, INK); ka.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+					ka.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+					g.add_child(kc); g.add_child(ka)
+				card_box.add_child(g)
 			"head":
 				var hl := _label(p[1], 15, INK); hl.add_theme_font_override("font", Game.font_bold)
 				var hr := HBoxContainer.new(); hl.size_flags_horizontal = Control.SIZE_EXPAND_FILL; hr.add_child(hl)
-				if p.size() > 2: hr.add_child(_label(p[2], 13, MUTED))
+				if p.size() > 2:
+					var hs := _label(p[2], 13, MUTED); hs.autowrap_mode = TextServer.AUTOWRAP_OFF; hs.custom_minimum_size.x = 0; hr.add_child(hs)
 				card_box.add_child(hr)
 			"tabs":
 				var hb := HBoxContainer.new(); hb.add_theme_constant_override("separation", 6)
@@ -435,7 +470,15 @@ func open(parts: Array) -> void:
 					var b := _button(tdef[0], tdef[1], true, "ink" if tdef[2] else "")
 					hb.add_child(b)
 				card_box.add_child(hb)
-	modal.visible = true
+	if not modal.visible:
+		modal.visible = true
+		modal.modulate.a = 0
+		var card: Control = card_box.get_parent().get_parent()
+		card.pivot_offset = card.size / 2
+		card.scale = Vector2(0.96, 0.96)
+		var tw := create_tween().set_parallel()
+		tw.tween_property(modal, "modulate:a", 1.0, 0.12)
+		tw.tween_property(card, "scale", Vector2.ONE, 0.16).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	if first_btn: first_btn.grab_focus.call_deferred()
 
 func _redrawer(c: Control) -> Node:
@@ -465,4 +508,10 @@ func _button(s: String, cb: Callable, enabled: bool, style := "") -> Button:
 		var fc := Color.WHITE if style in ["go", "ink", "teal"] else INK
 		for k in ["font_color", "font_hover_color", "font_focus_color", "font_pressed_color", "font_hover_pressed_color"]: b.add_theme_color_override(k, fc)
 	b.pressed.connect(cb)
+	# a little lift on hover and a squish on press
+	b.resized.connect(func(): b.pivot_offset = b.size / 2)
+	b.mouse_entered.connect(func(): if not b.disabled: create_tween().tween_property(b, "scale", Vector2(1.03, 1.03), 0.08))
+	b.mouse_exited.connect(func(): create_tween().tween_property(b, "scale", Vector2.ONE, 0.1))
+	b.button_down.connect(func(): create_tween().tween_property(b, "scale", Vector2(0.97, 0.97), 0.05))
+	b.button_up.connect(func(): create_tween().tween_property(b, "scale", Vector2(1.03, 1.03) if b.is_hovered() else Vector2.ONE, 0.08))
 	return b

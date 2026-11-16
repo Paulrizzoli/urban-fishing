@@ -51,6 +51,9 @@ var journal_tab := "spots"
 var weather: Weather
 var ground_tex: Texture2D
 var ach_t := 0.0
+var menu: Menu
+var saved_shown := -10.0
+var title_t := 0.0
 # test hook: godot --path . -- --at=x,y,hour --shot=out.png [--open=shop]
 var test_shot := ""
 var test_frames := 0
@@ -215,7 +218,25 @@ func _ready() -> void:
 	fishing.landed.connect(_on_landed)
 	get_viewport().size_changed.connect(_fit_zoom)
 	_fit_zoom()
-	if not Game.S.started: _intro()
+	menu = Menu.new()
+	menu.hud = hud
+	add_child(menu)
+	menu.title_closed.connect(func(): if not Game.S.started: _intro())
+	Game.saved.connect(func():
+		var now := Time.get_ticks_msec() / 1000.0
+		if now - saved_shown > 4.0 and Game.S.started and not menu.title_open: saved_shown = now; hud.show_saved())
+	if test_shot == "" and not Game.skip_title:
+		menu.show_title()
+		menu.fade_in(1.0)
+	else:
+		if Game.skip_title: menu.fade_in(0.6)
+		Game.skip_title = false
+		if not Game.S.started: _intro()
+	for a in OS.get_cmdline_user_args():
+		if a == "--title": hud.close(); menu.show_title()
+		if a == "--pause": menu.show_pause()
+		if a == "--controls": menu.show_controls()
+		if a == "--settings": menu.show_settings()
 	for a in OS.get_cmdline_user_args():
 		if a == "--open=shop": open_shop()
 		if a == "--open=gear": shop_tab = "gear"; open_shop()
@@ -246,6 +267,17 @@ func _fit_zoom() -> void:
 # ---------- loop ----------
 func _process(dt: float) -> void:
 	dt = minf(dt, 0.05)
+	if menu.title_open:
+		# the town drifts by behind the title screen
+		title_t += dt
+		cam.position = Vector2(56 + 30 * sin(title_t * 0.035 + 1.2), 82 + 58 * sin(title_t * 0.021 + 1.25)) * TS
+		_lighting()
+		hud.chips = []
+		hud.refresh("")
+		hud.action.visible = false; hud.hint.visible = false; hud.bar.visible = false
+		_test_shot()
+		return
+	hud.bar.visible = true
 	if not hud.is_open():
 		Game.advance(dt)
 		var dir := Vector2.ZERO
@@ -294,14 +326,18 @@ func _process(dt: float) -> void:
 		var behind: bool = player.position.x > b.x - 0.4 and player.position.x < b.x + b.w + g.y + 0.4 and player.position.y > b.y - g.x - 0.5 and player.position.y < b.y + b.h - 0.2
 		pair[0].modulate.a = move_toward(pair[0].modulate.a, 0.36 if behind else 1.0, dt * 4)
 	hud.refresh(near)
-	if test_shot != "":
-		test_frames += 1
-		if test_frames == 90:
-			get_viewport().get_texture().get_image().save_png(test_shot)
-			get_tree().quit()
-		return
+	if _test_shot(): return
 	save_t += dt
 	if save_t > 10: save_t = 0; Game.save_game()
+
+## Test hook: save a screenshot after 90 frames and quit. True while a test shot is pending.
+func _test_shot() -> bool:
+	if test_shot == "": return false
+	test_frames += 1
+	if test_frames == 90:
+		get_viewport().get_texture().get_image().save_png(test_shot)
+		get_tree().quit()
+	return true
 
 func _doors() -> void:
 	if player.in_boat(): return
@@ -332,8 +368,15 @@ func _lighting() -> void:
 
 # ---------- input ----------
 func _unhandled_input(e: InputEvent) -> void:
+	if e is InputEventKey and e.pressed and not e.echo and e.physical_keycode == KEY_F11:
+		menu.toggle_fullscreen(); return
 	if hud.is_open():
 		if e is InputEventKey and e.pressed and e.keycode == KEY_ESCAPE: hud.close()
+		return
+	if menu.title_open: return
+	if e is InputEventKey and e.pressed and not e.echo and e.physical_keycode == KEY_ESCAPE:
+		if fishing.state == "idle": menu.show_pause()
+		else: fishing.cancel(); hud.flash("You reel in your line.")
 		return
 	if e is InputEventKey and not e.echo:
 		var k: int = e.physical_keycode
@@ -661,7 +704,7 @@ func _draw_flood(ci: CanvasItem) -> void:
 func open_home() -> void:
 	var rest := func(h: float):
 		hud.close()
-		Game.skip_to(h); hud.flash("You rest until %s." % Game.clock_text()); Game.save_game()
+		menu.fade(func(): Game.skip_to(h); hud.flash("You rest until %s." % Game.clock_text()); Game.save_game(), 0.4, 0.7)
 	hud.open([["h3", "Home sweet home"], ["h2", ["The AC is on.", "Somebody left the TV on.", "It smells like bait in here.", "Home. Feet up."].pick_random()],
 		["p", "Kick back until…"],
 		["item", "Dawn", "The Lunker of the 7th bites at dawn.", "Rest until 6:00 AM", func(): rest.call(6.0), true],
@@ -857,6 +900,10 @@ func open_bus(i: int) -> void:
 
 func _ride_bus(i: int) -> void:
 	if Game.S.cash < 2: return
+	hud.close()
+	menu.fade(func(): _arrive_bus(i), 0.35, 0.6)
+
+func _arrive_bus(i: int) -> void:
 	Game.S.cash -= 2
 	Game.skip_minutes(25)
 	Game.S.boat = false

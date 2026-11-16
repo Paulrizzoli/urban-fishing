@@ -24,7 +24,8 @@ The first time you open it, Godot takes a few seconds to import the fonts.
 - **B** to switch bait
 - **K** to launch or land a kayak or skiff
 - **M** for the map, **J** for the journal (spots, Lou's Wall of Fame, the Gazette)
-- **Esc** closes a menu
+- **Esc** opens the pause menu (resume, controls, settings, save and quit), or closes a card
+- **F11** switches full screen on and off
 
 ## What's ported so far
 
@@ -47,7 +48,8 @@ The first time you open it, Godot takes a few seconds to import the fonts.
 - [x] Map (M) and journal (J)
 - [ ] Traffic, FINTASTIC! and the energy drink
 - [ ] Manholes, the storm drain's darkness, the power station's Geiger counter, golf course gator, home aquarium
-- [ ] Music and sound
+- [x] Title screen, pause menu, controls screen, settings (full screen, window size, VSync, lightning flashes), fades and a save indicator
+- [ ] Music and sound (and a volume setting)
 - [ ] Real art to replace the code-drawn shapes
 
 ## How it's built
@@ -61,6 +63,7 @@ Everything is drawn in tile units. The `World` node is scaled to 32 pixels per t
 - `scripts/guards.gd` runs everyone who keeps you off private water
 - `scripts/story.gd` has both story acts, the Wall of Fame plaques, the Mullet Bay Slam and the bus; `story_art.gd` draws the story card pictures
 - `scripts/weather.gd` works out each day's weather and draws rain, lightning and cloud shadows
+- `scripts/menu.gd` is the title screen, pause menu, controls, settings and screen fades
 - `scripts/hud.gd` is the UI; `scripts/main.gd` wires it all together
 - `data/*.json` holds the fish, gear and bait tables, exported from the browser version
 
@@ -72,4 +75,4 @@ Everything is drawn in tile units. The `World` node is scaled to 32 pixels per t
 godot --path . --resolution 1280x720 -- --at=12,15.5,15 --day=5 --shot=storm.png
 ```
 
-starts at tile (12, 15.5) at 3 PM on day 5 (a thunderstorm day), saves a screenshot after 90 frames and quits. Other hooks: `--open=shop|gear|order|note|marina|marina-slam|journal|fame|news|map|bus`, `--story=N` and `--act2=N` (jump to a story chapter), `--weigh` (enter and weigh in at the Slam), `--land`, `--cast`, `--busted`, `--boat=kayak|skiff`, `--rosa`, `--toast`. Run `--import` twice on a fresh checkout so the fonts import before the scripts parse.
+starts at tile (12, 15.5) at 3 PM on day 5 (a thunderstorm day), saves a screenshot after 90 frames and quits. Other hooks: `--open=shop|gear|order|note|marina|marina-slam|journal|fame|news|map|bus`, `--story=N` and `--act2=N` (jump to a story chapter), `--weigh` (enter and weigh in at the Slam), `--land`, `--cast`, `--busted`, `--boat=kayak|skiff`, `--rosa`, `--toast`, `--title`, `--pause`, `--controls`, `--settings`. Run `--import` twice on a fresh checkout so the fonts import before the scripts parse.

@@ -4,11 +4,14 @@ extends Node
 signal news(text: String)
 signal hint(text: String)
 signal new_day
+signal saved
 signal toast(text: String, mast: String)
 
 var hoa_open := false
 var orders: Array = []
 var tips2: Array = []
+var skip_title := false   # set by New game, so the reload goes straight into the game
+var flashes := true       # lightning flashes (a setting)
 var wx := { "k": "sunny", "rain": 0.0, "cloud": 0.1, "storm": false }
 
 const SAVE_PATH := "user://urban_fishing_save.json"
@@ -69,7 +72,7 @@ func load_game() -> void:
 
 func save_game() -> void:
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
-	if f: f.store_string(JSON.stringify(S))
+	if f: f.store_string(JSON.stringify(S)); saved.emit()
 
 func reset() -> void:
 	S = fresh(); save_game()
