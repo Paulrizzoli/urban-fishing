@@ -288,7 +288,7 @@ func update(dt: float) -> void:
 					if s.reg != spot or s.wary > 0 or s.spook > 0 or s.fade < 0.6 or s.leaving: continue
 					var R := 2.3 + (0.8 if Game.bait_mul(s.fish) > 1 else 0.0) + (1.6 if twitch > 0 else 0.0)
 					if s.pos.distance_to(bob) > R: continue
-					var rate: float = (0.22 if s.fish.get("legend", false) else 0.45 if s.fish.pull > 0.6 else 0.85) * (2.0 if twitch > 0 and not s.fish.get("legend", false) else 1.0) * Game.bait_mul(s.fish) * (1.0 if quiet else 0.6)
+					var rate: float = (0.22 if s.fish.get("legend", false) else 0.45 if s.fish.pull > 0.6 else 0.85) * (2.0 if twitch > 0 and not s.fish.get("legend", false) else 1.0) * Game.bait_mul(s.fish) * (1.0 if quiet else 0.6) * (1.0 + 0.7 * Game.wx.rain)
 					if randf() < rate * dt: s.go = true; target = s; break
 				if target == null and wait_t > 14 and randf() < dt * 0.25:
 					var f = pick_fish(spot, func(x): return x.get("junk", false) or (not x.get("legend", false) and x.pull <= 0.55))
@@ -350,7 +350,8 @@ func _land() -> void:
 	var is_record: bool = rec.is_empty() or w > rec.w
 	Game.S.journal[f.n] = { "w": maxf(w, rec.get("w", 0.0)), "spot": spot, "n": rec.get("n", 0) + 1, "legend": f.get("legend", false) }
 	emit_signal("landed", { "n": f.n, "w": w, "value": value, "spot": spot, "legend": f.get("legend", false), "junk": f.get("junk", false),
-		"release": f.get("release", false), "rep": f.get("rep", 1), "note": f.get("note", ""), "record": is_record, "day": Game.S.day })
+		"release": f.get("release", false), "rep": f.get("rep", 1), "note": f.get("note", ""), "record": is_record, "day": Game.S.day, "tm": Game.S.min,
+		"mutant": f.get("mutant", false), "pull": f.pull })
 
 # ---------- drawing ----------
 func _draw() -> void:

@@ -52,7 +52,7 @@ func active(w: Dictionary) -> bool:
 func is_night() -> bool: return Game.darkness() > 0.3
 
 func radius(w: Dictionary) -> float:
-	return float(w.rNight) if is_night() and w.has("rNight") else float(w.r)
+	return (float(w.rNight) if is_night() and w.has("rNight") else float(w.r)) * (1.0 - 0.3 * Game.wx.rain)
 
 func in_hiding() -> bool:
 	var t := Town.t_at(floori(player.position.x), floori(player.position.y))

@@ -29,6 +29,11 @@ var boat_text := ""
 var chips: Array = []
 var boat_btn: Button
 var chip_box: VBoxContainer
+var toast_panel: PanelContainer
+var toast_mast: Label
+var toast_head: Label
+var toast_q: Array = []
+var toast_t := 0.0
 
 func _ready() -> void:
 	layer = 10
@@ -103,6 +108,21 @@ func _ready() -> void:
 	action.button_up.connect(func(): action_released.emit())
 	action.focus_mode = Control.FOCUS_NONE
 	dock.add_child(action)
+	# the Gazette / Wall of Fame pop-up, top right
+	toast_panel = PanelContainer.new()
+	toast_panel.add_theme_stylebox_override("panel", _box(PAPER, INK, 6, 2, Vector4.ZERO, Color.TRANSPARENT, 14, 10, 4))
+	toast_panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	toast_panel.offset_left = -376; toast_panel.offset_right = -16; toast_panel.offset_top = 66
+	toast_panel.custom_minimum_size = Vector2(360, 0)
+	toast_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	toast_panel.visible = false
+	var tv := VBoxContainer.new(); tv.add_theme_constant_override("separation", 4)
+	toast_mast = _label("", 11, CORAL); toast_mast.add_theme_font_override("font", Game.font_bold)
+	var rule := ColorRect.new(); rule.color = INK; rule.custom_minimum_size = Vector2(0, 2)
+	toast_head = _label("", 19, INK); toast_head.add_theme_font_override("font", Game.font_display)
+	tv.add_child(toast_mast); tv.add_child(rule); tv.add_child(toast_head)
+	toast_panel.add_child(tv)
+	root.add_child(toast_panel)
 	# modal card
 	modal = Control.new()
 	modal.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -178,8 +198,8 @@ func refresh(near: String) -> void:
 	var col := SUN
 	match st:
 		"idle":
-			label = { "fish": "Cast", "shop": "Enter Lou's", "home": "Go inside", "marina": "Enter the marina", "oldtimer": "Talk to the old-timer", "rosa": "Talk to Rosa" }.get(near, "")
-			if near in ["oldtimer", "rosa", "marina"]: col = TEAL
+			label = { "fish": "Cast", "shop": "Enter Lou's", "home": "Go inside", "marina": "Enter the marina", "oldtimer": "Talk to the old-timer", "rosa": "Talk to Rosa", "bus": "Ride the bus" }.get(near, "")
+			if near in ["oldtimer", "rosa", "marina", "bus"]: col = TEAL
 		"power": label = "Release!"
 		"wait": label = "Retrieving…" if fishing.holding else "Twitch the lure"; col = PAPER
 		"nibble": label = "Wait for it…"; col = PAPER
@@ -197,7 +217,7 @@ func refresh(near: String) -> void:
 	else:
 		var m := ""
 		match st:
-			"idle": m = { "fish": "Cooler's full. Sell at Lou's." if S.cooler.size() >= S.cooler_cap else "Press F or Space to cast. B switches bait.", "shop": "Lou's Bait & Tackle. Press E or F to go in.", "home": "Home. Press E or F to go inside.", "marina": "Mullet Bay Marina. Press E to go in.", "oldtimer": "Press E to talk.", "rosa": "Press E to talk." }.get(near, "")
+			"idle": m = { "fish": "Cooler's full. Sell at Lou's." if S.cooler.size() >= S.cooler_cap else "Press F or Space to cast. B switches bait.", "shop": "Lou's Bait & Tackle. Press E or F to go in.", "home": "Home. Press E or F to go inside.", "marina": "Mullet Bay Marina. Press E to go in.", "oldtimer": "Press E to talk.", "rosa": "Press E to talk.", "bus": "Route 1 bus stop. Press E to ride. M for the map, J for the journal." }.get(near, "")
 			"power": m = "Release in the green to land right on the fish. ◀ ▶ or click the water to aim." if fishing.tgt != null else "No fish in line. ◀ ▶ to aim at a shadow, or click the water."
 			"wait": m = "Something's coming over…" if fishing.target != null else "Tap to twitch the lure. Hold to reel it back in."
 			"nibble": m = "It's nibbling… wait for the big dip."
@@ -209,7 +229,23 @@ func refresh(near: String) -> void:
 	boat_btn.visible = boat_text != ""
 	boat_btn.text = boat_text
 	_update_chips()
+	_update_toast()
 	meters.queue_redraw()
+
+func toast(text: String, mast: String) -> void:
+	toast_q.append([text, mast])
+
+func _update_toast() -> void:
+	var dt := get_process_delta_time()
+	if toast_t > 0:
+		toast_t -= dt
+		toast_panel.modulate.a = clampf(minf(toast_t, 5.0 - toast_t) * 3.0, 0, 1)
+		if toast_t <= 0: toast_panel.visible = false
+		return
+	if toast_q.is_empty() or is_open(): return
+	var t: Array = toast_q.pop_front()
+	toast_head.text = t[0]; toast_mast.text = t[1]
+	toast_panel.visible = true; toast_t = 5.0
 
 func _update_chips() -> void:
 	while chip_box.get_child_count() < chips.size():
@@ -320,6 +356,79 @@ func open(parts: Array) -> void:
 				hb.add_child(b)
 				card_box.add_child(hb)
 				var sep := HSeparator.new(); sep.add_theme_color_override("separator", LINE); card_box.add_child(sep)
+			"pic":
+				var pc := Control.new()
+				pc.custom_minimum_size = Vector2(0, p[2])
+				pc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				var fn: Callable = p[1]
+				pc.draw.connect(func(): fn.call(pc))
+				pc.resized.connect(pc.queue_redraw)
+				if p.size() > 3 and p[3]: pc.set_process(true); pc.add_child(_redrawer(pc))
+				card_box.add_child(pc)
+			"goal":
+				# [title, side note, progress 0..1 or -1, optional body]
+				var gp := PanelContainer.new()
+				gp.add_theme_stylebox_override("panel", _box(PAPER2, Color.TRANSPARENT, 10, 0, Vector4(4, 0, 0, 0), CORAL, 14, 10))
+				var gv := VBoxContainer.new(); gv.add_theme_constant_override("separation", 6)
+				var top := HBoxContainer.new()
+				var gt := _label("Goal" if p.size() <= 4 else p[1], 15, INK); gt.add_theme_font_override("font", Game.font_bold); gt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				top.add_child(gt)
+				if p[2] != "":
+					var side := _label(p[2], 13, MUTED); side.autowrap_mode = TextServer.AUTOWRAP_OFF; side.custom_minimum_size.x = 0; top.add_child(side)
+				gv.add_child(top)
+				gv.add_child(_label(p[1] if p.size() <= 4 else p[4], 16, INK))
+				if p[3] >= 0:
+					var bar := Control.new(); bar.custom_minimum_size = Vector2(0, 14)
+					var frac: float = p[3]
+					bar.draw.connect(func():
+						bar.draw_rect(Rect2(Vector2.ZERO, bar.size), Color("#e9dcc0"))
+						bar.draw_rect(Rect2(Vector2.ZERO, Vector2(bar.size.x * clampf(frac, 0, 1), bar.size.y)), TEAL)
+						bar.draw_rect(Rect2(Vector2.ZERO, bar.size), INK, false, 2))
+					gv.add_child(bar)
+				gp.add_child(gv); card_box.add_child(gp)
+			"lb":
+				var lv := VBoxContainer.new(); lv.add_theme_constant_override("separation", 4)
+				var i := 0
+				for r in p[1]:
+					i += 1
+					var rp := PanelContainer.new()
+					rp.add_theme_stylebox_override("panel", _box(SUN if r[2] else PAPER2, Color.TRANSPARENT, 8, 0, Vector4.ZERO, Color.TRANSPARENT, 12, 6))
+					var rh := HBoxContainer.new()
+					var n := _label("%d. %s" % [i, r[0]], 15, INK); n.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+					var v := _label(r[1], 15, INK); v.add_theme_font_override("font", Game.font_bold); v.custom_minimum_size.x = 0; v.autowrap_mode = TextServer.AUTOWRAP_OFF
+					rh.add_child(n); rh.add_child(v); rp.add_child(rh); lv.add_child(rp)
+				card_box.add_child(lv)
+			"grid":
+				# plaques: [[title, desc, got], ...]
+				var g := GridContainer.new(); g.columns = 2
+				g.add_theme_constant_override("h_separation", 8); g.add_theme_constant_override("v_separation", 8)
+				for a in p[1]:
+					var cell := PanelContainer.new()
+					cell.add_theme_stylebox_override("panel", _box(Color("#fff4cf") if a[2] else PAPER2, SUN if a[2] else Color.TRANSPARENT, 8, 2 if a[2] else 0, Vector4.ZERO, Color.TRANSPARENT, 10, 6))
+					cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+					var v := VBoxContainer.new(); v.add_theme_constant_override("separation", 0)
+					var tl := _label(("★ " if a[2] else "") + a[0], 14, INK if a[2] else MUTED); tl.add_theme_font_override("font", Game.font_bold)
+					v.add_child(tl); v.add_child(_label(a[1], 12, MUTED))
+					cell.add_child(v); g.add_child(cell)
+				card_box.add_child(g)
+			"chips":
+				# a flowing row of small tags: [[text, style], ...] with style "got", "leg" or ""
+				var fl := HFlowContainer.new()
+				fl.add_theme_constant_override("h_separation", 6); fl.add_theme_constant_override("v_separation", 6)
+				for c in p[1]:
+					var st: String = c[1]
+					var l := _label(c[0], 12, Color.WHITE if st == "got" else INK)
+					l.custom_minimum_size.x = 0
+					l.autowrap_mode = TextServer.AUTOWRAP_OFF
+					var bg := TEAL if st == "got" else Color("#fff4cf") if st == "leg" else PAPER2
+					l.add_theme_stylebox_override("normal", _box(bg, SUN if st == "leg" else Color.TRANSPARENT, 999, 2 if st == "leg" else 0, Vector4.ZERO, Color.TRANSPARENT, 9, 3))
+					fl.add_child(l)
+				card_box.add_child(fl)
+			"head":
+				var hl := _label(p[1], 15, INK); hl.add_theme_font_override("font", Game.font_bold)
+				var hr := HBoxContainer.new(); hl.size_flags_horizontal = Control.SIZE_EXPAND_FILL; hr.add_child(hl)
+				if p.size() > 2: hr.add_child(_label(p[2], 13, MUTED))
+				card_box.add_child(hr)
 			"tabs":
 				var hb := HBoxContainer.new(); hb.add_theme_constant_override("separation", 6)
 				for tdef in p[1]:
@@ -328,6 +437,11 @@ func open(parts: Array) -> void:
 				card_box.add_child(hb)
 	modal.visible = true
 	if first_btn: first_btn.grab_focus.call_deferred()
+
+func _redrawer(c: Control) -> Node:
+	var tm := Timer.new(); tm.wait_time = 0.05; tm.autostart = true
+	tm.timeout.connect(c.queue_redraw)
+	return tm
 
 func _label(s: String, size: int, col: Color) -> Label:
 	var l := Label.new()
