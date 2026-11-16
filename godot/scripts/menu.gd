@@ -31,7 +31,7 @@ var title: Control
 var title_open := false
 var fade_rect: ColorRect
 var fade_layer: CanvasLayer
-var settings := { "fullscreen": false, "size": 0, "vsync": true, "flashes": true }
+var settings := { "fullscreen": false, "size": 0, "vsync": true, "flashes": true, "master": 8, "music": 6, "sfx": 8, "ambience": 6 }
 
 func _ready() -> void:
 	layer = 5
@@ -189,7 +189,11 @@ func show_settings(from_pause := false) -> void:
 	for i in SIZES.size():
 		var ii := i
 		sizes.append(["%d × %d" % [SIZES[i].x, SIZES[i].y], func(): settings.size = ii; apply_settings(); back.call(), settings.size == ii])
+	var vol := func(k: String, label: String) -> Array:
+		return ["vol", label, int(settings[k]), func(v): settings[k] = clampi(v, 0, 10); apply_settings(); back.call()]
 	hud.open([["h3", "Settings"], ["h2", "Settings"],
+		["head", "Sound"],
+		vol.call("master", "Master"), vol.call("music", "Music"), vol.call("sfx", "Effects"), vol.call("ambience", "Ambience"),
 		["head", "Display"],
 		["tabs", [["Windowed", func(): settings.fullscreen = false; apply_settings(); back.call(), not settings.fullscreen], ["Full screen", func(): settings.fullscreen = true; apply_settings(); back.call(), settings.fullscreen]]],
 		["head", "Window size", "used when windowed"],
@@ -198,7 +202,6 @@ func show_settings(from_pause := false) -> void:
 		["tabs", [["On", func(): settings.vsync = true; apply_settings(); back.call(), settings.vsync], ["Off", func(): settings.vsync = false; apply_settings(); back.call(), not settings.vsync]]],
 		["head", "Lightning flashes"],
 		["tabs", [["On", func(): settings.flashes = true; apply_settings(); back.call(), settings.flashes], ["Off", func(): settings.flashes = false; apply_settings(); back.call(), not settings.flashes]]],
-		["sub", "There's no music or sound yet, so there's no volume setting yet."],
 		["row", [["Back", func(): show_pause() if from_pause else hud.close(), true, "hot"]]]])
 
 func load_settings() -> void:
@@ -209,6 +212,10 @@ func load_settings() -> void:
 
 func apply_settings(save := true) -> void:
 	Game.flashes = settings.flashes
+	Sound.set_volume("Master", settings.master / 10.0)
+	Sound.set_volume("Music", settings.music / 10.0)
+	Sound.set_volume("SFX", settings.sfx / 10.0)
+	Sound.set_volume("Ambience", settings.ambience / 10.0)
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if settings.vsync else DisplayServer.VSYNC_DISABLED)
 	# the test hooks run at a fixed size; leave the window alone then
 	if not OS.get_cmdline_user_args().is_empty(): return

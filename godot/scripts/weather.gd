@@ -56,7 +56,9 @@ func _ready() -> void:
 
 func _process(dt: float) -> void:
 	if flash > 0: flash = maxf(0, flash - dt * 2.5)
-	if Game.wx.storm and Game.flashes and randf() < dt * 0.1: flash = 1.0
+	if Game.wx.storm and randf() < dt * 0.1:
+		if Game.flashes: flash = 1.0
+		Sound.play_later("thunder", randf_range(0.4, 1.8))
 	node.queue_redraw()
 
 func _draw_screen() -> void:

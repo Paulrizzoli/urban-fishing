@@ -265,6 +265,7 @@ func _update_toast() -> void:
 	if toast_q.is_empty() or is_open(): return
 	var t: Array = toast_q.pop_front()
 	toast_head.text = t[0]; toast_mast.text = t[1]
+	Sound.play("plaque" if t[1].begins_with("LOU'S WALL") else "paper")
 	toast_panel.visible = true; toast_t = 5.0
 
 func _update_chips() -> void:
@@ -458,6 +459,30 @@ func open(parts: Array) -> void:
 					ka.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 					g.add_child(kc); g.add_child(ka)
 				card_box.add_child(g)
+			"vol":
+				# [label, 0..10, callable(new value)]
+				var vh := HBoxContainer.new(); vh.add_theme_constant_override("separation", 10)
+				var vl := _label(p[1], 15, INK); vl.custom_minimum_size.x = 110; vl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+				vh.add_child(vl)
+				var cbv: Callable = p[3]
+				var val: int = p[2]
+				var minus := _button("−", func(): cbv.call(val - 1), val > 0); minus.custom_minimum_size.x = 44
+				vh.add_child(minus)
+				var vbar := Control.new(); vbar.custom_minimum_size = Vector2(0, 22); vbar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				vbar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+				vbar.draw.connect(func():
+					var w := (vbar.size.x - 9 * 4) / 10.0
+					for i in 10: vbar.draw_rect(Rect2(i * (w + 4), 0, w, vbar.size.y), TEAL if i < val else Color("#e9dcc0")))
+				vbar.mouse_filter = Control.MOUSE_FILTER_STOP
+				vbar.gui_input.connect(func(ev):
+					if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+						cbv.call(clampi(ceili(ev.position.x / vbar.size.x * 10.0), 0, 10)))
+				vh.add_child(vbar)
+				var plus := _button("+", func(): cbv.call(val + 1), val < 10); plus.custom_minimum_size.x = 44
+				vh.add_child(plus)
+				var pct := _label("%d%%" % (val * 10), 14, MUTED); pct.custom_minimum_size.x = 48; pct.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+				vh.add_child(pct)
+				card_box.add_child(vh)
 			"head":
 				var hl := _label(p[1], 15, INK); hl.add_theme_font_override("font", Game.font_bold)
 				var hr := HBoxContainer.new(); hl.size_flags_horizontal = Control.SIZE_EXPAND_FILL; hr.add_child(hl)
@@ -507,10 +532,11 @@ func _button(s: String, cb: Callable, enabled: bool, style := "") -> Button:
 		b.add_theme_stylebox_override("hover", sb)
 		var fc := Color.WHITE if style in ["go", "ink", "teal"] else INK
 		for k in ["font_color", "font_hover_color", "font_focus_color", "font_pressed_color", "font_hover_pressed_color"]: b.add_theme_color_override(k, fc)
+	b.pressed.connect(func(): Sound.play("ui_click", -4))
 	b.pressed.connect(cb)
 	# a little lift on hover and a squish on press
 	b.resized.connect(func(): b.pivot_offset = b.size / 2)
-	b.mouse_entered.connect(func(): if not b.disabled: create_tween().tween_property(b, "scale", Vector2(1.03, 1.03), 0.08))
+	b.mouse_entered.connect(func(): if not b.disabled: Sound.play("ui_hover", -6); create_tween().tween_property(b, "scale", Vector2(1.03, 1.03), 0.08))
 	b.mouse_exited.connect(func(): create_tween().tween_property(b, "scale", Vector2.ONE, 0.1))
 	b.button_down.connect(func(): create_tween().tween_property(b, "scale", Vector2(0.97, 0.97), 0.05))
 	b.button_up.connect(func(): create_tween().tween_property(b, "scale", Vector2(1.03, 1.03) if b.is_hovered() else Vector2.ONE, 0.08))

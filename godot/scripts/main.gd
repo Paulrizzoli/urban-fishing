@@ -54,6 +54,9 @@ var ach_t := 0.0
 var menu: Menu
 var saved_shown := -10.0
 var title_t := 0.0
+var music_t := 0.0
+var prev_detect := 0.0
+var alert_t := 0.0
 # test hook: godot --path . -- --at=x,y,hour --shot=out.png [--open=shop]
 var test_shot := ""
 var test_frames := 0
@@ -272,12 +275,14 @@ func _process(dt: float) -> void:
 		title_t += dt
 		cam.position = Vector2(56 + 30 * sin(title_t * 0.035 + 1.2), 82 + 58 * sin(title_t * 0.021 + 1.25)) * TS
 		_lighting()
+		_audio(dt)
 		hud.chips = []
 		hud.refresh("")
 		hud.action.visible = false; hud.hint.visible = false; hud.bar.visible = false
 		_test_shot()
 		return
 	hud.bar.visible = true
+	_audio(dt)
 	if not hud.is_open():
 		Game.advance(dt)
 		var dir := Vector2.ZERO
@@ -330,6 +335,31 @@ func _process(dt: float) -> void:
 	save_t += dt
 	if save_t > 10: save_t = 0; Game.save_game()
 
+# ---------- music and ambience ----------
+## Which tune fits: sneaking music on private ground, the reactor hum at the power station,
+## swamp blues at dawn and dusk and in Sunsplash Jungle, Miami synths at night, yacht rock downtown by day.
+func _want_music() -> String:
+	if menu.title_open: return "miami" if Game.darkness() > 0.3 else "surf"
+	var z := Player.zone_of(player.position)
+	if z == 3: return "reactor"
+	if z in [1, 2, 5, 6, 7, 8, 9]: return "prowl"
+	if z == 4: return "swamp"
+	if player.position.y > 115: return "miami" if Game.darkness() > 0.3 else "yacht"
+	if Game.darkness() > 0.3: return "miami"
+	if Game.time_band() == "low": return "swamp"
+	return "steel" if Game.hour() >= 14 and Game.hour() < 18 else "surf"
+
+func _audio(dt: float) -> void:
+	music_t -= dt
+	if music_t <= 0:
+		music_t = 0.5
+		Sound.set_music(_want_music())
+	Sound.set_ambience(clampf(Game.darkness() / 0.62, 0, 1), Game.wx.rain)
+	Sound.set_reeling(fishing.state == "reel" and fishing.holding and not hud.is_open())
+	alert_t -= dt
+	if guards.detect > 0.05 and prev_detect <= 0.05 and alert_t <= 0: Sound.play("alert"); alert_t = 3.0
+	prev_detect = guards.detect
+
 ## Test hook: save a screenshot after 90 frames and quit. True while a test shot is pending.
 func _test_shot() -> bool:
 	if test_shot == "": return false
@@ -346,8 +376,8 @@ func _doors() -> void:
 		var d := player.position.distance_to(door)
 		if d < 0.7 and not latch[k] and fishing.state == "idle":
 			latch[k] = true; player.path.clear()
-			if k == "shop": open_shop()
-			elif k == "home": open_home()
+			if k == "shop": Sound.play("bell"); open_shop()
+			elif k == "home": Sound.play("door"); open_home()
 			else: open_marina()
 		if d > 1.6: latch[k] = false
 
@@ -405,9 +435,9 @@ func _unhandled_input(e: InputEvent) -> void:
 func _action_down() -> void:
 	if hud.is_open(): return
 	if fishing.state == "idle":
-		if near == "shop": open_shop()
-		elif near == "home": open_home()
-		elif near == "marina": open_marina()
+		if near == "shop": Sound.play("bell"); open_shop()
+		elif near == "home": Sound.play("door"); open_home()
+		elif near == "marina": Sound.play("door"); open_marina()
 		elif near == "oldtimer": talk_oldtimer()
 		elif near == "rosa": talk_rosa()
 		elif near == "bus": open_bus(Story.bus_near(player.position))
@@ -547,6 +577,7 @@ func _sell_all() -> void:
 		total += int(c.value)
 		if not c.junk and (best == null or c.value > best.value or (c.legend and not best.legend)): best = c
 	Game.S.cash += total
+	if total > 0: Sound.play("cash")
 	if best != null and (Game.S.story.is_empty() or int(Game.S.story_day) != int(Game.S.day) or best.value > Game.S.story.value):
 		Game.S.story = best; Game.S.story_day = Game.S.day; Game.S.story_told = false
 	Game.S.cooler = []
@@ -561,6 +592,7 @@ func _fill_order() -> void:
 	m.sort_custom(func(a, b): return a.value < b.value)
 	if m.size() < o.count: return
 	for c in m.slice(0, int(o.count)): Game.S.cooler.erase(c)
+	Sound.play("cash")
 	Game.S.cash += int(o.pay); Game.S.rep += 3; Game.S.order.done = true; Game.S.stats.orders += 1
 	if randf() < 0.3: Game.add_news(["Bait Shop Owner 'Satisfied for Once,' Customers Report", "Lou's Bait & Tackle Fills Mysterious Order; Questions Remain"].pick_random())
 	Game.save_game(); open_shop()
@@ -636,6 +668,7 @@ func talk_rosa() -> void:
 		["row", [["Thanks, Rosa", func(): hud.close(), true, "hot"]]]])
 
 func _busted(w: Dictionary) -> void:
+	Sound.play("whistle", 0.0, 0.0)
 	fishing.cancel(); player.path.clear()
 	var z := int(w.zone)
 	var off: Dictionary = Game.S.offenses
@@ -904,6 +937,7 @@ func _ride_bus(i: int) -> void:
 	menu.fade(func(): _arrive_bus(i), 0.35, 0.6)
 
 func _arrive_bus(i: int) -> void:
+	Sound.play("bus")
 	Game.S.cash -= 2
 	Game.skip_minutes(25)
 	Game.S.boat = false
