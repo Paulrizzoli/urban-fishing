@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.0 | Nov 17, 2026 | Three save slots |
 | v0.8.0 | Nov 17, 2026 | Tower sides you can see, and towers you can see through when you walk behind them |
 | v0.7.0 | Nov 17, 2026 | A better-looking Port Mullet (water, buildings, streets, cars, details) |
 | v0.6.0 | Nov 17, 2026 | A bigger zoomable map, and a town that opens up in four steps |
@@ -25,6 +26,16 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.0 · Three save slots
+
+_Nov 17, 2026 · Builds: `UrbanFishing-v0.9.0-windows.zip`, `UrbanFishing-v0.9.0-godot-project.zip`_
+
+- Three save slots, each its own game. Playing or starting one never touches the others
+- Your existing game is slot 1, exactly as it was. Slot 1 still uses the same save file as before (`urban_fishing_save.json`), so nothing is moved or converted. Slots 2 and 3 are `urban_fishing_save_2.json` and `urban_fishing_save_3.json`
+- Continue on the title screen opens the slot list, with the day, time, cash and rep of each game, and plays the one you pick. Under Continue it says which slot you played last
+- New game lets you pick a slot. An empty slot starts right away; a slot with a game in it asks first (Keep it is the default), and says your other slots stay as they are
+- The game remembers the last slot you played and loads it when it starts. The pause menu shows which slot you're in
 
 ## v0.8.0 · Tower sides, and seeing through towers
 
