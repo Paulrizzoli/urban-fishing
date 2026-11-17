@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.11 | Nov 17, 2026 | A desktop icon: a bobber in a Port Mullet sunset |
 | v0.9.10 | Nov 17, 2026 | Life on the water: wakes, ripples, jumping fish, a bobbing float and reflections |
 | v0.9.9 | Nov 17, 2026 | Build your own rod from a blank, a reel and a grip you find around town |
 | v0.9.8 | Nov 17, 2026 | A starter area you can actually get out of: manholes, the golf course, easier first orders, Lou's note on day 7 |
@@ -35,6 +36,15 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.11 · A desktop icon
+
+_Nov 17, 2026 · Builds: `UrbanFishing-v0.9.11-windows.zip`, `UrbanFishing-v0.9.11-godot-project.zip`, preview in `screenshots/v0.9.11/`_
+
+- **Urban Fishing has its own icon.** A red-and-white bobber sits in the bay at sunset, with the Port Mullet skyline, a palm tree, and a mullet jumping beside it. It replaces the default Godot icon on the .exe, on the desktop, in the taskbar, in the window's title bar, and in the Godot project list
+- At small sizes (16 to 32 pixels, like the title bar or a small taskbar) it switches to a bold, simple bobber so it still reads clearly
+- The .exe's file details (right-click, Properties, Details) now say Urban Fishing and the game's version instead of Godot Engine
+- The icon is drawn in `tools/icon/icon.svg` and `tools/icon/icon_small.svg`. `tools/icon/make_icon.sh` turns them into `godot/icon.png` and `godot/icon.ico`, and `tools/build_windows.sh` now puts the icon into the .exe itself (it needs Node for that)
 
 ## v0.9.10 · Life on the water
 

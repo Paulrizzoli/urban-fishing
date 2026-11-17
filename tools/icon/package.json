@@ -1,0 +1,5 @@
+{
+  "private": true,
+  "description": "Puts the game icon and version info into the Windows export template (tools/icon/patch_template.js)",
+  "dependencies": { "resedit": "3.1.1", "pe-library": "2.0.3" }
+}
