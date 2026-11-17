@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.3 | Nov 17, 2026 | Pictures of every rod, bait and upgrade in the shop, the marina and the top bar |
 | v0.9.2 | Nov 17, 2026 | Round islands and beaches, and boats that stay where you leave them |
 | v0.9.1 | Nov 17, 2026 | Real-looking people with walk cycles, fish that splash, and light that changes through the day |
 | v0.9.0 | Nov 17, 2026 | Three save slots |
@@ -28,6 +29,17 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.3 · Pictures in the shop
+
+_Nov 17, 2026 · Builds: `UrbanFishing-v0.9.3-windows.zip`, `UrbanFishing-v0.9.3-godot-project.zip`, screenshots in `screenshots/v0.9.3/`_
+
+- Every item at Lou's and the marina has its own picture next to its name: all five rods, every bait, the coolers, the camera phone, the golf polo and visor, the lanyard, the flashlight, waders, the Geiger counter, the pry bar, the kayak, the skiff, the big tank, the suit and the polarized sunglasses. They're all drawn in the game's own style, with a dark outline, on a little paper tile
+- The five rods each look different: the garage-sale rod is a yellowed fiberglass stick with tape on it and a push-button reel, the bait-shop special is green with a cork grip, the graphite pro is black with blue wraps, the surf rod of legend is cream and gold with a sparkle, and the big-game rod is short and thick with gold roller guides and a big gold reel
+- Items you can't buy yet (a rod that needs a better rod first) show their picture faded
+- A "Your kit" strip at the top of Lou's Gear tab and the marina's Boats & gear tab shows a picture of your rod, every bait you have and everything you own. Point at one to see its name
+- The fish in your cooler on the Sell tab have pictures too, tinted for their kind (green bass, orange koi, red redfish and so on), a gold fish with a star for a legend, and a soggy can for junk
+- The top bar shows a picture of the bait you have on, next to its name, and it changes when you press B
 
 ## v0.9.2 · Round islands, and boats that stay put
 
