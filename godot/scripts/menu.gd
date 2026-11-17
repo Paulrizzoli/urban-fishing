@@ -24,7 +24,7 @@ const CONTROLS := [
 	["B", "Switch bait"],
 	["K", "Launch or land a kayak or skiff"],
 	["J", "Journal: spots, Lou's Wall of Fame, the Gazette"],
-	["M", "Map"],
+	["M", "Map. Scroll or + and − to zoom, drag to move it"],
 	["Esc", "Pause menu. Closes any card"],
 	["F11", "Full screen on or off"],
 ]

@@ -62,6 +62,9 @@ var test_shot := ""
 var test_frames := 0
 
 func _ready() -> void:
+	# the test hooks that put you somewhere or deep in the story start with the whole town open
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--at=") or a.begins_with("--story=") or a.begins_with("--act2=") or a.begins_with("--boat="): Game.S.unlock = Unlocks.LAST
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--at="):
 			var v := a.substr(5).split(",")
@@ -70,6 +73,7 @@ func _ready() -> void:
 		if a.begins_with("--boat="): Game.S.boat = true; Game.S.boat_kind = a.substr(7); Game.S.gear.kayak = 1; Game.S.gear.skiff = 1
 		if a.begins_with("--day="): Game.S.day = int(a.substr(6)); Game.S.min += (Game.S.day - 1) * 1440.0
 		if a.begins_with("--story="): Game.S.saga.ch = int(a.substr(8)) - 1; Game.S.saga.done = int(a.substr(8)) > 1; Game.S.day = maxi(int(Game.S.day), 3)
+		if a.begins_with("--unlock="): Game.S.unlock = int(a.substr(9)); Game.S.started = true
 		if a.begins_with("--act2="): Game.S.saga.finished = true; Game.S.saga.ch = 7; Game.S.act2.ch = int(a.substr(7)) - 1; Game.S.act2.done = int(a.substr(7)) > 1; Game.S.day = maxi(int(Game.S.day), 9)
 	Game.wx = Weather.compute(int(Game.S.day), Game.hour())
 	RenderingServer.set_default_clear_color(Color("#0b1a3a"))
@@ -166,6 +170,9 @@ func _ready() -> void:
 	var line := Drawer.make(fishing.draw_line_layer, 0, true)
 	line.z_index = 5
 	world.add_child(line)
+	var bars := Drawer.make(func(ci): Unlocks.draw_barriers(ci, _view_tiles()), 0, true)
+	bars.z_index = 3
+	world.add_child(bars)
 	var wxd := Drawer.make(func(ci): Weather.ripples(ci, _view_tiles()), 0, true)
 	wxd.z_index = 4
 	world.add_child(wxd)
@@ -305,6 +312,8 @@ func _process(dt: float) -> void:
 		if ach_t > 1:
 			ach_t = 0
 			for a in Story.check_ach(): Game.toast.emit("%s: %s +$50, +3 rep" % [a[1], a[2]], "LOU'S WALL OF FAME")
+			if fishing.state == "idle" and Game.S.started and Unlocks.ready():
+				Sound.play("plaque"); hud.open(Unlocks.advance(hud.close)); player.rebuild_grids()
 		if player.position.y > 115 and not Game.S.visited.has("dt"): Game.S.visited.dt = 1; hud.flash("Downtown Port Mullet. The bay is at the bottom of the street.")
 	near = ""
 	if fishing.state == "idle":
@@ -403,6 +412,11 @@ func _unhandled_input(e: InputEvent) -> void:
 		menu.toggle_fullscreen(); return
 	if hud.is_open():
 		if e is InputEventKey and e.pressed and e.keycode == KEY_ESCAPE: hud.close()
+		elif e is InputEventKey and e.pressed and is_instance_valid(map_view) and map_view.is_visible_in_tree():
+			match e.physical_keycode:
+				KEY_EQUAL, KEY_KP_ADD: map_view.zoom_by(1.5)
+				KEY_MINUS, KEY_KP_SUBTRACT: map_view.zoom_by(1 / 1.5)
+				KEY_M: hud.close()
 		return
 	if menu.title_open: return
 	if e is InputEventKey and e.pressed and not e.echo and e.physical_keycode == KEY_ESCAPE:
@@ -429,6 +443,7 @@ func _unhandled_input(e: InputEvent) -> void:
 			fishing.start_cast(wp); fishing.power = pw; fishing.t = tt
 			return
 		if fishing.state != "idle": _action_down(); return
+		if not Unlocks.open_p(wp): hud.flash("Road closed for now. " + Unlocks.goal() + ". Press M for the map.")
 		if fishing.near_water() and fishing.is_water(wp) and wp.distance_to(player.position) <= Fishing.MAXR + 0.6:
 			fishing.start_cast(wp); return
 		player.walk_to(wp)
@@ -473,6 +488,7 @@ func _intro() -> void:
 func _on_landed(c: Dictionary) -> void:
 	pending_catch = c
 	Story.on_catch(c)
+	Unlocks.on_catch(c)
 	if int(c.spot) == 15 and Game.rod_level() < 4 and c.pull > 0.75 and not Game.S.get("big_rod_hint", false):
 		Game.S.big_rod_hint = true; Game.hint.emit("That nearly pulled your arms off. The marina sells a big-game rod.")
 	var spot_name: String = Game.spots[c.spot].name
@@ -713,6 +729,8 @@ func _chips() -> Array:
 	var out := []
 	var g := Story.goal_text()
 	if g != "": out.append([g, "coral"])
+	var u := Unlocks.chip()
+	if u != "": out.append([u, "sea"])
 	var o = Game.cur_order()
 	if o != null:
 		out.append(["Lou's order: done ✓" if Game.S.order.done else "Lou wants: %s (%d/%d)" % [o.s, mini(Game.order_matches().size(), int(o.count)), int(o.count)], "paper"])
@@ -888,6 +906,7 @@ func open_journal() -> void:
 
 # ---------- the map ----------
 var _zone_tex: ImageTexture
+var map_view: MapView
 func open_map() -> void:
 	if _zone_tex == null:
 		var img := Image.create(Town.MW, Town.MH, false, Image.FORMAT_RGBA8)
@@ -895,31 +914,12 @@ func open_map() -> void:
 			for x in Town.MW:
 				if Town.zone[Town.idx(x, y)] > 0: img.set_pixel(x, y, Color(0.89, 0.25, 0.2, 0.32))
 		_zone_tex = ImageTexture.create_from_image(img)
-	var draw_map := func(ci: Control):
-		var h := ci.size.y
-		var w := h * Town.MW / Town.MH
-		var o := Vector2((ci.size.x - w) / 2, 0)
-		var k := h / Town.MH
-		var r := Rect2(o, Vector2(w, h))
-		ci.draw_texture_rect(ground_tex, r, false)
-		ci.draw_texture_rect(_zone_tex, r, false)
-		for b in Town.buildings: ci.draw_rect(Rect2(o + Vector2(b.x, b.y) * k, Vector2(b.w, b.h) * k), Color(b.color) if b.has("color") else Color("#c9b9a0"))
-		for bs in Story.BUS: ci.draw_rect(Rect2(o + bs[1] * k - Vector2(3, 3), Vector2(6, 6)), Color("#2b7ea6"))
-		for l in Town.labels:
-			var s: String = l.t
-			var fs := 9
-			var tw := Game.font_bold.get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
-			var p: Vector2 = o + Vector2(l.x, l.y) * k
-			ci.draw_string_outline(Game.font_bold, p - Vector2(tw / 2, 0), s, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, 3, Color(0.98, 0.95, 0.89, 0.9))
-			ci.draw_string(Game.font_bold, p - Vector2(tw / 2, 0), s, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color("#22313a"))
-		var pp := o + player.position * k
-		var pulse := 5.0 + 2.0 * sin(Time.get_ticks_msec() / 200.0)
-		ci.draw_circle(pp, pulse + 2, Color("#22313a"))
-		ci.draw_circle(pp, pulse, Color("#f2b134"))
-		ci.draw_rect(r, Color("#22313a"), false, 2)
-	hud.open([["h3", "Port Mullet"], ["pic", draw_map, 440, true],
-		["sub", "Orange dot: you. Red: private, keep your head down. Blue squares: bus stops. Lou's is the red roof by the main road; downtown and the bay are way down south."],
-		["row", [["Close", func(): hud.close(), true, "hot"], ["Journal (J)", open_journal]]]])
+	map_view = MapView.new(self)
+	map_view.locked = Unlocks.map_overlay() if Unlocks.step() < Unlocks.LAST else null
+	map_view.custom_minimum_size = Vector2(0, get_viewport_rect().size.y - 250)
+	hud.open([["h3", "Port Mullet · drag to move, scroll or + and − to zoom"], ["node", map_view],
+		["sub", "Orange dot: you. Red: private, keep your head down. Blue squares: bus stops. Lou's is the red roof by the main road; downtown and the bay are way down south." + ("" if Unlocks.step() >= Unlocks.LAST else " Grey: closed for now. " + Unlocks.goal() + ".")],
+		["row", [["Close", func(): hud.close(), true, "hot"], ["Journal (J)", open_journal]]]], true)
 
 # ---------- the Route 1 bus ----------
 func open_bus(i: int) -> void:
@@ -928,7 +928,8 @@ func open_bus(i: int) -> void:
 	for j in Story.BUS.size():
 		if j == i: continue
 		var jj := j
-		parts.append(["item", Story.BUS[j][0], Story.BUS[j][2], "Ride ($2)", func(): _ride_bus(jj), Game.S.cash >= 2])
+		var open := Unlocks.open_p(Story.BUS[j][1])
+		parts.append(["item", Story.BUS[j][0], Story.BUS[j][2] if open else "Road closed for now. " + Unlocks.goal() + ".", "Ride ($2)" if open else "Closed", func(): _ride_bus(jj), Game.S.cash >= 2 and open])
 	parts.append(["row", [["Walk instead", func(): hud.close(), true, "hot"]]])
 	hud.open(parts)
 

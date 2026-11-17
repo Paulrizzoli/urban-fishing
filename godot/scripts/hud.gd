@@ -333,8 +333,14 @@ func close() -> void:
 
 ## Opens a card. parts: [["h3", text], ["h2", text], ["p", text], ["sub", text], ["quote", text],
 ## ["kv", [[k, v], ...]], ["row", [[label, callable, enabled, style], ...]], ["item", name, desc, button, callable, enabled]]
-func open(parts: Array) -> void:
+## wide: the card fills most of the window (the map uses this). ["node", control] adds a ready-made control.
+func open(parts: Array, wide := false) -> void:
 	for c in card_box.get_children(): c.queue_free()
+	var scroll: Control = card_box.get_parent()
+	var cardc: Control = scroll.get_parent()
+	var vs := get_viewport().get_visible_rect().size
+	cardc.custom_minimum_size.x = vs.x - 80 if wide else 620.0
+	scroll.custom_minimum_size.x = vs.x - 124 if wide else 600.0
 	var first_btn: Button = null
 	for p in parts:
 		match p[0]:
@@ -377,6 +383,7 @@ func open(parts: Array) -> void:
 				hb.add_child(b)
 				card_box.add_child(hb)
 				var sep := HSeparator.new(); sep.add_theme_color_override("separator", LINE); card_box.add_child(sep)
+			"node": card_box.add_child(p[1])
 			"pic":
 				var pc := Control.new()
 				pc.custom_minimum_size = Vector2(0, p[2])

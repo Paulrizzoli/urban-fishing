@@ -52,7 +52,7 @@ func fresh() -> Dictionary:
 	return { "day": 1, "min": 6 * 60 + 30.0, "cash": 30, "rep": 0, "x": 48.5, "y": 33.2, "face": PI / 2, "gear": {}, "cooler_cap": 5,
 		"cooler": [], "journal": {}, "bait": "worms", "started": false, "news": [],
 		"boat": false, "boat_kind": "kayak", "offenses": {}, "order": {}, "park_day": 0, "swept_day": 0, "story": {}, "story_day": 0, "story_told": false,
-		"tips_heard": 0, "rosa": 0, "visited": {}, "busts": 0 }.merged(Story.fresh_state())
+		"tips_heard": 0, "rosa": 0, "visited": {}, "busts": 0, "unlock": 1 }.merged(Story.fresh_state())
 
 func load_game() -> void:
 	S = fresh()
@@ -64,8 +64,10 @@ func load_game() -> void:
 			for k in d:
 				if S.has(k) and S[k] is Dictionary and d[k] is Dictionary and k in ["saga", "act2", "stats"]: S[k].merge(d[k], true)
 				else: S[k] = d[k]
+			# saves from before the map opened up in steps keep the whole town
+			if not d.has("unlock"): S.unlock = Unlocks.LAST
 	# JSON brings every number back as a float; keep the counters whole
-	for k in ["day", "cash", "rep", "cooler_cap"]: S[k] = int(S[k])
+	for k in ["day", "cash", "rep", "cooler_cap", "unlock"]: S[k] = int(S[k])
 	for k in ["ch", "paid_ch", "left", "fin_day"]: S.saga[k] = int(S.saga[k])
 	for k in ["ch", "since"]: S.act2[k] = int(S.act2[k])
 	for k in S.stats: S.stats[k] = int(S.stats[k])
@@ -154,8 +156,17 @@ func new_order() -> void:
 	for i in orders.size():
 		var o: Dictionary = orders[i]
 		var need: String = o.get("need", "")
-		if need == "" or (need == "downtown" and S.visited.has("dt")) or S.gear.has(need): pool.append(i)
+		if (need == "" or (need == "downtown" and S.visited.has("dt")) or S.gear.has(need)) and order_possible(o): pool.append(i)
+	if pool.is_empty(): pool = [0]
 	S.order = { "day": S.day, "i": pool.pick_random(), "done": false }
+## True if some fish in the open part of town could fill the order.
+func order_possible(o: Dictionary) -> bool:
+	for sid in spots:
+		if not Unlocks.spot_open(sid): continue
+		for f in spots[sid].fish:
+			if order_match(o, { "n": f.n, "junk": f.get("junk", false), "w": 9999.0, "spot": sid }): return true
+	return false
+
 func order_match(o: Dictionary, c: Dictionary) -> bool:
 	var m: Dictionary = o.match
 	if m.has("name") and c.n != m.name: return false
