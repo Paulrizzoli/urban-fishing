@@ -46,11 +46,25 @@ var prev_pos := Vector2.ZERO
 var last_sale := 0
 var pending_catch = null
 var shop_tab := "sell"
+var marina_tab := "boats"
+var journal_tab := "spots"
+var weather: Weather
+var ground_tex: Texture2D
+var ach_t := 0.0
+var menu: Menu
+var saved_shown := -10.0
+var title_t := 0.0
+var music_t := 0.0
+var prev_detect := 0.0
+var alert_t := 0.0
 # test hook: godot --path . -- --at=x,y,hour --shot=out.png [--open=shop]
 var test_shot := ""
 var test_frames := 0
 
 func _ready() -> void:
+	# the test hooks that put you somewhere or deep in the story start with the whole town open
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--at=") or a.begins_with("--story=") or a.begins_with("--act2=") or a.begins_with("--boat="): Game.S.unlock = Unlocks.LAST
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--at="):
 			var v := a.substr(5).split(",")
@@ -58,6 +72,10 @@ func _ready() -> void:
 		if a.begins_with("--shot="): test_shot = a.substr(7)
 		if a.begins_with("--boat="): Game.S.boat = true; Game.S.boat_kind = a.substr(7); Game.S.gear.kayak = 1; Game.S.gear.skiff = 1
 		if a.begins_with("--day="): Game.S.day = int(a.substr(6)); Game.S.min += (Game.S.day - 1) * 1440.0
+		if a.begins_with("--story="): Game.S.saga.ch = int(a.substr(8)) - 1; Game.S.saga.done = int(a.substr(8)) > 1; Game.S.day = maxi(int(Game.S.day), 3)
+		if a.begins_with("--unlock="): Game.S.unlock = int(a.substr(9)); Game.S.started = true
+		if a.begins_with("--act2="): Game.S.saga.finished = true; Game.S.saga.ch = 7; Game.S.act2.ch = int(a.substr(7)) - 1; Game.S.act2.done = int(a.substr(7)) > 1; Game.S.day = maxi(int(Game.S.day), 9)
+	Game.wx = Weather.compute(int(Game.S.day), Game.hour())
 	RenderingServer.set_default_clear_color(Color("#0b1a3a"))
 	world = Node2D.new()
 	world.scale = Vector2(TS, TS)
@@ -65,6 +83,7 @@ func _ready() -> void:
 	# ground
 	var ground := Sprite2D.new()
 	ground.texture = Ground.make_texture()
+	ground_tex = ground.texture
 	ground.centered = false
 	ground.scale = Vector2.ONE / Ground.PX
 	ground.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
@@ -130,6 +149,9 @@ func _ready() -> void:
 		Art.person(ci, ROSA, PI / 2 + 0.35, Color("#e2583e"), Color("#fbf3e2"), true)
 		ci.draw_circle(ROSA + Vector2(-0.42, 0.1), 0.14, Color("#9aa6ad")), ROSA.y))
 	ents.add_child(Drawer.make(func(ci): ci.draw_rect(Rect2(OLDTIMER.x - 0.5, OLDTIMER.y + 0.15, 0.3, 0.3), Color("#2c5f8a")), OLDTIMER.y + 0.01))
+	for bs in Story.BUS:
+		var bp: Vector2 = bs[1]
+		ents.add_child(Drawer.make(func(ci): draw_bus_stop(ci, bp), bp.y - 0.2))
 	guards = Guards.new()
 	guards.player = player
 	guards.fishing = fishing
@@ -148,6 +170,12 @@ func _ready() -> void:
 	var line := Drawer.make(fishing.draw_line_layer, 0, true)
 	line.z_index = 5
 	world.add_child(line)
+	var bars := Drawer.make(func(ci): Unlocks.draw_barriers(ci, _view_tiles()), 0, true)
+	bars.z_index = 3
+	world.add_child(bars)
+	var wxd := Drawer.make(func(ci): Weather.ripples(ci, _view_tiles()), 0, true)
+	wxd.z_index = 4
+	world.add_child(wxd)
 	var labels := Drawer.make(_draw_labels)
 	labels.z_index = 6
 	world.add_child(labels)
@@ -186,9 +214,13 @@ func _ready() -> void:
 	var gw := Node2D.new(); gw.scale = Vector2(TS, TS); glow_layer.add_child(gw)
 	var gholder := Drawer.make(_draw_night_glow, 0, true)
 	gw.add_child(gholder)
+	weather = Weather.new()
+	add_child(weather)
 	hud = Hud.new()
 	hud.fishing = fishing
 	add_child(hud)
+	Game.hint.connect(hud.flash)
+	Game.toast.connect(hud.toast)
 	hud.action_pressed.connect(_action_down)
 	hud.action_released.connect(func(): fishing.action_up())
 	hud.boat_pressed.connect(_toggle_boat)
@@ -196,7 +228,25 @@ func _ready() -> void:
 	fishing.landed.connect(_on_landed)
 	get_viewport().size_changed.connect(_fit_zoom)
 	_fit_zoom()
-	if not Game.S.started: _intro()
+	menu = Menu.new()
+	menu.hud = hud
+	add_child(menu)
+	menu.title_closed.connect(func(): if not Game.S.started: _intro())
+	Game.saved.connect(func():
+		var now := Time.get_ticks_msec() / 1000.0
+		if now - saved_shown > 4.0 and Game.S.started and not menu.title_open: saved_shown = now; hud.show_saved())
+	if test_shot == "" and not Game.skip_title:
+		menu.show_title()
+		menu.fade_in(1.0)
+	else:
+		if Game.skip_title: menu.fade_in(0.6)
+		Game.skip_title = false
+		if not Game.S.started: _intro()
+	for a in OS.get_cmdline_user_args():
+		if a == "--title": hud.close(); menu.show_title()
+		if a == "--pause": menu.show_pause()
+		if a == "--controls": menu.show_controls()
+		if a == "--settings": menu.show_settings()
 	for a in OS.get_cmdline_user_args():
 		if a == "--open=shop": open_shop()
 		if a == "--open=gear": shop_tab = "gear"; open_shop()
@@ -204,6 +254,18 @@ func _ready() -> void:
 		if a == "--open=marina": open_marina()
 		if a == "--busted": _busted(guards.watchers[0])
 		if a == "--rosa": talk_rosa()
+		if a == "--open=marina-slam": marina_tab = "slam"; open_marina()
+		if a == "--open=note": shop_tab = "note"; open_shop()
+		if a == "--open=journal": open_journal()
+		if a == "--open=fame": journal_tab = "fame"; open_journal()
+		if a == "--open=news": journal_tab = "news"; open_journal()
+		if a == "--open=map": open_map()
+		if a == "--open=bus": open_bus(0)
+		if a == "--weigh":
+			Story.sign_up()
+			Game.S.cooler.append({ "n": "Snook", "w": 31.4, "value": 90, "spot": 14, "legend": false, "junk": false, "day": Game.S.day, "tm": Game.S.min + 5 })
+			_slam_weigh()
+		if a == "--toast": Game.add_news("Local Angler Buys Garage-Sale Rod, Announces 'Big Plans'")
 		if a == "--cast": fishing.start_cast()
 		if a == "--land": fishing.fish = Game.spots[1].fish[5]; fishing.fw = 44.2; fishing.spot = 1; fishing._land()
 
@@ -215,6 +277,19 @@ func _fit_zoom() -> void:
 # ---------- loop ----------
 func _process(dt: float) -> void:
 	dt = minf(dt, 0.05)
+	if menu.title_open:
+		# the town drifts by behind the title screen
+		title_t += dt
+		cam.position = Vector2(56 + 30 * sin(title_t * 0.035 + 1.2), 82 + 58 * sin(title_t * 0.021 + 1.25)) * TS
+		_lighting()
+		_audio(dt)
+		hud.chips = []
+		hud.refresh("")
+		hud.action.visible = false; hud.hint.visible = false; hud.bar.visible = false
+		_test_shot()
+		return
+	hud.bar.visible = true
+	_audio(dt)
 	if not hud.is_open():
 		Game.advance(dt)
 		var dir := Vector2.ZERO
@@ -233,6 +308,12 @@ func _process(dt: float) -> void:
 		if guards.plane_hint: guards.plane_hint = false; hud.flash("A jet roars overhead. Nobody's looking!")
 		_doors()
 		_park(dt)
+		ach_t += dt
+		if ach_t > 1:
+			ach_t = 0
+			for a in Story.check_ach(): Game.toast.emit("%s: %s +$50, +3 rep" % [a[1], a[2]], "LOU'S WALL OF FAME")
+			if fishing.state == "idle" and Game.S.started and Unlocks.ready():
+				Sound.play("plaque"); hud.open(Unlocks.advance(hud.close)); player.rebuild_grids()
 		if player.position.y > 115 and not Game.S.visited.has("dt"): Game.S.visited.dt = 1; hud.flash("Downtown Port Mullet. The bay is at the bottom of the street.")
 	near = ""
 	if fishing.state == "idle":
@@ -242,6 +323,7 @@ func _process(dt: float) -> void:
 		elif player.position.distance_to(MARINA_DOOR) < 1.3: near = "marina"
 		elif player.position.distance_to(OLDTIMER) < 1.8: near = "oldtimer"
 		elif player.position.distance_to(ROSA) < 1.6: near = "rosa"
+		elif Story.bus_near(player.position) >= 0: near = "bus"
 		elif fishing.near_water(): near = "fish"
 	hud.boat_text = ""
 	if fishing.state == "idle":
@@ -258,14 +340,44 @@ func _process(dt: float) -> void:
 		var behind: bool = player.position.x > b.x - 0.4 and player.position.x < b.x + b.w + g.y + 0.4 and player.position.y > b.y - g.x - 0.5 and player.position.y < b.y + b.h - 0.2
 		pair[0].modulate.a = move_toward(pair[0].modulate.a, 0.36 if behind else 1.0, dt * 4)
 	hud.refresh(near)
-	if test_shot != "":
-		test_frames += 1
-		if test_frames == 90:
-			get_viewport().get_texture().get_image().save_png(test_shot)
-			get_tree().quit()
-		return
+	if _test_shot(): return
 	save_t += dt
 	if save_t > 10: save_t = 0; Game.save_game()
+
+# ---------- music and ambience ----------
+## Which tune fits: sneaking music on private ground, the reactor hum at the power station,
+## swamp blues at dawn and dusk and in Sunsplash Jungle, Miami synths at night, yacht rock downtown by day.
+func _want_music() -> String:
+	if Sound.style != "auto": return Sound.style
+	if menu.title_open: return "miami" if Game.darkness() > 0.3 else "surf"
+	var z := Player.zone_of(player.position)
+	if z == 3: return "reactor"
+	if z in [1, 2, 5, 6, 7, 8, 9]: return "prowl"
+	if z == 4: return "swamp"
+	if player.position.y > 115: return "miami" if Game.darkness() > 0.3 else "yacht"
+	if Game.darkness() > 0.3: return "miami"
+	if Game.time_band() == "low": return "swamp"
+	return "steel" if Game.hour() >= 14 and Game.hour() < 18 else "surf"
+
+func _audio(dt: float) -> void:
+	music_t -= dt
+	if music_t <= 0:
+		music_t = 0.5
+		Sound.set_music(_want_music())
+	Sound.set_ambience(clampf(Game.darkness() / 0.62, 0, 1), Game.wx.rain)
+	Sound.set_reeling(fishing.state == "reel" and fishing.holding and not hud.is_open())
+	alert_t -= dt
+	if guards.detect > 0.05 and prev_detect <= 0.05 and alert_t <= 0: Sound.play("alert"); alert_t = 3.0
+	prev_detect = guards.detect
+
+## Test hook: save a screenshot after 90 frames and quit. True while a test shot is pending.
+func _test_shot() -> bool:
+	if test_shot == "": return false
+	test_frames += 1
+	if test_frames == 90:
+		get_viewport().get_texture().get_image().save_png(test_shot)
+		get_tree().quit()
+	return true
 
 func _doors() -> void:
 	if player.in_boat(): return
@@ -274,8 +386,8 @@ func _doors() -> void:
 		var d := player.position.distance_to(door)
 		if d < 0.7 and not latch[k] and fishing.state == "idle":
 			latch[k] = true; player.path.clear()
-			if k == "shop": open_shop()
-			elif k == "home": open_home()
+			if k == "shop": Sound.play("bell"); open_shop()
+			elif k == "home": Sound.play("door"); open_home()
 			else: open_marina()
 		if d > 1.6: latch[k] = false
 
@@ -296,8 +408,20 @@ func _lighting() -> void:
 
 # ---------- input ----------
 func _unhandled_input(e: InputEvent) -> void:
+	if e is InputEventKey and e.pressed and not e.echo and e.physical_keycode == KEY_F11:
+		menu.toggle_fullscreen(); return
 	if hud.is_open():
 		if e is InputEventKey and e.pressed and e.keycode == KEY_ESCAPE: hud.close()
+		elif e is InputEventKey and e.pressed and is_instance_valid(map_view) and map_view.is_visible_in_tree():
+			match e.physical_keycode:
+				KEY_EQUAL, KEY_KP_ADD: map_view.zoom_by(1.5)
+				KEY_MINUS, KEY_KP_SUBTRACT: map_view.zoom_by(1 / 1.5)
+				KEY_M: hud.close()
+		return
+	if menu.title_open: return
+	if e is InputEventKey and e.pressed and not e.echo and e.physical_keycode == KEY_ESCAPE:
+		if fishing.state == "idle": menu.show_pause()
+		else: fishing.cancel(); hud.flash("You reel in your line.")
 		return
 	if e is InputEventKey and not e.echo:
 		var k: int = e.physical_keycode
@@ -306,6 +430,8 @@ func _unhandled_input(e: InputEvent) -> void:
 			else: fishing.action_up()
 		elif e.pressed and k == KEY_B: _cycle_bait()
 		elif e.pressed and k == KEY_K: _toggle_boat()
+		elif e.pressed and k == KEY_J and fishing.state == "idle": open_journal()
+		elif e.pressed and k == KEY_M and fishing.state == "idle": open_map()
 		elif e.pressed and fishing.state == "wait" and (k == KEY_LEFT or k == KEY_A or k == KEY_RIGHT or k == KEY_D): fishing.action_down(); fishing.action_up()
 	elif e is InputEventMouseButton and e.button_index == MOUSE_BUTTON_LEFT:
 		if not e.pressed:
@@ -317,6 +443,7 @@ func _unhandled_input(e: InputEvent) -> void:
 			fishing.start_cast(wp); fishing.power = pw; fishing.t = tt
 			return
 		if fishing.state != "idle": _action_down(); return
+		if not Unlocks.open_p(wp): hud.flash("Road closed for now. " + Unlocks.goal() + ". Press M for the map.")
 		if fishing.near_water() and fishing.is_water(wp) and wp.distance_to(player.position) <= Fishing.MAXR + 0.6:
 			fishing.start_cast(wp); return
 		player.walk_to(wp)
@@ -324,11 +451,12 @@ func _unhandled_input(e: InputEvent) -> void:
 func _action_down() -> void:
 	if hud.is_open(): return
 	if fishing.state == "idle":
-		if near == "shop": open_shop()
-		elif near == "home": open_home()
-		elif near == "marina": open_marina()
+		if near == "shop": Sound.play("bell"); open_shop()
+		elif near == "home": Sound.play("door"); open_home()
+		elif near == "marina": Sound.play("door"); open_marina()
 		elif near == "oldtimer": talk_oldtimer()
 		elif near == "rosa": talk_rosa()
+		elif near == "bus": open_bus(Story.bus_near(player.position))
 		elif near == "fish": fishing.start_cast()
 		return
 	fishing.action_down()
@@ -355,10 +483,14 @@ func _intro() -> void:
 	hud.open([["h3", "Port Mullet, Florida · pop. 8,214"], ["h2", "You've got a garage-sale rod, $30, and no shame."],
 		["p", "Every pond, canal and storm drain in this town has fish in it. Half of them say NO FISHING. Figure out how to get in, catch something, get out, and sell it to Lou."],
 		["sub", "Walk with WASD or the arrow keys, or click where you want to go. Stand by water and press F or Space to cast: release in the green, hook it when the bobber dips, then hold to reel and keep the needle in the green. Press B to switch bait. Lou's Bait & Tackle is the red roof just north of the main road."],
-		["row", [["Go fishing", func(): Game.S.started = true; Game.save_game(); hud.close(), true, "hot"]]]])
+		["row", [["Go fishing", func(): Game.S.started = true; Game.save_game(); hud.close(); Game.add_news("Local Angler Buys Garage-Sale Rod, Announces 'Big Plans'"), true, "hot"]]]])
 
 func _on_landed(c: Dictionary) -> void:
 	pending_catch = c
+	Story.on_catch(c)
+	Unlocks.on_catch(c)
+	if int(c.spot) == 15 and Game.rod_level() < 4 and c.pull > 0.75 and not Game.S.get("big_rod_hint", false):
+		Game.S.big_rod_hint = true; Game.hint.emit("That nearly pulled your arms off. The marina sells a big-game rod.")
 	var spot_name: String = Game.spots[c.spot].name
 	var full: bool = Game.S.cooler.size() >= Game.S.cooler_cap
 	var parts := [["h3", spot_name], ["h2", c.n + ("  ★ LEGEND" if c.legend else "") + ("  · new record" if c.record and not c.junk else "")],
@@ -374,18 +506,33 @@ func _on_landed(c: Dictionary) -> void:
 
 func _keep() -> void:
 	var c: Dictionary = pending_catch
-	Game.S.cooler.append({ "n": c.n, "w": c.w, "value": c.value, "spot": c.spot, "legend": c.legend, "junk": c.junk })
+	Game.S.cooler.append({ "n": c.n, "w": c.w, "value": c.value, "spot": c.spot, "legend": c.legend, "junk": c.junk, "day": c.day, "tm": c.tm })
 	pending_catch = null; hud.close(); Game.save_game()
 
 func _release() -> void:
 	var c: Dictionary = pending_catch
 	Game.S.rep += c.rep if c.release else 1
+	if c.legend and c.release: Game.add_news(("Angler Wrestles, Releases '%s'; Storm Drain Residents Grateful" if int(c.spot) == 5 else "Angler Releases '%s' After Epic Fight; Witnesses 'Still Shaking'") % c.n)
 	pending_catch = null; hud.close(); Game.save_game()
+
+## Opens a card, turning a story card's ["into", tab] into the "Into the shop" button.
+func open_card(parts: Array) -> void:
+	var out := []
+	for p in parts:
+		if p[0] == "into":
+			var tab: String = p[1]
+			out.append(["row", [["Into the shop", func(): shop_tab = tab; open_shop(), true, "hot"]]])
+		else: out.append(p)
+	hud.open(out)
 
 func open_shop() -> void:
 	var S := Game.S
+	var sc := Story.scene()
+	if not sc.is_empty(): open_card(sc); return
 	var tabs := []
-	for td in [["sell", "Sell"], ["order", "Today's order"], ["gear", "Gear"], ["story", "Tell a story"]]:
+	var story_on: bool = int(S.saga.ch) > 0
+	if shop_tab == "note" and not story_on: shop_tab = "sell"
+	for td in [["sell", "Sell"], ["order", "Today's order"], ["gear", "Gear"], ["story", "Tell a story"]] + ([["note", "Lou's note"]] if story_on else []):
 		var key: String = td[0]
 		tabs.append([td[1], func(): shop_tab = key; open_shop(), shop_tab == key])
 	var parts := [["h3", "Lou's Bait & Tackle · since 1977"], ["h2", "\"%s\"" % ["What'd you catch?", "Wipe your feet.", "Back again?", "Don't touch the shrimp.", "Tell me it's a big one."].pick_random()], ["tabs", tabs]]
@@ -412,6 +559,8 @@ func open_shop() -> void:
 		"gear":
 			_gear_list(parts, Game.gear.filter(func(g): return not g.has("where")))
 			parts.append(["sub", "Your rod: %s." % Game.rods[Game.rod_level()].name + (" Boats, squid and big-game tackle are at the marina downtown." if S.visited.has("dt") else "")])
+		"note":
+			parts += Story.note_parts(func(n): Story.pay(n); open_shop())
 		"story":
 			var s: Dictionary = S.story
 			if s.is_empty() or int(S.story_day) != int(S.day): parts.append(["sub", "Sell a fish today and Lou will want to hear how you caught it."])
@@ -445,6 +594,7 @@ func _sell_all() -> void:
 		total += int(c.value)
 		if not c.junk and (best == null or c.value > best.value or (c.legend and not best.legend)): best = c
 	Game.S.cash += total
+	if total > 0: Sound.play("cash")
 	if best != null and (Game.S.story.is_empty() or int(Game.S.story_day) != int(Game.S.day) or best.value > Game.S.story.value):
 		Game.S.story = best; Game.S.story_day = Game.S.day; Game.S.story_told = false
 	Game.S.cooler = []
@@ -459,7 +609,9 @@ func _fill_order() -> void:
 	m.sort_custom(func(a, b): return a.value < b.value)
 	if m.size() < o.count: return
 	for c in m.slice(0, int(o.count)): Game.S.cooler.erase(c)
-	Game.S.cash += int(o.pay); Game.S.rep += 3; Game.S.order.done = true
+	Sound.play("cash")
+	Game.S.cash += int(o.pay); Game.S.rep += 3; Game.S.order.done = true; Game.S.stats.orders += 1
+	if randf() < 0.3: Game.add_news(["Bait Shop Owner 'Satisfied for Once,' Customers Report", "Lou's Bait & Tackle Fills Mysterious Order; Questions Remain"].pick_random())
 	Game.save_game(); open_shop()
 	hud.flash("Lou pays %s. \"Same time tomorrow.\"" % Game.money(o.pay))
 
@@ -473,6 +625,7 @@ func _tell_story(lv: int) -> void:
 	var claim: Variant = [s.w, roundi(s.w * 1.6), roundi(s.w * 4)][lv]
 	var gain: int = base * [1, 2, 5][lv] if ok else -base * [0, 1, 2][lv]
 	S.rep = maxi(0, S.rep + gain); S.story_told = true
+	if ok and lv == 2: S.stats.full_fl += 1; Game.add_news("Bait Shop Regulars Confirm %s-lb %s 'Totally Real'" % [str(claim), s.n])
 	Game.save_game()
 	hud.open([["h3", "Fish story"], ["h2", "\"It was %s pounds.\"" % str(claim)], ["quote", (STORY_LINES_OK if ok else STORY_LINES_NO).pick_random()],
 		["p", ("They bought it. +%d rep." % gain) if ok else ("Nobody bought it. %d rep." % gain) if gain else "Nobody's impressed, but nobody can argue."],
@@ -486,15 +639,26 @@ func _buy(gid: String, price: int, at_marina := false) -> void:
 	else: Game.S.gear[gid] = 1
 	for b in Game.baits:
 		if b.get("gear", "") == gid: Game.S.bait = b.id
+	if gid == "skiff": Game.add_news("Local Angler Buys Used Skiff; Lou Names It After a Coffee Can")
+	Story.check()
 	Game.save_game()
 	if at_marina: open_marina()
 	else: open_shop()
 
 func open_marina() -> void:
 	var S := Game.S
-	var parts := [["h3", "Mullet Bay Marina · fuel, ice, squid"], ["h2", "\"%s\"" % ["Mind the dock lines.", "No running on the docks.", "You smell like Lou's."].pick_random()]]
-	_gear_list(parts, Game.gear.filter(func(g): return g.get("where", "") == "marina"))
-	parts.append(["sub", "The skiff is tied up at the docks. Launch it from the bay or the river with K." if S.gear.has("skiff") else "Lou still buys the fish. We just sell the stuff to catch them."])
+	var parts := [["h3", "Mullet Bay Marina · fuel, ice, squid"], ["h2", "\"%s\"" % ["Mind the dock lines.", "No running on the docks.", "Here for the Slam?", "You smell like Lou's."].pick_random()],
+		["pic", StoryArt.marina, 120]]
+	var tabs := []
+	for td in [["boats", "Boats & gear"], ["slam", "Mullet Bay Slam"]]:
+		var key: String = td[0]
+		tabs.append([td[1], func(): marina_tab = key; open_marina(), marina_tab == key])
+	parts.append(["tabs", tabs])
+	if marina_tab == "boats":
+		_gear_list(parts, Game.gear.filter(func(g): return g.get("where", "") == "marina"))
+		parts.append(["sub", "The COFFEE CAN is tied up at the docks. Launch it from the bay or the river with K." if S.gear.has("skiff") else "Lou still buys the fish. We just sell the stuff to catch them."])
+	else:
+		parts += Story.slam_parts(_slam_sign, _slam_weigh)
 	parts.append(["kv", [["Cash", Game.money(S.cash)], ["Rep", str(int(S.rep))], ["Cooler", "%d/%d" % [S.cooler.size(), S.cooler_cap]]]])
 	parts.append(["row", [["Back outside", func(): hud.close(), true, "hot"]]])
 	hud.open(parts)
@@ -521,6 +685,7 @@ func talk_rosa() -> void:
 		["row", [["Thanks, Rosa", func(): hud.close(), true, "hot"]]]])
 
 func _busted(w: Dictionary) -> void:
+	Sound.play("whistle", 0.0, 0.0)
 	fishing.cancel(); player.path.clear()
 	var z := int(w.zone)
 	var off: Dictionary = Game.S.offenses
@@ -541,6 +706,7 @@ func _busted(w: Dictionary) -> void:
 func _on_new_day() -> void:
 	Game.new_order()
 	if Game.tide_day(): hud.flash("King tide today: Low Street floods from 10 AM to 2 PM.")
+	for w in guards.watchers: w.alert = 0.0
 
 ## Sunsplash Jungle: $8 admission from 9 to 6, and staff sweep the park at closing. The restroom is a good place to wait.
 func _park(_dt: float) -> void:
@@ -561,6 +727,10 @@ func _park(_dt: float) -> void:
 
 func _chips() -> Array:
 	var out := []
+	var g := Story.goal_text()
+	if g != "": out.append([g, "coral"])
+	var u := Unlocks.chip()
+	if u != "": out.append([u, "sea"])
 	var o = Game.cur_order()
 	if o != null:
 		out.append(["Lou's order: done ✓" if Game.S.order.done else "Lou wants: %s (%d/%d)" % [o.s, mini(Game.order_matches().size(), int(o.count)), int(o.count)], "paper"])
@@ -569,6 +739,9 @@ func _chips() -> Array:
 	else:
 		var d := 3 - int(Game.S.day) % 4
 		out.append(["Next king tide: " + ("in %d days" % (4 + d) if d <= 0 else "tomorrow" if d == 1 else "in %d days" % d), "sea"])
+	out.append(["Weather: " + Weather.label(), "ink"])
+	var tc := Story.tour_chip()
+	if tc != "": out.append([tc, "paper"])
 	return out
 
 func _draw_flood(ci: CanvasItem) -> void:
@@ -582,12 +755,8 @@ func _draw_flood(ci: CanvasItem) -> void:
 
 func open_home() -> void:
 	var rest := func(h: float):
-		var cur := floorf(Game.S.min / 1440.0)
-		var target := cur * 1440.0 + h * 60.0
-		if target <= Game.S.min + 1: target += 1440.0
-		if floorf(target / 1440.0) != cur: Game.S.day += int(floorf(target / 1440.0) - cur)
-		Game.S.min = target
-		hud.close(); hud.flash("You rest until %s." % Game.clock_text()); Game.save_game()
+		hud.close()
+		menu.fade(func(): Game.skip_to(h); hud.flash("You rest until %s." % Game.clock_text()); Game.save_game(), 0.4, 0.7)
 	hud.open([["h3", "Home sweet home"], ["h2", ["The AC is on.", "Somebody left the TV on.", "It smells like bait in here.", "Home. Feet up."].pick_random()],
 		["p", "Kick back until…"],
 		["item", "Dawn", "The Lunker of the 7th bites at dawn.", "Rest until 6:00 AM", func(): rest.call(6.0), true],
@@ -679,3 +848,112 @@ func _draw_night_glow(ci: CanvasItem) -> void:
 	for lp in Town.lamps:
 		if view.has_point(lp): ci.draw_circle(lp, 0.16, Color(1, 0.9, 0.62, 0.8 * dk / 0.62))
 	if view.has_point(Vector2(51.4, 31.6)): Art.text(ci, Vector2(51.4, 31.6), "OPEN", 0.4, Color(1, 0.4, 0.33, 0.9))
+
+func _view_tiles() -> Rect2:
+	return Rect2(cam.get_screen_center_position() / TS - get_viewport_rect().size / cam.zoom / TS / 2, get_viewport_rect().size / cam.zoom / TS).grow(2)
+
+# ---------- the Mullet Bay Slam ----------
+func _slam_sign() -> void:
+	if Story.sign_up():
+		open_marina(); hud.flash("You're in the Slam. Only fish caught from now on count.")
+
+func _slam_weigh() -> void:
+	var r := Story.weigh_in()
+	if r.is_empty(): return
+	r.append(["row", [["Back outside", func(): hud.close(), true, "hot"]]])
+	hud.open(r)
+
+# ---------- the journal: spots, Lou's Wall of Fame, and the Gazette ----------
+func open_journal() -> void:
+	var S := Game.S
+	var tabs := []
+	for td in [["spots", "Fishing spots"], ["fame", "Wall of Fame"], ["news", "Gazette"]]:
+		var key: String = td[0]
+		tabs.append([td[1], func(): journal_tab = key; open_journal(), journal_tab == key])
+	var parts := [["h3", "Fishing journal"]]
+	match journal_tab:
+		"fame":
+			parts.append(["h2", "Lou's Wall of Fame"]); parts.append(["tabs", tabs])
+			var st: Dictionary = S.stats
+			parts.append(["kv", [["Legends", "%d/%d" % [Story.legends_got(), Story.legends_all()]], ["Species", str(Story.species_got())], ["Junk found", str(Story.junk_got())],
+				["Fish landed", str(st.catches)], ["Busted", str(int(S.busts))], ["Orders filled", str(st.orders)]]])
+			var got := Story.ACH.filter(func(a): return S.ach.has(a[0])).size()
+			parts.append(["head", "Plaques: %d of %d" % [got, Story.ACH.size()]])
+			parts.append(["grid", Story.ACH.map(func(a): return [a[1], a[2] + (" Day %d." % int(S.ach[a[0]]) if S.ach.has(a[0]) else ""), S.ach.has(a[0])])])
+			parts.append(["head", "Slam trophies"])
+			if S.trophies.is_empty(): parts.append(["sub", "No Slam finishes yet. The marina runs one every seventh day."])
+			else:
+				var tr: Array = S.trophies.slice(-8); tr.reverse()
+				parts.append(["lb", tr.map(func(t): return ["Day %d · %s" % [int(t.day), Story.TFMT[t.fmt][0]], "%s · %s" % [Story.ordinal(int(t.place)), Story.fmt_score(t.fmt, t.v)], int(t.place) == 1])])
+		"news":
+			parts.append(["h2", "The Port Mullet Gazette"]); parts.append(["tabs", tabs])
+			if S.news.is_empty(): parts.append(["sub", "Nothing newsworthy yet. Give it time."])
+			for n in S.news: parts.append(["item", n.text, "Day %d" % int(n.day), "", func(): pass, false])
+		_:
+			parts.append(["h2", "%d of %d legends" % [Story.legends_got(), Story.legends_all()]]); parts.append(["tabs", tabs])
+			var keys := Game.spots.keys(); keys.sort()
+			for k in keys:
+				var s: Dictionary = Game.spots[k]
+				var visited: bool = S.visited.has(str(k)) or s.fish.any(func(f): return S.journal.has(f.n) and int(S.journal[f.n].spot) == int(k))
+				parts.append(["head", s.name, "Visited" if visited else "Not visited yet"])
+				parts.append(["chips", s.fish.map(func(f):
+					var j: Variant = S.journal.get(f.n)
+					var leg: bool = f.get("legend", false)
+					var txt: String = (f.n if j != null or not leg else "???") + (" · %s lb" % str(j.w) if j != null else "")
+					return [txt, "got" if j != null else "leg" if leg else ""])])
+	parts.append(["row", [["Close", func(): hud.close(), true, "hot"], ["Map (M)", open_map]]])
+	hud.open(parts)
+
+# ---------- the map ----------
+var _zone_tex: ImageTexture
+var map_view: MapView
+func open_map() -> void:
+	if _zone_tex == null:
+		var img := Image.create(Town.MW, Town.MH, false, Image.FORMAT_RGBA8)
+		for y in Town.MH:
+			for x in Town.MW:
+				if Town.zone[Town.idx(x, y)] > 0: img.set_pixel(x, y, Color(0.89, 0.25, 0.2, 0.32))
+		_zone_tex = ImageTexture.create_from_image(img)
+	map_view = MapView.new(self)
+	map_view.locked = Unlocks.map_overlay() if Unlocks.step() < Unlocks.LAST else null
+	map_view.custom_minimum_size = Vector2(0, get_viewport_rect().size.y - 250)
+	hud.open([["h3", "Port Mullet · drag to move, scroll or + and − to zoom"], ["node", map_view],
+		["sub", "Orange dot: you. Red: private, keep your head down. Blue squares: bus stops. Lou's is the red roof by the main road; downtown and the bay are way down south." + ("" if Unlocks.step() >= Unlocks.LAST else " Grey: closed for now. " + Unlocks.goal() + ".")],
+		["row", [["Close", func(): hud.close(), true, "hot"], ["Journal (J)", open_journal]]]], true)
+
+# ---------- the Route 1 bus ----------
+func open_bus(i: int) -> void:
+	var parts := [["h3", "Route 1 bus · " + Story.BUS[i][0]], ["h2", "\"Exact change, pal.\""],
+		["p", "Two dollars to anywhere on the line. The ride takes about 25 minutes, and the driver doesn't want to hear about your fish."]]
+	for j in Story.BUS.size():
+		if j == i: continue
+		var jj := j
+		var open := Unlocks.open_p(Story.BUS[j][1])
+		parts.append(["item", Story.BUS[j][0], Story.BUS[j][2] if open else "Road closed for now. " + Unlocks.goal() + ".", "Ride ($2)" if open else "Closed", func(): _ride_bus(jj), Game.S.cash >= 2 and open])
+	parts.append(["row", [["Walk instead", func(): hud.close(), true, "hot"]]])
+	hud.open(parts)
+
+func _ride_bus(i: int) -> void:
+	if Game.S.cash < 2: return
+	hud.close()
+	menu.fade(func(): _arrive_bus(i), 0.35, 0.6)
+
+func _arrive_bus(i: int) -> void:
+	Sound.play("bus")
+	Game.S.cash -= 2
+	Game.skip_minutes(25)
+	Game.S.boat = false
+	player.position = Story.BUS[i][1]; player.path.clear()
+	cam.position = player.position * TS; cam.reset_smoothing()
+	for w in guards.watchers: w.alert = 0.0
+	hud.close(); hud.flash("The bus wheezes to a stop: %s." % Story.BUS[i][0]); Game.save_game()
+
+static func draw_bus_stop(ci: CanvasItem, p: Vector2) -> void:
+	p = p - Vector2(0, 0.5)
+	ci.draw_rect(Rect2(p.x - 0.5, p.y - 0.1, 1.25, 0.42), Color(0, 0, 0, 0.2))
+	ci.draw_rect(Rect2(p.x - 0.6, p.y - 0.3, 1.2, 0.36), Color("#2b7ea6"))
+	ci.draw_rect(Rect2(p.x - 0.52, p.y - 0.24, 1.04, 0.12), Color("#9fd3f0"))
+	ci.draw_rect(Rect2(p.x - 0.45, p.y + 0.04, 0.9, 0.1), Color("#8a5a35"))
+	ci.draw_rect(Rect2(p.x + 0.66, p.y - 0.5, 0.05, 0.7), Color("#6b5034"))
+	ci.draw_circle(Vector2(p.x + 0.685, p.y - 0.55), 0.18, Color("#2b7ea6"))
+	Art.text(ci, Vector2(p.x + 0.685, p.y - 0.51), "BUS", 0.13, Color.WHITE)

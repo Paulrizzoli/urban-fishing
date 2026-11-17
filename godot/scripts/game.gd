@@ -4,10 +4,16 @@ extends Node
 signal news(text: String)
 signal hint(text: String)
 signal new_day
+signal saved
+signal toast(text: String, mast: String)
 
 var hoa_open := false
 var orders: Array = []
 var tips2: Array = []
+var version: String = ProjectSettings.get_setting("application/config/version", "dev")
+var skip_title := false   # set by New game, so the reload goes straight into the game
+var flashes := true       # lightning flashes (a setting)
+var wx := { "k": "sunny", "rain": 0.0, "cloud": 0.1, "storm": false }
 
 const SAVE_PATH := "user://urban_fishing_save.json"
 const TS := 32.0                      # pixels per tile
@@ -46,20 +52,30 @@ func fresh() -> Dictionary:
 	return { "day": 1, "min": 6 * 60 + 30.0, "cash": 30, "rep": 0, "x": 48.5, "y": 33.2, "face": PI / 2, "gear": {}, "cooler_cap": 5,
 		"cooler": [], "journal": {}, "bait": "worms", "started": false, "news": [],
 		"boat": false, "boat_kind": "kayak", "offenses": {}, "order": {}, "park_day": 0, "swept_day": 0, "story": {}, "story_day": 0, "story_told": false,
-		"tips_heard": 0, "rosa": 0, "visited": {}, "busts": 0 }
+		"tips_heard": 0, "rosa": 0, "visited": {}, "busts": 0, "unlock": 1 }.merged(Story.fresh_state())
 
 func load_game() -> void:
 	S = fresh()
 	if FileAccess.file_exists(SAVE_PATH):
 		var f := FileAccess.open(SAVE_PATH, FileAccess.READ)
 		var d: Variant = JSON.parse_string(f.get_as_text())
-		if d is Dictionary: S.merge(d, true)
+		if d is Dictionary:
+			# merge one level deep, so older saves pick up new story and stats fields
+			for k in d:
+				if S.has(k) and S[k] is Dictionary and d[k] is Dictionary and k in ["saga", "act2", "stats"]: S[k].merge(d[k], true)
+				else: S[k] = d[k]
+			# saves from before the map opened up in steps keep the whole town
+			if not d.has("unlock"): S.unlock = Unlocks.LAST
 	# JSON brings every number back as a float; keep the counters whole
-	for k in ["day", "cash", "rep", "cooler_cap"]: S[k] = int(S[k])
+	for k in ["day", "cash", "rep", "cooler_cap", "unlock"]: S[k] = int(S[k])
+	for k in ["ch", "paid_ch", "left", "fin_day"]: S.saga[k] = int(S.saga[k])
+	for k in ["ch", "since"]: S.act2[k] = int(S.act2[k])
+	for k in S.stats: S.stats[k] = int(S.stats[k])
+	wx = Weather.compute(int(S.day), hour())
 
 func save_game() -> void:
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
-	if f: f.store_string(JSON.stringify(S))
+	if f: f.store_string(JSON.stringify(S)); saved.emit()
 
 func reset() -> void:
 	S = fresh(); save_game()
@@ -87,7 +103,38 @@ func advance(dt: float) -> void:
 	S.min += dt * MINUTES_PER_SECOND
 	if int(S.min / 1440.0) != int(before / 1440.0):
 		S.day += 1
-		new_day.emit()
+		_on_new_day()
+	wx = Weather.compute(int(S.day), hour())
+
+## Skip ahead to the next time the clock reads `h` hours (resting, the bus, waking up somewhere).
+func skip_to(h: float) -> void:
+	var cur := floorf(S.min / 1440.0)
+	var target := cur * 1440.0 + h * 60.0
+	if target <= S.min + 1: target += 1440.0
+	skip_minutes(target - S.min)
+
+func skip_minutes(m: float) -> void:
+	var before: float = S.min
+	S.min += m
+	for i in int(floorf(S.min / 1440.0) - floorf(before / 1440.0)):
+		S.day += 1
+		_on_new_day()
+	wx = Weather.compute(int(S.day), hour())
+
+func _on_new_day() -> void:
+	if tide_day(): add_news("King Tide Expected on Low Street Today, 10 AM to 2 PM")
+	var f := Weather.forecast_news(int(S.day))
+	if f != "": add_news(f)
+	if Story.tour_day(int(S.day)): add_news("Mullet Bay Slam Today at the Marina: %s. Sign-Ups Close at Noon" % Story.TFMT[Story.tour_fmt(int(S.day))][0])
+	elif Story.tour_day(int(S.day) + 1): add_news("Mullet Bay Slam Tomorrow; TV Angler Trent Marlowe 'Already Practicing His Speech'")
+	if int(S.day) == 3 and int(S.saga.ch) == 0: hint.emit("Lou called. He sounds worried. Stop by the shop.")
+	new_day.emit()
+
+## Adds a headline to the Port Mullet Gazette (the journal's news tab) and pops it up.
+func add_news(text: String) -> void:
+	S.news.push_front({ "day": S.day, "text": text })
+	if S.news.size() > 30: S.news.resize(30)
+	toast.emit(text, "PORT MULLET GAZETTE · DAY %d" % int(S.day))
 
 # ---------- the king tide floods Low Street every fourth day, 10 AM to 2 PM ----------
 func tide_day() -> bool: return int(S.day) % 4 == 3
@@ -109,8 +156,17 @@ func new_order() -> void:
 	for i in orders.size():
 		var o: Dictionary = orders[i]
 		var need: String = o.get("need", "")
-		if need == "" or (need == "downtown" and S.visited.has("dt")) or S.gear.has(need): pool.append(i)
+		if (need == "" or (need == "downtown" and S.visited.has("dt")) or S.gear.has(need)) and order_possible(o): pool.append(i)
+	if pool.is_empty(): pool = [0]
 	S.order = { "day": S.day, "i": pool.pick_random(), "done": false }
+## True if some fish in the open part of town could fill the order.
+func order_possible(o: Dictionary) -> bool:
+	for sid in spots:
+		if not Unlocks.spot_open(sid): continue
+		for f in spots[sid].fish:
+			if order_match(o, { "n": f.n, "junk": f.get("junk", false), "w": 9999.0, "spot": sid }): return true
+	return false
+
 func order_match(o: Dictionary, c: Dictionary) -> bool:
 	var m: Dictionary = o.match
 	if m.has("name") and c.n != m.name: return false

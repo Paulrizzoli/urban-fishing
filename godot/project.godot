@@ -5,12 +5,14 @@ config_version=5
 
 config/name="Urban Fishing"
 config/description="A Florida fishing-and-sneaking game set in Port Mullet."
+config/version="0.6.0"
 run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.4", "GL Compatibility")
 
 [autoload]
 
 Game="*res://scripts/game.gd"
+Sound="*res://scripts/sound.gd"
 
 [display]
 

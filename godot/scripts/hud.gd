@@ -29,6 +29,13 @@ var boat_text := ""
 var chips: Array = []
 var boat_btn: Button
 var chip_box: VBoxContainer
+var toast_panel: PanelContainer
+var toast_mast: Label
+var toast_head: Label
+var toast_q: Array = []
+var toast_t := 0.0
+var saved_label: Label
+var bar: PanelContainer
 
 func _ready() -> void:
 	layer = 10
@@ -39,7 +46,7 @@ func _ready() -> void:
 	root.theme = theme_
 	add_child(root)
 	# top bar
-	var bar := PanelContainer.new()
+	bar = PanelContainer.new()
 	bar.add_theme_stylebox_override("panel", _box(PAPER, INK, 0, 0, Vector4(0, 0, 0, 4), CORAL))
 	bar.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	root.add_child(bar)
@@ -103,6 +110,33 @@ func _ready() -> void:
 	action.button_up.connect(func(): action_released.emit())
 	action.focus_mode = Control.FOCUS_NONE
 	dock.add_child(action)
+	# the Gazette / Wall of Fame pop-up, top right
+	toast_panel = PanelContainer.new()
+	toast_panel.add_theme_stylebox_override("panel", _box(PAPER, INK, 6, 2, Vector4.ZERO, Color.TRANSPARENT, 14, 10, 4))
+	toast_panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	toast_panel.offset_left = -376; toast_panel.offset_right = -16; toast_panel.offset_top = 66
+	toast_panel.custom_minimum_size = Vector2(360, 0)
+	toast_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	toast_panel.visible = false
+	var tv := VBoxContainer.new(); tv.add_theme_constant_override("separation", 4)
+	toast_mast = _label("", 11, CORAL); toast_mast.add_theme_font_override("font", Game.font_bold)
+	var rule := ColorRect.new(); rule.color = INK; rule.custom_minimum_size = Vector2(0, 2)
+	toast_head = _label("", 19, INK); toast_head.add_theme_font_override("font", Game.font_display)
+	tv.add_child(toast_mast); tv.add_child(rule); tv.add_child(toast_head)
+	toast_panel.add_child(tv)
+	root.add_child(toast_panel)
+	# the autosave indicator, bottom right
+	saved_label = Label.new()
+	saved_label.text = "✓ Saved"
+	saved_label.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	saved_label.offset_left = -120; saved_label.offset_top = -46; saved_label.offset_right = -16; saved_label.offset_bottom = -16
+	saved_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	saved_label.add_theme_font_override("font", Game.font_bold)
+	saved_label.add_theme_font_size_override("font_size", 13)
+	saved_label.add_theme_color_override("font_color", Color.WHITE)
+	saved_label.add_theme_stylebox_override("normal", _box(Color(INK, 0.8), Color(0, 0, 0, 0), 999, 0, Vector4.ZERO, Color.TRANSPARENT, 10, 4))
+	saved_label.modulate.a = 0
+	root.add_child(saved_label)
 	# modal card
 	modal = Control.new()
 	modal.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -178,8 +212,8 @@ func refresh(near: String) -> void:
 	var col := SUN
 	match st:
 		"idle":
-			label = { "fish": "Cast", "shop": "Enter Lou's", "home": "Go inside", "marina": "Enter the marina", "oldtimer": "Talk to the old-timer", "rosa": "Talk to Rosa" }.get(near, "")
-			if near in ["oldtimer", "rosa", "marina"]: col = TEAL
+			label = { "fish": "Cast", "shop": "Enter Lou's", "home": "Go inside", "marina": "Enter the marina", "oldtimer": "Talk to the old-timer", "rosa": "Talk to Rosa", "bus": "Ride the bus" }.get(near, "")
+			if near in ["oldtimer", "rosa", "marina", "bus"]: col = TEAL
 		"power": label = "Release!"
 		"wait": label = "Retrieving…" if fishing.holding else "Twitch the lure"; col = PAPER
 		"nibble": label = "Wait for it…"; col = PAPER
@@ -197,7 +231,7 @@ func refresh(near: String) -> void:
 	else:
 		var m := ""
 		match st:
-			"idle": m = { "fish": "Cooler's full. Sell at Lou's." if S.cooler.size() >= S.cooler_cap else "Press F or Space to cast. B switches bait.", "shop": "Lou's Bait & Tackle. Press E or F to go in.", "home": "Home. Press E or F to go inside.", "marina": "Mullet Bay Marina. Press E to go in.", "oldtimer": "Press E to talk.", "rosa": "Press E to talk." }.get(near, "")
+			"idle": m = { "fish": "Cooler's full. Sell at Lou's." if S.cooler.size() >= S.cooler_cap else "Press F or Space to cast. B switches bait.", "shop": "Lou's Bait & Tackle. Press E or F to go in.", "home": "Home. Press E or F to go inside.", "marina": "Mullet Bay Marina. Press E to go in.", "oldtimer": "Press E to talk.", "rosa": "Press E to talk.", "bus": "Route 1 bus stop. Press E to ride. M for the map, J for the journal." }.get(near, "")
 			"power": m = "Release in the green to land right on the fish. ◀ ▶ or click the water to aim." if fishing.tgt != null else "No fish in line. ◀ ▶ to aim at a shadow, or click the water."
 			"wait": m = "Something's coming over…" if fishing.target != null else "Tap to twitch the lure. Hold to reel it back in."
 			"nibble": m = "It's nibbling… wait for the big dip."
@@ -209,7 +243,30 @@ func refresh(near: String) -> void:
 	boat_btn.visible = boat_text != ""
 	boat_btn.text = boat_text
 	_update_chips()
+	_update_toast()
 	meters.queue_redraw()
+
+func show_saved() -> void:
+	var tw := create_tween()
+	tw.tween_property(saved_label, "modulate:a", 1.0, 0.25)
+	tw.tween_interval(1.2)
+	tw.tween_property(saved_label, "modulate:a", 0.0, 0.6)
+
+func toast(text: String, mast: String) -> void:
+	toast_q.append([text, mast])
+
+func _update_toast() -> void:
+	var dt := get_process_delta_time()
+	if toast_t > 0:
+		toast_t -= dt
+		toast_panel.modulate.a = clampf(minf(toast_t, 5.0 - toast_t) * 3.0, 0, 1)
+		if toast_t <= 0: toast_panel.visible = false
+		return
+	if toast_q.is_empty() or is_open(): return
+	var t: Array = toast_q.pop_front()
+	toast_head.text = t[0]; toast_mast.text = t[1]
+	Sound.play("plaque" if t[1].begins_with("LOU'S WALL") else "paper")
+	toast_panel.visible = true; toast_t = 5.0
 
 func _update_chips() -> void:
 	while chip_box.get_child_count() < chips.size():
@@ -276,8 +333,14 @@ func close() -> void:
 
 ## Opens a card. parts: [["h3", text], ["h2", text], ["p", text], ["sub", text], ["quote", text],
 ## ["kv", [[k, v], ...]], ["row", [[label, callable, enabled, style], ...]], ["item", name, desc, button, callable, enabled]]
-func open(parts: Array) -> void:
+## wide: the card fills most of the window (the map uses this). ["node", control] adds a ready-made control.
+func open(parts: Array, wide := false) -> void:
 	for c in card_box.get_children(): c.queue_free()
+	var scroll: Control = card_box.get_parent()
+	var cardc: Control = scroll.get_parent()
+	var vs := get_viewport().get_visible_rect().size
+	cardc.custom_minimum_size.x = vs.x - 80 if wide else 620.0
+	scroll.custom_minimum_size.x = vs.x - 124 if wide else 600.0
 	var first_btn: Button = null
 	for p in parts:
 		match p[0]:
@@ -320,14 +383,140 @@ func open(parts: Array) -> void:
 				hb.add_child(b)
 				card_box.add_child(hb)
 				var sep := HSeparator.new(); sep.add_theme_color_override("separator", LINE); card_box.add_child(sep)
+			"node": card_box.add_child(p[1])
+			"pic":
+				var pc := Control.new()
+				pc.custom_minimum_size = Vector2(0, p[2])
+				pc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				var fn: Callable = p[1]
+				pc.draw.connect(func(): fn.call(pc))
+				pc.resized.connect(pc.queue_redraw)
+				if p.size() > 3 and p[3]: pc.set_process(true); pc.add_child(_redrawer(pc))
+				card_box.add_child(pc)
+			"goal":
+				# [title, side note, progress 0..1 or -1, optional body]
+				var gp := PanelContainer.new()
+				gp.add_theme_stylebox_override("panel", _box(PAPER2, Color.TRANSPARENT, 10, 0, Vector4(4, 0, 0, 0), CORAL, 14, 10))
+				var gv := VBoxContainer.new(); gv.add_theme_constant_override("separation", 6)
+				var top := HBoxContainer.new()
+				var gt := _label("Goal" if p.size() <= 4 else p[1], 15, INK); gt.add_theme_font_override("font", Game.font_bold); gt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				top.add_child(gt)
+				if p[2] != "":
+					var side := _label(p[2], 13, MUTED); side.autowrap_mode = TextServer.AUTOWRAP_OFF; side.custom_minimum_size.x = 0; top.add_child(side)
+				gv.add_child(top)
+				gv.add_child(_label(p[1] if p.size() <= 4 else p[4], 16, INK))
+				if p[3] >= 0:
+					var bar := Control.new(); bar.custom_minimum_size = Vector2(0, 14)
+					var frac: float = p[3]
+					bar.draw.connect(func():
+						bar.draw_rect(Rect2(Vector2.ZERO, bar.size), Color("#e9dcc0"))
+						bar.draw_rect(Rect2(Vector2.ZERO, Vector2(bar.size.x * clampf(frac, 0, 1), bar.size.y)), TEAL)
+						bar.draw_rect(Rect2(Vector2.ZERO, bar.size), INK, false, 2))
+					gv.add_child(bar)
+				gp.add_child(gv); card_box.add_child(gp)
+			"lb":
+				var lv := VBoxContainer.new(); lv.add_theme_constant_override("separation", 4)
+				var i := 0
+				for r in p[1]:
+					i += 1
+					var rp := PanelContainer.new()
+					rp.add_theme_stylebox_override("panel", _box(SUN if r[2] else PAPER2, Color.TRANSPARENT, 8, 0, Vector4.ZERO, Color.TRANSPARENT, 12, 6))
+					var rh := HBoxContainer.new()
+					var n := _label("%d. %s" % [i, r[0]], 15, INK); n.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+					var v := _label(r[1], 15, INK); v.add_theme_font_override("font", Game.font_bold); v.custom_minimum_size.x = 0; v.autowrap_mode = TextServer.AUTOWRAP_OFF
+					rh.add_child(n); rh.add_child(v); rp.add_child(rh); lv.add_child(rp)
+				card_box.add_child(lv)
+			"grid":
+				# plaques: [[title, desc, got], ...]
+				var g := GridContainer.new(); g.columns = 2
+				g.add_theme_constant_override("h_separation", 8); g.add_theme_constant_override("v_separation", 8)
+				for a in p[1]:
+					var cell := PanelContainer.new()
+					cell.add_theme_stylebox_override("panel", _box(Color("#fff4cf") if a[2] else PAPER2, SUN if a[2] else Color.TRANSPARENT, 8, 2 if a[2] else 0, Vector4.ZERO, Color.TRANSPARENT, 10, 6))
+					cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+					var v := VBoxContainer.new(); v.add_theme_constant_override("separation", 0)
+					var tl := _label(("★ " if a[2] else "") + a[0], 14, INK if a[2] else MUTED); tl.add_theme_font_override("font", Game.font_bold)
+					v.add_child(tl); v.add_child(_label(a[1], 12, MUTED))
+					cell.add_child(v); g.add_child(cell)
+				card_box.add_child(g)
+			"chips":
+				# a flowing row of small tags: [[text, style], ...] with style "got", "leg" or ""
+				var fl := HFlowContainer.new()
+				fl.add_theme_constant_override("h_separation", 6); fl.add_theme_constant_override("v_separation", 6)
+				for c in p[1]:
+					var st: String = c[1]
+					var l := _label(c[0], 12, Color.WHITE if st == "got" else INK)
+					l.custom_minimum_size.x = 0
+					l.autowrap_mode = TextServer.AUTOWRAP_OFF
+					var bg := TEAL if st == "got" else Color("#fff4cf") if st == "leg" else PAPER2
+					l.add_theme_stylebox_override("normal", _box(bg, SUN if st == "leg" else Color.TRANSPARENT, 999, 2 if st == "leg" else 0, Vector4.ZERO, Color.TRANSPARENT, 9, 3))
+					fl.add_child(l)
+				card_box.add_child(fl)
+			"keys":
+				var g := GridContainer.new(); g.columns = 2
+				g.add_theme_constant_override("h_separation", 14); g.add_theme_constant_override("v_separation", 8)
+				for kd in p[1]:
+					var kc := _label(kd[0], 14, INK); kc.add_theme_font_override("font", Game.font_bold)
+					kc.autowrap_mode = TextServer.AUTOWRAP_OFF; kc.custom_minimum_size = Vector2(150, 0)
+					kc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+					var ks := _box(Color.WHITE, INK, 6, 2, Vector4.ZERO, Color.TRANSPARENT, 8, 4)
+					ks.border_width_bottom = 4
+					kc.add_theme_stylebox_override("normal", ks)
+					var ka := _label(kd[1], 15, INK); ka.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+					ka.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+					g.add_child(kc); g.add_child(ka)
+				card_box.add_child(g)
+			"vol":
+				# [label, 0..10, callable(new value)]
+				var vh := HBoxContainer.new(); vh.add_theme_constant_override("separation", 10)
+				var vl := _label(p[1], 15, INK); vl.custom_minimum_size.x = 110; vl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+				vh.add_child(vl)
+				var cbv: Callable = p[3]
+				var val: int = p[2]
+				var minus := _button("−", func(): cbv.call(val - 1), val > 0); minus.custom_minimum_size.x = 44
+				vh.add_child(minus)
+				var vbar := Control.new(); vbar.custom_minimum_size = Vector2(0, 22); vbar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				vbar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+				vbar.draw.connect(func():
+					var w := (vbar.size.x - 9 * 4) / 10.0
+					for i in 10: vbar.draw_rect(Rect2(i * (w + 4), 0, w, vbar.size.y), TEAL if i < val else Color("#e9dcc0")))
+				vbar.mouse_filter = Control.MOUSE_FILTER_STOP
+				vbar.gui_input.connect(func(ev):
+					if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+						cbv.call(clampi(ceili(ev.position.x / vbar.size.x * 10.0), 0, 10)))
+				vh.add_child(vbar)
+				var plus := _button("+", func(): cbv.call(val + 1), val < 10); plus.custom_minimum_size.x = 44
+				vh.add_child(plus)
+				var pct := _label("%d%%" % (val * 10), 14, MUTED); pct.custom_minimum_size.x = 48; pct.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+				vh.add_child(pct)
+				card_box.add_child(vh)
+			"head":
+				var hl := _label(p[1], 15, INK); hl.add_theme_font_override("font", Game.font_bold)
+				var hr := HBoxContainer.new(); hl.size_flags_horizontal = Control.SIZE_EXPAND_FILL; hr.add_child(hl)
+				if p.size() > 2:
+					var hs := _label(p[2], 13, MUTED); hs.autowrap_mode = TextServer.AUTOWRAP_OFF; hs.custom_minimum_size.x = 0; hr.add_child(hs)
+				card_box.add_child(hr)
 			"tabs":
 				var hb := HBoxContainer.new(); hb.add_theme_constant_override("separation", 6)
 				for tdef in p[1]:
 					var b := _button(tdef[0], tdef[1], true, "ink" if tdef[2] else "")
 					hb.add_child(b)
 				card_box.add_child(hb)
-	modal.visible = true
+	if not modal.visible:
+		modal.visible = true
+		modal.modulate.a = 0
+		var card: Control = card_box.get_parent().get_parent()
+		card.pivot_offset = card.size / 2
+		card.scale = Vector2(0.96, 0.96)
+		var tw := create_tween().set_parallel()
+		tw.tween_property(modal, "modulate:a", 1.0, 0.12)
+		tw.tween_property(card, "scale", Vector2.ONE, 0.16).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	if first_btn: first_btn.grab_focus.call_deferred()
+
+func _redrawer(c: Control) -> Node:
+	var tm := Timer.new(); tm.wait_time = 0.05; tm.autostart = true
+	tm.timeout.connect(c.queue_redraw)
+	return tm
 
 func _label(s: String, size: int, col: Color) -> Label:
 	var l := Label.new()
@@ -350,5 +539,12 @@ func _button(s: String, cb: Callable, enabled: bool, style := "") -> Button:
 		b.add_theme_stylebox_override("hover", sb)
 		var fc := Color.WHITE if style in ["go", "ink", "teal"] else INK
 		for k in ["font_color", "font_hover_color", "font_focus_color", "font_pressed_color", "font_hover_pressed_color"]: b.add_theme_color_override(k, fc)
+	b.pressed.connect(func(): Sound.play("ui_click", -4))
 	b.pressed.connect(cb)
+	# a little lift on hover and a squish on press
+	b.resized.connect(func(): b.pivot_offset = b.size / 2)
+	b.mouse_entered.connect(func(): if not b.disabled: Sound.play("ui_hover", -6); create_tween().tween_property(b, "scale", Vector2(1.03, 1.03), 0.08))
+	b.mouse_exited.connect(func(): create_tween().tween_property(b, "scale", Vector2.ONE, 0.1))
+	b.button_down.connect(func(): create_tween().tween_property(b, "scale", Vector2(0.97, 0.97), 0.05))
+	b.button_up.connect(func(): create_tween().tween_property(b, "scale", Vector2(1.03, 1.03) if b.is_hovered() else Vector2.ONE, 0.08))
 	return b

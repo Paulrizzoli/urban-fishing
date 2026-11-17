@@ -52,7 +52,7 @@ func active(w: Dictionary) -> bool:
 func is_night() -> bool: return Game.darkness() > 0.3
 
 func radius(w: Dictionary) -> float:
-	return float(w.rNight) if is_night() and w.has("rNight") else float(w.r)
+	return (float(w.rNight) if is_night() and w.has("rNight") else float(w.r)) * (1.0 - 0.3 * Game.wx.rain)
 
 func in_hiding() -> bool:
 	var t := Town.t_at(floori(player.position.x), floori(player.position.y))
@@ -95,7 +95,9 @@ func hoa_gate_open() -> bool: return hoa_t > 1.8 and hoa_t < 4.7
 func update(dt: float) -> void:
 	var was_plane := plane_t < 5
 	plane_t = fmod(plane_t + dt, PLANE_CYCLE)
-	if plane_t < 5 and not was_plane and player.position.distance_to(Vector2(96, 99)) < 45 and zone_at(player.position) == 7: plane_hint = true
+	if plane_t < 5 and not was_plane and player.position.distance_to(Vector2(96, 99)) < 45:
+		Sound.play("jet", -2.0 if zone_at(player.position) == 7 else -8.0)
+		if zone_at(player.position) == 7: plane_hint = true
 	hoa_t = fmod(hoa_t + dt, HOA_CYCLE)
 	Game.hoa_open = hoa_gate_open()
 	var t := Time.get_ticks_msec() / 1000.0

@@ -216,9 +216,11 @@ func release_cast() -> void:
 	if not is_water(p):
 		state = "idle"
 		var tt := Town.t_at(floori(p.x), floori(p.y))
+		Sound.play("cast")
 		emit_signal("message", "Snagged a bush. Reel it back and try again." if tt == Town.T.BUSH or tt == Town.T.TREE else "That landed on dry land. Try again.")
 		return
 	bob = p; spot = region_at(p); state = "wait"; t = 0.0; wait_t = 0.0; target = null; blind = false; twitch = 0.0
+	Sound.play("cast"); Sound.play_later("plop", 0.22, -2.0 if quiet else 2.0)
 	splash = 0.35 if quiet else 0.7; splash_big = not quiet
 	if not quiet:
 		for s in shadows:
@@ -245,9 +247,10 @@ func action_down() -> void:
 			if is_water(n): bob = n
 			splash = 0.25; splash_big = false
 		"nibble":
-			emit_signal("message", "Too early! It spat the hook.")
+			emit_signal("message", "Too early! It spat the hook."); Sound.play("splash", -4)
 			drop_target(6); state = "wait"; wait_t = 0.0; t = 0.0; blind = false
 		"bite":
+			Sound.play("splash")
 			state = "reel"; tension = 0.35; progress = 0.3; ang = 0.0; run = 0.0; run_t = randf_range(0.6, 1.4); thrash_t = randf_range(1.0, 2.2); holding = true
 			bob0 = bob
 			var a: float = (bob - player.position).angle()
@@ -288,20 +291,20 @@ func update(dt: float) -> void:
 					if s.reg != spot or s.wary > 0 or s.spook > 0 or s.fade < 0.6 or s.leaving: continue
 					var R := 2.3 + (0.8 if Game.bait_mul(s.fish) > 1 else 0.0) + (1.6 if twitch > 0 else 0.0)
 					if s.pos.distance_to(bob) > R: continue
-					var rate: float = (0.22 if s.fish.get("legend", false) else 0.45 if s.fish.pull > 0.6 else 0.85) * (2.0 if twitch > 0 and not s.fish.get("legend", false) else 1.0) * Game.bait_mul(s.fish) * (1.0 if quiet else 0.6)
+					var rate: float = (0.22 if s.fish.get("legend", false) else 0.45 if s.fish.pull > 0.6 else 0.85) * (2.0 if twitch > 0 and not s.fish.get("legend", false) else 1.0) * Game.bait_mul(s.fish) * (1.0 if quiet else 0.6) * (1.0 + 0.7 * Game.wx.rain)
 					if randf() < rate * dt: s.go = true; target = s; break
 				if target == null and wait_t > 14 and randf() < dt * 0.25:
 					var f = pick_fish(spot, func(x): return x.get("junk", false) or (not x.get("legend", false) and x.pull <= 0.55))
-					if f != null: fish = f; fw = fish_weight(f); blind = true; state = "nibble"; t = 0.0; nib = randf_range(0.3, 0.9)
+					if f != null: fish = f; fw = fish_weight(f); blind = true; state = "nibble"; t = 0.0; nib = randf_range(0.3, 0.9); Sound.play("nibble")
 			elif target.leaving or target.gone or target.spook > 0: drop_target(0)
 			elif target.pos.distance_to(bob) < 0.32:
-				state = "nibble"; t = 0.0; nib = randf_range(0.4, 1.3) * (1.5 if target.fish.get("legend", false) else 1.0); blind = false
+				state = "nibble"; t = 0.0; nib = randf_range(0.4, 1.3) * (1.5 if target.fish.get("legend", false) else 1.0); blind = false; Sound.play("nibble")
 		"nibble":
 			t += dt
 			if target != null: target.pos = bob - Vector2.from_angle(target.dir) * target.len * 0.45
 			if t >= nib:
 				if target != null: fish = target.fish; fw = target.w
-				state = "bite"; t = 0.0; splash = 0.6; splash_big = true
+				state = "bite"; t = 0.0; splash = 0.6; splash_big = true; Sound.play("bite")
 		"bite":
 			t += dt
 			if target != null: target.pos = bob - Vector2.from_angle(target.dir) * target.len * 0.45
@@ -325,17 +328,17 @@ func update(dt: float) -> void:
 			if side >= 1: tension += 0.3; ang *= 0.4; emit_signal("message", "It ran the line sideways! Pull the other way.")
 			thrash_t -= dt
 			if thrash_t <= 0:
-				tension += fp * 0.32 * rt; splash = 0.45; splash_big = true; thrash_t = randf_range(1.1, 3.0) / (0.55 + fp)
+				tension += fp * 0.32 * rt; splash = 0.45; splash_big = true; Sound.play("splash", -3); thrash_t = randf_range(1.1, 3.0) / (0.55 + fp)
 			tension = maxf(0.0, tension)
 			var k := clampf(progress, 0, 1) * 0.85
 			bob = bob0 + (shore - bob0) * k + perp * ang * 1.6
 			if target != null:
 				target.pos = bob; target.dir = (bob - player.position).angle() + ang * 0.8 + sin(target.wob) * 0.4
 			if tension >= 1:
-				state = "idle"; holding = false; drop_target(20)
+				state = "idle"; holding = false; drop_target(20); Sound.play("snap")
 				emit_signal("message", "Snap! The line broke." + (" That felt like something legendary." if fish.get("legend", false) else ""))
 			elif progress <= 0:
-				state = "idle"; holding = false; drop_target(20); emit_signal("message", "It got away.")
+				state = "idle"; holding = false; drop_target(20); emit_signal("message", "It got away."); Sound.play("splash")
 			elif progress >= 1: _land()
 	if state == "idle": bob = null
 	queue_redraw()
@@ -344,13 +347,15 @@ func _land() -> void:
 	var f: Dictionary = fish
 	var w := fw if fw > 0 else fish_weight(f)
 	state = "idle"; holding = false
+	Sound.play("legend" if f.get("legend", false) else "catch", 0.0, 0.0)
 	if target != null: target.gone = true; target = null
 	var value: int = int(f.flat) if f.has("flat") else maxi(1, int(round(w * f.pp)))
 	var rec: Dictionary = Game.S.journal.get(f.n, {})
 	var is_record: bool = rec.is_empty() or w > rec.w
 	Game.S.journal[f.n] = { "w": maxf(w, rec.get("w", 0.0)), "spot": spot, "n": rec.get("n", 0) + 1, "legend": f.get("legend", false) }
 	emit_signal("landed", { "n": f.n, "w": w, "value": value, "spot": spot, "legend": f.get("legend", false), "junk": f.get("junk", false),
-		"release": f.get("release", false), "rep": f.get("rep", 1), "note": f.get("note", ""), "record": is_record, "day": Game.S.day })
+		"release": f.get("release", false), "rep": f.get("rep", 1), "note": f.get("note", ""), "record": is_record, "day": Game.S.day, "tm": Game.S.min,
+		"mutant": f.get("mutant", false), "pull": f.pull })
 
 # ---------- drawing ----------
 func _draw() -> void:
