@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.13 | Nov 17, 2026 | Fish that bump off the edge and swim away instead of circling into walls |
 | v0.9.12 | Nov 17, 2026 | Town traffic: cars driving the streets, with headlights at night |
 | v0.9.11 | Nov 17, 2026 | A desktop icon: a bobber in a Port Mullet sunset |
 | v0.9.10 | Nov 17, 2026 | Life on the water: wakes, ripples, jumping fish, a bobbing float and reflections |
@@ -37,6 +38,16 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.13 · Fish that bounce off the edges
+
+_Nov 17, 2026 · Builds: `UrbanFishing-v0.9.13-windows.zip`, `UrbanFishing-v0.9.13-godot-project.zip`_
+
+- Fish shadows no longer get stuck swimming into a wall or a corner over and over in a circle. When one reaches the edge it bumps off, like a ball off a wall, turns away and swims back out into open water before picking somewhere new to go
+- Fish only set off for places they can reach in a straight line, so they don't aim across an island, a point or a bend in the bank
+- A fish spooked by a splash now darts away along open water instead of straight into the bank behind it
+- On the curved shores (the beaches, Bird Key and the round Maple Park Pond) fish keep to the water you can see, so their nose no longer pokes into the sand or grass
+- A fish heading for your bait that keeps hitting the bank gives up instead of pushing into it
 
 ## v0.9.12 · Town traffic
 
