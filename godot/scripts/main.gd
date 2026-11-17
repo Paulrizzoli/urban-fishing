@@ -40,6 +40,7 @@ var weather: Weather
 var ground_tex: Texture2D
 var ground_mat: ShaderMaterial
 var water_fx: WaterFx
+var traffic: Traffic
 var glow_tex: GradientTexture2D
 var open_lamps: Array = []    # street lamps whose glow isn't hidden behind a tower
 var ach_t := 0.0
@@ -197,6 +198,10 @@ func _ready() -> void:
 	guards.z_index = -4
 	world.add_child(guards)
 	guards.setup(ents)
+	traffic = Traffic.new()
+	traffic.player = player
+	add_child(traffic)
+	traffic.setup(ents)
 	var overlay := Drawer.make(guards.draw_overlay, 0, true)
 	overlay.z_index = 7
 	world.add_child(overlay)
@@ -568,6 +573,9 @@ func _draw_bloom(ci: CanvasItem) -> void:
 	if hc != null: cars.append([hc[0], hc[1], 0.95])
 	for w in guards.watchers:
 		if w.kind == "truck" and guards.active(w): cars.append([w.pos, w.dir, 1.0])
+	if traffic != null:
+		for c in traffic.cars:
+			if c.fade > 0.3: cars.append([c.position, c.ang, c.L * 0.5])
 	for cr in cars:
 		var cp: Vector2 = cr[0]
 		if not view.has_point(cp): continue
