@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.16 | Nov 17, 2026 | Town life: people out walking, trees in the wind, flags and fountains |
 | v0.9.15 | Nov 17, 2026 | The bait or lure you have on shows on the water, a thin line, and twitching left and right |
 | v0.9.14 | Nov 17, 2026 | Your house on the map, and a living room that fills up as you play |
 | v0.9.13 | Nov 17, 2026 | Fish that bump off the edge and swim away instead of circling into walls |
@@ -40,6 +41,17 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.16 · Town life
+
+_Nov 17, 2026 · Builds: `UrbanFishing-v0.9.16-windows.zip`, `UrbanFishing-v0.9.16-godot-project.zip`, screenshots in `screenshots/v0.9.16/`_
+
+- People walk the sidewalks and park paths. They keep to the right, stop to look around now and then, and step back if you're in their way. Some walk a dog.
+- When it rains, they put up umbrellas and walk a bit slower.
+- At night fewer people are out, and very late only a few.
+- The leafy trees now sway and rustle, and the palms move more. On cloudy, rainy and stormy days the wind is stronger, so everything moves more.
+- Flags fly outside City Hall (the Port Mullet flag with its little mullet), the marina, the golf club and Lou's. They ripple in the breeze and whip about in a storm.
+- A fountain sprays in the middle of the plaza pool in front of Marlowe Tower, with a smaller one in the Bayfront Park pond. The wind blows the spray sideways.
 
 ## v0.9.15 · See what's on your hook
 
