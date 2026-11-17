@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.12 | Nov 17, 2026 | Town traffic: cars driving the streets, with headlights at night |
 | v0.9.11 | Nov 17, 2026 | A desktop icon: a bobber in a Port Mullet sunset |
 | v0.9.10 | Nov 17, 2026 | Life on the water: wakes, ripples, jumping fish, a bobbing float and reflections |
 | v0.9.9 | Nov 17, 2026 | Build your own rod from a blank, a reel and a grip you find around town |
@@ -36,6 +37,16 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.12 · Town traffic
+
+_Nov 17, 2026 · Builds: `UrbanFishing-v0.9.12-windows.zip`, `UrbanFishing-v0.9.12-godot-project.zip`, screenshots in `screenshots/v0.9.12/`_
+
+- Cars now drive around Port Mullet. They keep to the right-hand lane, pick a way at each crossing (straight on, left or right), slow down behind other cars and show brake lights.
+- Cars stop for you when you step out in front of them, and drive off once you're out of the way.
+- At night they have headlight beams and red tail lights.
+- Cars that drive off the edge of the map are replaced by new ones pulling in somewhere off screen, so there are always about 30 on the roads.
+- A few streets had a strip of sidewalk across them right where they met another street, so they didn't join up. Those are now proper crossings.
 
 ## v0.9.11 · A desktop icon
 

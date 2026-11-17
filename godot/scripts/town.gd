@@ -240,6 +240,7 @@ static func build() -> void:
 		lamps.append(Vector2(x, 96.6)); lamps.append(Vector2(x, 101.4))
 	for x in [8, 30, 48, 70, 90, 104]: lamps.append(Vector2(x + 0.5, 82.5))
 	_build_downtown()
+	_join_roads()
 	_build_driveways()
 	_build_depth()
 
@@ -310,6 +311,17 @@ static func _build_downtown() -> void:
 			b.home = true; b.color = "#f6c86d"; b.label = "HOME"
 
 ## Every house gets a driveway to the nearest street, if one is close and nothing is in the way.
+## Where a sidewalk strip was laid across a street (a one-tile gap between two bits of road),
+## pave it over so the streets meet properly and cars can drive through. Lamps standing there move off.
+static func _join_roads() -> void:
+	var gaps := []
+	for y in range(1, MH - 1):
+		for x in range(1, MW - 1):
+			if t_at(x, y) != T.WALK: continue
+			if (t_at(x - 1, y) == T.ROAD and t_at(x + 1, y) == T.ROAD) or (t_at(x, y - 1) == T.ROAD and t_at(x, y + 1) == T.ROAD): gaps.append(Vector2i(x, y))
+	for g in gaps: set_t(g.x, g.y, T.ROAD)
+	lamps = lamps.filter(func(l): return t_at(floori(l.x), floori(l.y)) != T.ROAD)
+
 static func _build_driveways() -> void:
 	var ok := [T.GRASS, T.WALK, T.CONC]
 	for b in buildings:
