@@ -31,13 +31,15 @@ func _detail(x: int, y: int) -> void:
 	match t:
 		T.GRASS, T.FAIR:
 			var fair := t == T.FAIR
+			var bank := Ground.is_coast(x, y)
 			for k in (3 if fair else 6):
 				var hx := Town.hash2(x * 7 + k, y * 13 - k)
 				var hy := Town.hash2(x * 3 - k, y * 5 + k * 7)
 				var bx := x + 0.08 + hx * 0.84
 				var by := y + 0.14 + hy * 0.8
+				if bank and not Ground.dry_at(Vector2(bx, by)): continue
 				draw_line(Vector2(bx, by), Vector2(bx + (hx - 0.5) * 0.1, by - 0.15), Color(0.19, 0.39, 0.14, 0.32) if k % 2 else Color(0.75, 0.91, 0.55, 0.3), 0.035)
-			if not fair and Town.hash2(x * 31, y * 17) > 0.965:
+			if not fair and not bank and Town.hash2(x * 31, y * 17) > 0.965:
 				var fc: Color = [Color("#fff6d8"), Color("#f7d64a"), Color("#f48fb1"), Color("#c9b6e4")][int(Town.hash2(x, y * 3) * 4)]
 				for k in 3: draw_circle(Vector2(x + 0.25 + Town.hash2(k, x) * 0.5, y + 0.25 + Town.hash2(y, k) * 0.5), 0.06, fc)
 			if fair: R(x, y, 1, 0.5, Color(1, 1, 1, 0.05))
@@ -129,6 +131,7 @@ func _lily_pads(x: int, y: int, h: float) -> void:
 	for k in 1 + int(h * 9) % 3:
 		var c := Vector2(x + 0.2 + Town.hash2(k, x * 5 + y) * 0.6, y + 0.2 + Town.hash2(y * 3 + k, x) * 0.6)
 		var r := 0.13 + Town.hash2(x + k, y) * 0.1
+		if Ground.is_coast(x, y) and Ground.land_at(c) > 0.36: continue   # not up on a curved bank
 		var a := Town.hash2(k * 7, x + y) * TAU
 		var pts := PackedVector2Array()
 		for i in 15:
@@ -151,6 +154,12 @@ func _reeds(x: int, y: int) -> void:
 		for k in 6:
 			var u := 0.1 + Town.hash2(k, x * 7 + y + d.y) * 0.8
 			var base := Vector2(x + 0.5 + d.x * 0.42, y + 0.5 + d.y * 0.42) + Vector2(d.y, d.x) * (u - 0.5)
+			if Ground.is_coast(x, y):
+				# on a curved bank, walk out to where the water starts
+				base = Vector2(x + 0.5, y + 0.5) + Vector2(d.y, d.x) * (u - 0.5)
+				var n := 0
+				while n < 30 and Ground.dry_at(base + Vector2(d.x, d.y) * 0.06): base += Vector2(d.x, d.y) * 0.05; n += 1
+				if n >= 30: continue
 			var lean := Vector2(d.x, d.y) * 0.18 + Vector2(0, -0.32 - Town.hash2(x, k) * 0.15)
 			draw_line(base, base + lean, Color("#4f7f34") if k % 2 else Color("#6c9a3e"), 0.03)
 			if k % 3 == 0: draw_line(base + lean * 0.8, base + lean * 1.05, Color("#7a4e2a"), 0.06)
@@ -167,8 +176,8 @@ func _shore(X0: int, X1: int, Y0: int, Y1: int) -> void:
 				if not Town.inb(nx, ny): continue
 				var nt: int = Town.tile[Town.idx(nx, ny)]
 				if Town.is_water_t(nt): continue
-				# sandy shores get a smooth curved edge from the ground texture instead
-				if Ground.is_coast(x, y) and Ground._sandy(nx, ny): continue
+				# sandy shores and natural pond banks get a smooth curved edge from the ground shader instead
+				if Ground.is_coast(x, y) and Ground.is_coast(nx, ny): continue
 				var bands := [[0.18, Color(0.04, 0.12, 0.16, 0.2)], [0.05, Color(1, 1, 1, 0.2)]] if (nt in HARD or Town.in_bridge(nx, ny)) else \
 					[[0.22, Color(0.59, 0.67, 0.47, 0.3)], [0.12, Color(0.85, 0.78, 0.59, 0.85)], [0.05, Color(0.47, 0.39, 0.24, 0.35)]]
 				for b in bands:
