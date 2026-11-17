@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.5 | Nov 17, 2026 | Driveways from every house to the street |
 | v0.9.3 | Nov 17, 2026 | Pictures of every rod, bait and upgrade in the shop, the marina and the top bar |
 | v0.9.2 | Nov 17, 2026 | Round islands and beaches, and boats that stay where you leave them |
 | v0.9.1 | Nov 17, 2026 | Real-looking people with walk cycles, fish that splash, and light that changes through the day |
@@ -29,6 +30,13 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.5 · Driveways
+
+_Nov 17, 2026 · Builds: `UrbanFishing-v0.9.5-windows.zip`, `UrbanFishing-v0.9.5-godot-project.zip`, screenshots in `screenshots/v0.9.5/`_
+
+- Every house has a concrete driveway out to the nearest street, with a flared apron at the curb, expansion joints, tire wear and an oil spot. Houses with no street close by, or with something in the way, go without
+- About half the driveways have a car parked in them
 
 ## v0.9.3 · Pictures in the shop
 
