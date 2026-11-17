@@ -14,7 +14,8 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
-| v0.9.4 | Nov 17, 2026 | Make your own lures from parts you find around town |
+| v0.9.6 | Nov 17, 2026 | Make your own lures from parts you find around town |
+| v0.9.5 | Nov 17, 2026 | Driveways from every house to the street |
 | v0.9.3 | Nov 17, 2026 | Pictures of every rod, bait and upgrade in the shop, the marina and the top bar |
 | v0.9.2 | Nov 17, 2026 | Round islands and beaches, and boats that stay where you leave them |
 | v0.9.1 | Nov 17, 2026 | Real-looking people with walk cycles, fish that splash, and light that changes through the day |
@@ -31,9 +32,9 @@ Nothing right now.
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
 
-## v0.9.4 · Home-made lures
+## v0.9.6 · Home-made lures
 
-_Nov 17, 2026 · Builds: `UrbanFishing-v0.9.4-windows.zip`, `UrbanFishing-v0.9.4-godot-project.zip`, screenshots in `screenshots/v0.9.4/`_
+_Nov 17, 2026 · Builds: `UrbanFishing-v0.9.6-windows.zip`, `UrbanFishing-v0.9.6-godot-project.zip`, screenshots in `screenshots/v0.9.6/`_
 
 - Parts lie around town: something shiny glints on the ground by Lou's and on the banks of a dozen fishing spots. Walk up and press E (or the Pick it up button) to take it. Each spot has its own part and fills up again two days after you pick it
 - Six parts: bent spoons (Back Canal, the downtown river, Marlowe Tower), bottle caps (Lou's, Maple Park Pond), beads (Bayfront Park, Sunsplash, Heron Lakes), gull feathers (Mullet Bay, the golf course lake), copper wire (Mullet Canal, the airport canal) and glow sticks (the power station outflow)
@@ -45,6 +46,12 @@ _Nov 17, 2026 · Builds: `UrbanFishing-v0.9.4-windows.zip`, `UrbanFishing-v0.9.4
   - **Glow lure** (glow stick + wire + beads): after dark every fish comes to look. In daylight it's just a lure. Lasts 5 catches
 - A lure you make goes straight on your line. It switches with B like any bait, and the top bar shows how many catches it has left. Junk doesn't wear it down. When it falls apart you're back on worms, and the catch card tells you
 - Every part and lure has its own picture, in the workbench, the top bar and your kit at Lou's
+## v0.9.5 · Driveways
+
+_Nov 17, 2026 · Builds: `UrbanFishing-v0.9.5-windows.zip`, `UrbanFishing-v0.9.5-godot-project.zip`, screenshots in `screenshots/v0.9.5/`_
+
+- Every house has a concrete driveway out to the nearest street, with a flared apron at the curb, expansion joints, tire wear and an oil spot. Houses with no street close by, or with something in the way, go without
+- About half the driveways have a car parked in them
 
 ## v0.9.3 · Pictures in the shop
 

@@ -994,6 +994,40 @@ func _draw_statics(ci: CanvasItem) -> void:
 		ci.draw_rect(Rect2(b.x0, b.y0, 1, hh), Color("#d8d2c4")); ci.draw_rect(Rect2(b.x1, b.y0, 1, hh), Color("#d8d2c4"))
 		ci.draw_rect(Rect2(b.x0, b.y0, 0.14, hh), Color("#8b8f96")); ci.draw_rect(Rect2(b.x1 + 0.86, b.y0, 0.14, hh), Color("#8b8f96"))
 		ci.draw_rect(Rect2(b.x1 + 1, b.y0, 0.35, hh), Color(0, 0, 0, 0.25))
+	# driveways from the houses to the street, some with a car in them
+	for dw in Town.driveways:
+		var r: Rect2 = dw.r
+		var d: Vector2i = dw.d
+		var vert := d.y != 0
+		# a flared apron where it meets the street
+		var ap := Rect2(r.position.x - 0.25, r.end.y - 0.6, r.size.x + 0.5, 0.6) if d.y == 1 else \
+			Rect2(r.position.x - 0.25, r.position.y, r.size.x + 0.5, 0.6) if d.y == -1 else \
+			Rect2(r.position.x, r.position.y - 0.25, 0.6, r.size.y + 0.5) if d.x == -1 else Rect2(r.end.x - 0.6, r.position.y - 0.25, 0.6, r.size.y + 0.5)
+		ci.draw_rect(r.grow(0.05), Color(0.2, 0.25, 0.15, 0.25))
+		ci.draw_rect(ap, Color("#c9c3b5"))
+		ci.draw_rect(r, Color("#d3cdbf"))
+		# expansion joints, a darker middle where the tires go, and an oil spot
+		var L := r.size.y if vert else r.size.x
+		var k := 1.0
+		while k < L:
+			if vert: ci.draw_line(Vector2(r.position.x, r.position.y + k), Vector2(r.end.x, r.position.y + k), Color(0, 0, 0, 0.12), 0.03)
+			else: ci.draw_line(Vector2(r.position.x + k, r.position.y), Vector2(r.position.x + k, r.end.y), Color(0, 0, 0, 0.12), 0.03)
+			k += 1.0
+		for o in [0.28, 0.72]:
+			if vert: ci.draw_rect(Rect2(r.position.x + r.size.x * o - 0.09, r.position.y, 0.18, r.size.y), Color(0, 0, 0, 0.05))
+			else: ci.draw_rect(Rect2(r.position.x, r.position.y + r.size.y * o - 0.09, r.size.x, 0.18), Color(0, 0, 0, 0.05))
+		var oc := r.get_center() + Vector2(0.1, 0.15)
+		Art.ellipse(ci, oc, 0.22, 0.14, Color(0.1, 0.1, 0.12, 0.14))
+		if vert:
+			ci.draw_line(r.position, Vector2(r.position.x, r.end.y), Color(1, 1, 1, 0.25), 0.04)
+			ci.draw_line(Vector2(r.end.x, r.position.y), r.end, Color(0, 0, 0, 0.12), 0.04)
+		else:
+			ci.draw_line(r.position, Vector2(r.end.x, r.position.y), Color(1, 1, 1, 0.25), 0.04)
+			ci.draw_line(Vector2(r.position.x, r.end.y), r.end, Color(0, 0, 0, 0.12), 0.04)
+		if dw.car:
+			var col := Color(Art.CAR_COLORS[int(Town.hash2(int(r.position.x), int(r.position.y) * 3) * Art.CAR_COLORS.size())])
+			var near_house := r.position + (Vector2(r.size.x / 2, 1.0) if d.y == 1 else Vector2(r.size.x / 2, r.size.y - 1.0) if d.y == -1 else Vector2(r.size.x - 1.0, r.size.y / 2) if d.x == -1 else Vector2(1.0, r.size.y / 2))
+			Art.car(ci, near_house, (Vector2(d) * -1.0).angle() if Town.hash2(int(r.position.y), 5) > 0.5 else Vector2(d).angle(), col, 1.6, 0.78)
 	# parked cars in the lots
 	for d in Town.decor:
 		if d.k != "parking": continue
