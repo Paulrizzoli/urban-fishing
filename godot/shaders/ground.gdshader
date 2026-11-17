@@ -8,6 +8,7 @@ uniform sampler2D materials : filter_nearest;   // what the ground is made of, s
 uniform vec2 map_size = vec2(112.0, 184.0);
 uniform float sun = 1.0;                        // 1 at noon on a clear day, 0 at night
 uniform float rain = 0.0;
+uniform vec3 sky_col = vec3(0.55, 0.75, 0.92);  // the sky the water reflects, from Main.sky_tint()
 
 float hash(vec2 p) {
 	p = fract(p * vec2(0.1031, 0.1030));
@@ -94,7 +95,7 @@ void fragment() {
 		vec3 r = reflect(-L, n);
 		float spec = pow(max(r.z, 0.0), 60.0);
 		float tw = step(0.9, hash(floor(p * 9.0) + floor(t * 3.0)));
-		c.rgb += vec3(1.0, 0.98, 0.9) * (spec * 0.55 + spec * tw * 0.9) * sun * (1.0 - murky) * (1.0 - rain * 0.7);
+		c.rgb += mix(vec3(1.0, 0.98, 0.9), sky_col * 1.3, 0.35) * (spec * 0.55 + spec * tw * 0.9) * sun * (1.0 - murky) * (1.0 - rain * 0.7);
 		// foam lapping at the shore
 		float edge = 1.0 - smoothstep(0.55, 0.97, wm.r);
 		float fn = fbm(p * 3.2 + vec2(t * 0.35, -t * 0.25));
@@ -102,7 +103,7 @@ void fragment() {
 		float foam = edge * smoothstep(0.62, 0.95, lap * 0.55 + fn * 0.7) + edge * edge * 0.25;
 		c.rgb = mix(c.rgb, vec3(0.94, 0.98, 1.0), clamp(foam, 0.0, 1.0) * 0.6 * (1.0 - murky * 0.8));
 		// a hint of sky reflected on the deep water
-		c.rgb = mix(c.rgb, vec3(0.55, 0.75, 0.92), 0.08 * depth * sun);
+		c.rgb = mix(c.rgb, sky_col, (0.06 + 0.1 * depth) * (0.4 + 0.6 * sun));
 	} else if (mat > 0.5) {
 		float big = fbm(p * 0.35);
 		float mid = noise(p * 2.2);

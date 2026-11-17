@@ -37,6 +37,7 @@ var journal_tab := "spots"
 var weather: Weather
 var ground_tex: Texture2D
 var ground_mat: ShaderMaterial
+var glow_tex: GradientTexture2D
 var open_lamps: Array = []    # street lamps whose glow isn't hidden behind a tower
 var ach_t := 0.0
 var menu: Menu
@@ -224,6 +225,20 @@ func _ready() -> void:
 	var gw := Node2D.new(); gw.scale = Vector2(TS, TS); glow_layer.add_child(gw)
 	var gholder := Drawer.make(_draw_night_glow, 0, true)
 	gw.add_child(gholder)
+	# soft light that blooms around lamps, lit windows and headlights, added on top
+	var bloom := Drawer.make(_draw_bloom, 0, true)
+	var add := CanvasItemMaterial.new()
+	add.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	bloom.get_child(0).material = add
+	gw.add_child(bloom)
+	glow_tex = GradientTexture2D.new()
+	glow_tex.width = 64; glow_tex.height = 64
+	glow_tex.fill = GradientTexture2D.FILL_RADIAL
+	glow_tex.fill_from = Vector2(0.5, 0.5); glow_tex.fill_to = Vector2(1.0, 0.5)
+	var gg := Gradient.new()
+	gg.offsets = PackedFloat32Array([0.0, 0.35, 1.0])
+	gg.colors = PackedColorArray([Color(1, 1, 1, 1), Color(1, 1, 1, 0.35), Color(1, 1, 1, 0)])
+	glow_tex.gradient = gg
 	weather = Weather.new()
 	add_child(weather)
 	hud = Hud.new()
@@ -409,19 +424,106 @@ func _doors() -> void:
 func _lighting() -> void:
 	var dk := Game.darkness()
 	var h := Game.hour()
-	var c := Color.WHITE.lerp(Color(0.3, 0.36, 0.6), dk / 0.62)
-	var dusk := 0.0
-	if h >= 16.5 and h < 19.5: dusk = sin((h - 16.5) / 3.0 * PI) * 0.18
-	elif h >= 5.5 and h < 8: dusk = sin((h - 5.5) / 2.5 * PI) * 0.12
-	c = c.lerp(Color(1, 0.72, 0.55), dusk)
+	var c := day_tint(h)
+	# clouds wash the warm colors out toward grey
+	c = c.lerp(Color(0.86, 0.88, 0.92) * c.v, Game.wx.cloud * 0.35 * (1.0 - dk / 0.62))
 	night.color = c
 	ground_mat.set_shader_parameter("sun", clampf(1.0 - dk / 0.5, 0.0, 1.0) * (1.0 - Game.wx.cloud * 0.55))
+	ground_mat.set_shader_parameter("sky_col", sky_tint(h))
 	ground_mat.set_shader_parameter("rain", Game.wx.rain)
 	var on := dk > 0.15
 	var view := Rect2(cam.get_screen_center_position() - get_viewport_rect().size / cam.zoom / 2, get_viewport_rect().size / cam.zoom).grow(6 * TS)
 	for l in lamp_lights:
 		l.enabled = on and view.has_point(l.position)
 		l.energy = dk * 1.6
+
+## The color of the light over the day: cool blue nights, a pink dawn, white noon, a golden
+## late afternoon, an orange and pink sunset and a purple dusk.
+const TINTS := [[0.0, Color(0.3, 0.35, 0.6)], [4.6, Color(0.3, 0.35, 0.61)], [5.6, Color(0.52, 0.45, 0.64)], [6.5, Color(1.0, 0.76, 0.7)],
+	[7.6, Color(1.0, 0.92, 0.84)], [9.0, Color(1.0, 0.98, 0.95)], [12.0, Color(1, 1, 1)], [15.5, Color(1.0, 0.97, 0.9)], [17.0, Color(1.0, 0.88, 0.7)],
+	[18.2, Color(1.0, 0.78, 0.6)], [19.0, Color(0.9, 0.63, 0.65)], [19.8, Color(0.55, 0.44, 0.66)], [20.7, Color(0.32, 0.36, 0.61)], [24.0, Color(0.3, 0.35, 0.6)]]
+## The sky color the water reflects at that hour.
+const SKIES := [[0.0, Color(0.1, 0.14, 0.3)], [5.6, Color(0.45, 0.4, 0.62)], [6.5, Color(1.0, 0.7, 0.62)], [8.0, Color(0.6, 0.78, 0.94)],
+	[16.5, Color(0.62, 0.78, 0.92)], [18.2, Color(1.0, 0.66, 0.42)], [19.0, Color(0.95, 0.5, 0.6)], [19.8, Color(0.42, 0.34, 0.62)], [20.7, Color(0.1, 0.14, 0.3)], [24.0, Color(0.1, 0.14, 0.3)]]
+
+static func _keyed(keys: Array, h: float) -> Color:
+	for i in keys.size() - 1:
+		if h < keys[i + 1][0]:
+			var k: float = (h - keys[i][0]) / (keys[i + 1][0] - keys[i][0])
+			return (keys[i][1] as Color).lerp(keys[i + 1][1], smoothstep(0.0, 1.0, k))
+	return keys[-1][1]
+
+static func day_tint(h: float) -> Color: return _keyed(TINTS, fposmod(h, 24.0))
+static func sky_tint(h: float) -> Color: return _keyed(SKIES, fposmod(h, 24.0))
+
+## Additive light: halos around lamps, lit windows and porch lights, and headlight beams.
+func _draw_bloom(ci: CanvasItem) -> void:
+	var dk := Game.darkness()
+	if dk < 0.1: return
+	var a := dk / 0.62
+	var h := Game.hour()
+	var view := _view_tiles().grow(3)
+	var warm := Color(1.0, 0.72, 0.38)
+	for lp in open_lamps:
+		if not view.has_point(lp): continue
+		var hd := Art.lamp_head(lp)
+		_glow(ci, hd, 0.7, Color(warm, 0.5 * a))
+		_glow(ci, lp + Vector2(0.2, 0.2), 2.6, Color(warm, 0.16 * a))
+	# windows in houses and low buildings: lots lit in the evening, a few late at night
+	var lit := 0.7 if (h >= 18 and h < 23) else 0.15 if (h >= 23 or h < 5) else 0.35
+	for b in Town.buildings:
+		if not view.intersects(Rect2(b.x - 1, b.y - 1, b.w + 2, b.h + 2)): continue
+		var day := int(Game.S.day)
+		if b.kind == "house":
+			var wy: float = b.y + b.h - 0.62
+			var i := 0
+			for u in [0.48, 0.72]:
+				if Town.hash2(int(b.x) * 3 + i, int(b.y) + day * 7) < lit:
+					var r := Rect2(b.x + b.w * u, wy + 0.17, 0.4, 0.27)
+					ci.draw_rect(r, Color(1.0, 0.8, 0.45, 0.55 * a))
+					_glow(ci, r.get_center() + Vector2(0, 0.2), 0.9, Color(warm, 0.3 * a))
+				i += 1
+			if h >= 18 or h < 6: _glow(ci, Vector2(b.x + 1.06, wy + 0.2), 0.5, Color(1, 0.85, 0.55, 0.55 * a))
+		elif b.kind in ["shop", "mega", "marina", "club", "office", "plant", "flat"] and b.label != "PARKING":
+			var open_k := 0.95 if b.kind in ["shop", "mega", "marina", "club"] and h >= 17 and h < 22 else 0.3
+			var fy: float = b.y + b.h - 0.85
+			var wx: float = b.x + 0.3
+			var i := 0
+			while wx < b.x + b.w - 0.5:
+				if Town.hash2(int(b.x) + i * 5, int(b.y) * 3 + day) < open_k:
+					var r := Rect2(wx, fy + 0.2, 0.55, 0.38)
+					ci.draw_rect(r, Color(1.0, 0.86, 0.55, 0.5 * a))
+					_glow(ci, r.get_center() + Vector2(0, 0.3), 1.0, Color(warm, 0.22 * a))
+				wx += 0.9; i += 1
+	# towers: a faint halo over each lit window
+	var tl := 0.55 if (h >= 18 or h < 1) else 0.18 if h < 5 else 0.35
+	for pair in sky_nodes:
+		var b: Dictionary = pair[1]
+		if not view.intersects(Art.sky_bounds(b)): continue
+		var i := 0
+		for r in b.wins:
+			if Town.hash2(i, b.x * 7 + Game.S.day) < tl and b.see < 0.5: _glow(ci, r.get_center(), 0.45, Color(1, 0.75, 0.4, 0.22 * a))
+			i += 1
+	if view.has_point(Vector2(51.4, 31.6)): _glow(ci, Vector2(51.4, 31.4), 1.4, Color(1, 0.3, 0.25, 0.4 * a))
+	# headlights on the security truck and the HOA resident's car
+	var cars := []
+	var hc = guards.hoa_car_pos()
+	if hc != null: cars.append([hc[0], hc[1], 0.95])
+	for w in guards.watchers:
+		if w.kind == "truck" and guards.active(w): cars.append([w.pos, w.dir, 1.0])
+	for cr in cars:
+		var cp: Vector2 = cr[0]
+		if not view.has_point(cp): continue
+		var fw := Vector2.from_angle(cr[1])
+		var sd := Vector2(-fw.y, fw.x)
+		var front: Vector2 = cp + fw * cr[2]
+		var beam := PackedVector2Array([front + sd * 0.3, front - sd * 0.3, front + fw * 4.5 - sd * 1.6, front + fw * 4.5 + sd * 1.6])
+		ci.draw_polygon(beam, PackedColorArray([Color(1, 0.95, 0.8, 0.32 * a), Color(1, 0.95, 0.8, 0.32 * a), Color(1, 0.95, 0.8, 0), Color(1, 0.95, 0.8, 0)]))
+		for k in [-1, 1]: _glow(ci, front + sd * 0.3 * k, 0.35, Color(1, 0.97, 0.85, 0.7 * a))
+		for k in [-1, 1]: _glow(ci, cp - fw * cr[2] + sd * 0.3 * k, 0.3, Color(1, 0.15, 0.1, 0.5 * a))
+
+func _glow(ci: CanvasItem, c: Vector2, r: float, col: Color) -> void:
+	ci.draw_texture_rect(glow_tex, Rect2(c - Vector2(r, r), Vector2(r, r) * 2), false, col)
 
 # ---------- input ----------
 func _unhandled_input(e: InputEvent) -> void:

@@ -269,6 +269,8 @@ func update(dt: float) -> void:
 	var rr: float = rl.r
 	if splash > 0: splash -= dt
 	player.fishing_pose = state != "idle"
+	player.rod_pull = pull if state == "reel" else 0
+	player.rod_bend = clampf(tension, 0.0, 1.2) if state == "reel" else (0.25 if state == "bite" else 0.0)
 	match state:
 		"power":
 			t += dt; power = (sin(t * 2.6 - PI / 2) + 1) / 2
@@ -408,6 +410,16 @@ func draw_line_layer(ci: CanvasItem) -> void:
 	ci.draw_polyline(line, Color(1, 0.67, 0.59, 0.95) if state == "reel" and tension > BAND[1] else Color(1, 1, 1, 0.85), 0.05)
 	if state == "reel":
 		if target == null: Art.fish_shadow(ci, b, (b - player.position).angle() + ang * 0.8, clampf(0.34 + sqrt(maxf(fw, 1)) * 0.19, 0.32, 2.8), 0.4, false, now * 14)
+		# the fish fights at the surface: churned water and spray, more of it the harder it pulls
+		var fury := clampf(tension, 0.2, 1.0)
+		Art.ellipse(ci, b + Vector2(0, 0.05), 0.45 + fury * 0.3, 0.16 + fury * 0.1, Color(1, 1, 1, 0.18 + 0.12 * sin(now * 13)))
+		for i in 7:
+			var k := fmod(now * (1.6 + fury) + i / 7.0, 1.0)
+			var sd := floorf(now * (1.6 + fury) + i / 7.0)
+			var a := Town.hash2(int(sd) * 7 + i, i * 13) * TAU
+			var reach := (0.25 + Town.hash2(i, int(sd)) * 0.45) * (0.6 + fury)
+			var dp := b + Vector2(cos(a), sin(a) * 0.5) * reach * k + Vector2(0, -sin(k * PI) * (0.25 + fury * 0.35))
+			ci.draw_circle(dp, 0.05 * (1.0 - k * 0.5), Color(1, 1, 1, 0.8 * (1.0 - k) * fury))
 		var rr := 0.35 + sin(now * 9) * 0.08
 		ci.draw_set_transform(b, 0, Vector2(1, 0.5)); ci.draw_arc(Vector2.ZERO, rr + 0.25, 0, TAU, 24, Color(1, 1, 1, 0.5), 0.05); ci.draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
 	else:
@@ -418,6 +430,12 @@ func draw_line_layer(ci: CanvasItem) -> void:
 	if splash > 0:
 		var big := 1.0 if splash_big else 0.45
 		var k := 1.0 - splash / 0.7
+		# a burst of droplets thrown up and falling back
+		for i in 10:
+			var a := i * TAU / 10 + 0.3
+			var dp := b + Vector2(cos(a), sin(a) * 0.45) * (0.2 + k * 0.9) * big + Vector2(0, -sin(clampf(k, 0, 1) * PI) * 0.6 * big)
+			ci.draw_circle(dp, 0.06 * big + 0.02, Color(1, 1, 1, clampf(1 - k, 0, 1) * 0.9))
+		if splash_big: Art.ellipse(ci, b + Vector2(0, -0.1 - k * 0.3), 0.18 * (1 - k * 0.5), 0.35 * (1 - k), Color(1, 1, 1, clampf(0.7 - k, 0, 1)))
 		ci.draw_set_transform(b, 0, Vector2(1, 0.4))
 		ci.draw_arc(Vector2.ZERO, (0.3 + k * 1.1) * big + 0.15, 0, TAU, 24, Color(1, 1, 1, clampf(1 - k, 0, 1)), 0.06)
 		ci.draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
