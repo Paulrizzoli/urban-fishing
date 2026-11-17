@@ -45,6 +45,16 @@ static func draw(ci: CanvasItem, id: String, r: Rect2, t := 0.0) -> void:
 		"skiff": _skiff(ci)
 		"shades": _shades(ci)
 		"junk": _junk(ci)
+		"p_spoon": _spoon_part(ci)
+		"p_caps": _caps(ci)
+		"p_beads": _beads(ci)
+		"p_feather": _feather(ci, Vector2(32, 32), 1.0)
+		"p_wire": _wire(ci)
+		"p_glow": _glowstick(ci, t)
+		"spoon": _spoon_lure(ci)
+		"popper": _popper(ci)
+		"jig": _jig(ci)
+		"glowlure": _glow_lure(ci, t)
 		_: _fish(ci, SILVER)
 	ci.draw_set_transform(Vector2.ZERO)
 
@@ -578,3 +588,148 @@ static func _junk(ci: CanvasItem) -> void:
 	for i in 9: wd.append(Vector2(40 + i * 2.2, 14 + sin(i * 1.3) * 3 + i * 3))
 	ci.draw_polyline(wd, Color("#3f8a4a"), 2.4, true)
 	for p in [Vector2(12, 22), Vector2(52, 10), Vector2(10, 40)]: ci.draw_arc(p, 2.0, 0, TAU, 8, Color(SEA, 0.8), 1.2)
+
+# ---------- parts and home-made lures ----------
+
+static func _spoon_shape(ci: CanvasItem, c: Vector2, rot: float, k: float) -> void:
+	_el(ci, c, 9 * k, 13 * k, SILVER, rot)
+	_el(ci, c + Vector2(-2.5, -3).rotated(rot) * k, 3.5 * k, 6.5 * k, Color(1, 1, 1, 0.7), rot, 0)
+	ci.draw_arc(c, 6.5 * k, rot + 0.3, rot + 1.4, 6, Color("#8a959c"), 1.2, true)
+
+static func _spoon_part(ci: CanvasItem) -> void:
+	var rot := 0.6
+	var top := Vector2(24, 22)
+	var tip := top + Vector2(0, 38).rotated(-rot) * 0.95
+	ci.draw_line(top + Vector2(0, 10).rotated(-rot), tip, INK, 6.4, true)
+	ci.draw_line(top + Vector2(0, 10).rotated(-rot), tip, SILVER, 3.6, true)
+	# a bend in the handle
+	ci.draw_line(tip, tip + Vector2(10, -2), INK, 6.4, true); ci.draw_line(tip, tip + Vector2(10, -2), SILVER, 3.6, true)
+	_spoon_shape(ci, top, -rot, 1.0)
+
+static func _cap(ci: CanvasItem, c: Vector2, col: Color) -> void:
+	var pts := PackedVector2Array()
+	for i in 24:
+		var a := i * TAU / 24
+		pts.append(c + Vector2(cos(a), sin(a)) * (11.0 if i % 2 == 0 else 9.6))
+	_shape(ci, pts, Art.shade(col, -0.1), 1.6)
+	ci.draw_circle(c, 7.6, col)
+	ci.draw_arc(c, 7.6, 0, TAU, 20, Color(INK, 0.5), 1.0, true)
+	ci.draw_arc(c, 4.5, PI * 1.1, PI * 1.6, 6, Color(1, 1, 1, 0.6), 1.6, true)
+
+static func _caps(ci: CanvasItem) -> void:
+	_cap(ci, Vector2(24, 38), CORAL)
+	_cap(ci, Vector2(41, 26), SEA)
+
+static func _beads(ci: CanvasItem) -> void:
+	var pts := PackedVector2Array()
+	for i in 13: pts.append(Vector2(8 + i * 4, 36 + sin(i * 0.7) * 12))
+	ci.draw_polyline(pts, INK, 1.2, true)
+	var cols := [CORAL, SUN, TEAL, Color.WHITE, SEA, Color("#c9b6e4")]
+	for i in range(1, 12, 2):
+		var p: Vector2 = pts[i]
+		ci.draw_circle(p, 5.0, INK); ci.draw_circle(p, 3.8, cols[(i / 2) % cols.size()])
+		ci.draw_circle(p + Vector2(-1.4, -1.4), 1.1, Color(1, 1, 1, 0.75))
+
+static func _feather(ci: CanvasItem, c: Vector2, k: float, col := Color("#f2f4f5")) -> void:
+	var rot := -0.8
+	var P := func(x: float, y: float) -> Vector2: return c + Vector2(x, y).rotated(rot) * k
+	var vane := PackedVector2Array()
+	for i in 13:
+		var f := i / 12.0
+		vane.append(P.call(lerpf(-22, 20, f), -sin(f * PI) * 8 - (1.5 if i % 3 == 1 else 0.0)))
+	for i in 13:
+		var f := 1.0 - i / 12.0
+		vane.append(P.call(lerpf(-22, 20, f), sin(f * PI) * 7 + (1.5 if i % 3 == 1 else 0.0)))
+	_shape(ci, vane, col, 1.6 if k > 0.7 else 1.2)
+	for i in 5:
+		var x := lerpf(-12, 12, i / 4.0)
+		ci.draw_line(P.call(x, 0), P.call(x + 6, -6), Color("#c3ccd2"), 1.0)
+	ci.draw_line(P.call(-28, 0), P.call(21, 0), INK, 1.4 * k + 0.4, true)
+	ci.draw_line(P.call(14, 0), P.call(20, 0), Color("#8a959c"), 1.0)
+
+static func _wire(ci: CanvasItem) -> void:
+	var col := Color("#d0793a")
+	var pts := PackedVector2Array()
+	for i in 49:
+		var a := i * 0.5
+		pts.append(Vector2(30, 34) + Vector2(cos(a) * 16, sin(a) * 10) + Vector2(i * 0.12, 0))
+	pts.append(Vector2(56, 14))
+	ci.draw_polyline(pts, INK, 4.6, true)
+	ci.draw_polyline(pts, col, 2.4, true)
+	ci.draw_polyline(pts, Color(1, 1, 1, 0.35), 0.8, true)
+
+static func _glowstick(ci: CanvasItem, t: float) -> void:
+	var g := 0.75 + 0.25 * sin(t * 2.5)
+	var c := Vector2(32, 32)
+	var rot := -0.75
+	_el(ci, c, 26, 12, Color(0.6, 1.0, 0.35, 0.22 * g), rot, 0)
+	_el(ci, c, 20, 8, Color(0.6, 1.0, 0.35, 0.3 * g), rot, 0)
+	var body := PackedVector2Array()
+	for q in Art.rrect(Vector2.ZERO, 22, 4.6, 4.4): body.append(c + q.rotated(rot))
+	_shape(ci, body, Color("#a8f05a"))
+	ci.draw_line(c + Vector2(-18, -1.5).rotated(rot), c + Vector2(16, -1.5).rotated(rot), Color(1, 1, 1, 0.65), 1.4)
+	ci.draw_circle(c + Vector2(23, 0).rotated(rot), 2.6, INK); ci.draw_circle(c + Vector2(23, 0).rotated(rot), 1.6, Color("#59636b"))
+
+static func _treble(ci: CanvasItem, top: Vector2) -> void:
+	ci.draw_line(top, top + Vector2(0, 8), INK, 1.8)
+	for sx in [-1, 1]:
+		var hc := top + Vector2(sx * 3.6, 8)
+		var hp := _arc(hc, 3.6, PI if sx > 0 else 0.0, 0.0 if sx > 0 else PI, 6)
+		hp.append(hc + Vector2(sx * 3.6, -3.5))
+		ci.draw_polyline(hp, INK, 1.8, true)
+
+static func _spoon_lure(ci: CanvasItem) -> void:
+	ci.draw_arc(Vector2(32, 6), 2.8, 0, TAU, 10, INK, 1.6, true)
+	ci.draw_line(Vector2(32, 9), Vector2(32, 13), INK, 1.6)
+	_spoon_shape(ci, Vector2(32, 28), 0.0, 1.15)
+	# a red stripe painted on
+	ci.draw_line(Vector2(28, 26), Vector2(36, 34), Color(CORAL, 0.85), 2.2, true)
+	_treble(ci, Vector2(32, 43))
+	ci.draw_circle(Vector2(32, 43), 1.8, INK)
+
+static func _popper(ci: CanvasItem) -> void:
+	# two caps face to face on a bead body, chugging across the top
+	ci.draw_line(Vector2(6, 46), Vector2(58, 46), Color(SEA, 0.55), 2.0)
+	for p in [Vector2(10, 40), Vector2(6, 36), Vector2(13, 34)]: ci.draw_circle(p, 1.5, Color(SEA, 0.7))
+	ci.draw_line(Vector2(14, 30), Vector2(52, 30), INK, 1.6)
+	_el(ci, Vector2(34, 30), 12, 6.5, SUN)
+	ci.draw_line(Vector2(26, 27), Vector2(42, 27), Color(1, 1, 1, 0.5), 1.4)
+	ci.draw_circle(Vector2(41, 29), 1.8, INK)
+	var cap := PackedVector2Array()
+	for i in 13:
+		var a := -PI / 2 + i * PI / 12
+		cap.append(Vector2(20, 30) + Vector2(-cos(a) * 3.5, sin(a) * 10 * (1.0 if i % 2 == 0 else 0.9)))
+	_shape(ci, cap, CORAL, 1.6)
+	ci.draw_circle(Vector2(50, 30), 2.6, INK); ci.draw_circle(Vector2(50, 30), 1.7, TEAL)
+	_treble(ci, Vector2(34, 36.5))
+	ci.draw_arc(Vector2(52, 30), 2.2, 0, TAU, 8, INK, 1.4, true)
+
+static func _jig(ci: CanvasItem) -> void:
+	_feather(ci, Vector2(30, 36), 0.75, Color("#f7f2e6"))
+	_feather(ci, Vector2(27, 38), 0.6, Color("#e8b54a"))
+	ci.draw_circle(Vector2(44, 21), 7.2, INK); ci.draw_circle(Vector2(44, 21), 5.8, CORAL)
+	ci.draw_circle(Vector2(42, 19), 1.8, Color(1, 1, 1, 0.7))
+	ci.draw_circle(Vector2(46, 20.5), 1.6, Color.WHITE); ci.draw_circle(Vector2(46.4, 20.5), 0.8, INK)
+	ci.draw_arc(Vector2(50, 15), 2.6, 0, TAU, 10, INK, 1.6, true)
+	var hp := PackedVector2Array([Vector2(42, 26), Vector2(30, 48)])
+	hp.append_array(_arc(Vector2(34, 49), 4.2, PI, PI * 0.1, 6))
+	ci.draw_polyline(hp, INK, 1.8, true)
+
+static func _glow_lure(ci: CanvasItem, t: float) -> void:
+	var g := 0.75 + 0.25 * sin(t * 2.5)
+	ci.draw_rect(Rect2(4, 4, 56, 56), Color(0.08, 0.14, 0.24, 0.85))
+	_el(ci, Vector2(32, 28), 18, 22, Color(0.6, 1.0, 0.35, 0.16 * g), 0, 0)
+	_el(ci, Vector2(32, 28), 12, 16, Color(0.6, 1.0, 0.35, 0.22 * g), 0, 0)
+	ci.draw_arc(Vector2(32, 6), 2.8, 0, TAU, 10, SILVER, 1.6, true)
+	ci.draw_line(Vector2(32, 9), Vector2(32, 44), SILVER, 1.4)
+	for i in 3:
+		var p := Vector2(32, 15 + i * 6)
+		ci.draw_circle(p, 3.4, INK); ci.draw_circle(p, 2.6, Color("#c8ff7a"))
+	_el(ci, Vector2(32, 37), 4.5, 7, Color("#a8f05a"))
+	ci.draw_line(Vector2(30.5, 33), Vector2(30.5, 40), Color(1, 1, 1, 0.6), 1.2)
+	for sx in [-1, 1]:
+		var hc := Vector2(32 + sx * 3.6, 52)
+		var hp := _arc(hc, 3.6, PI if sx > 0 else 0.0, 0.0 if sx > 0 else PI, 6)
+		hp.append(hc + Vector2(sx * 3.6, -3.5))
+		ci.draw_polyline(hp, SILVER, 1.8, true)
+	ci.draw_line(Vector2(32, 44), Vector2(32, 52), SILVER, 1.8)

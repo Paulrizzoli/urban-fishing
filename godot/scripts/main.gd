@@ -32,6 +32,7 @@ var prev_pos := Vector2.ZERO
 var last_sale := 0
 var pending_catch = null
 var shop_tab := "sell"
+var home_tab := "rest"
 var marina_tab := "boats"
 var journal_tab := "spots"
 var weather: Weather
@@ -67,6 +68,9 @@ func _ready() -> void:
 			Game.S.cooler_cap = 30; Game.S.cash = 2000
 		if a.begins_with("--gear=") and a != "--gear=all":
 			for gid in a.substr(7).split("+"): Game.S.gear[gid] = 1
+		if a == "--parts=all":
+			for p in Crafting.PARTS: Game.S.parts[p] = 3
+		if a.begins_with("--lure="): Game.S.lures[a.substr(7)] = 3; Game.S.bait = a.substr(7)
 		if a == "--cooler=sample":
 			for f in [[1, 2], [1, 4], [1, 5], [4, 1], [14, 4], [15, 0], [2, 7], [16, 7]]:
 				var fd: Dictionary = Game.spots[f[0]].fish[f[1]]
@@ -104,6 +108,9 @@ func _ready() -> void:
 	var statics := Drawer.make(_draw_statics)
 	statics.z_index = -8
 	world.add_child(statics)
+	var part_glints := Drawer.make(func(ci): Crafting.draw_spots(ci), 0.0, true)
+	part_glints.z_index = -6
+	world.add_child(part_glints)
 	fishing = Fishing.new()
 	fishing.z_index = -5
 	world.add_child(fishing)
@@ -289,6 +296,7 @@ func _ready() -> void:
 		if a == "--open=gear": shop_tab = "gear"; open_shop()
 		if a == "--open=order": shop_tab = "order"; open_shop()
 		if a == "--open=marina": open_marina()
+		if a == "--open=bench": home_tab = "bench"; open_home()
 		if a == "--busted": _busted(guards.watchers[0])
 		if a == "--rosa": talk_rosa()
 		if a == "--open=marina-slam": marina_tab = "slam"; open_marina()
@@ -299,14 +307,14 @@ func _ready() -> void:
 		if a == "--beach": _toggle_boat()
 		if a == "--open=map": open_map()
 		if a == "--open=icons": # every item picture, big, for checking the art
-			var ids := ["rod0", "rod1", "rod2", "rod3", "rod4", "worms", "bait", "lure", "hotdog", "bread", "squid", "cooler", "mcooler", "camera", "polo", "lanyard", "flashlight", "waders", "geiger", "prybar", "kayak", "bigtank", "suit", "skiff", "shades", "junk"]
+			var ids := ["p_spoon", "p_caps", "p_beads", "p_feather", "p_wire", "p_glow", "spoon", "popper", "jig", "glowlure", "rod0", "rod1", "rod2", "rod3", "rod4", "worms", "bait", "lure", "hotdog", "bread", "squid", "cooler", "mcooler", "camera", "polo", "lanyard", "flashlight", "waders", "geiger", "prybar", "kayak", "bigtank", "suit", "skiff", "shades", "junk"]
 			var sheet := Control.new(); sheet.custom_minimum_size = Vector2(1180, 600)
 			sheet.draw.connect(func():
 				for i in ids.size():
-					var r := Rect2(Vector2((i % 9) * 130 + 4, (i / 9) * 150 + 4), Vector2(120, 120))
+					var r := Rect2(Vector2((i % 12) * 98 + 4, (i / 12) * 104 + 4), Vector2(88, 88))
 					sheet.draw_rect(r, Color("#fff8ea"))
 					ItemIcons.draw(sheet, ids[i], r.grow(-8))
-					sheet.draw_string(Game.font_bold, r.position + Vector2(4, 138), ids[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#22313a")))
+					sheet.draw_string(Game.font_bold, r.position + Vector2(2, 100), ids[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("#22313a")))
 			hud.open([["node", sheet]], true)
 		if a == "--open=bus": open_bus(0)
 		if a == "--weigh":
@@ -371,6 +379,7 @@ func _process(dt: float) -> void:
 		elif player.position.distance_to(MARINA_DOOR) < 1.3: near = "marina"
 		elif player.position.distance_to(OLDTIMER) < 1.8: near = "oldtimer"
 		elif player.position.distance_to(ROSA) < 1.6: near = "rosa"
+		elif Crafting.near(player.position) >= 0: near = "part"
 		elif Story.bus_near(player.position) >= 0: near = "bus"
 		elif fishing.near_water(): near = "fish"
 	hud.boat_text = ""
@@ -598,6 +607,9 @@ func _action_down() -> void:
 		elif near == "marina": Sound.play("door"); open_marina()
 		elif near == "oldtimer": talk_oldtimer()
 		elif near == "rosa": talk_rosa()
+		elif near == "part":
+			var pi := Crafting.near(player.position)
+			if pi >= 0: Sound.play("ui_click"); hud.flash(Crafting.pick(pi))
 		elif near == "bus": open_bus(Story.bus_near(player.position))
 		elif near == "fish": fishing.start_cast()
 		return
@@ -638,6 +650,7 @@ func _on_landed(c: Dictionary) -> void:
 	pending_catch = c
 	Story.on_catch(c)
 	Unlocks.on_catch(c)
+	var worn := Crafting.wear(c)
 	if int(c.spot) == 15 and Game.rod_level() < 4 and c.pull > 0.75 and not Game.S.get("big_rod_hint", false):
 		Game.S.big_rod_hint = true; Game.hint.emit("That nearly pulled your arms off. The marina sells a big-game rod.")
 	var spot_name: String = Game.spots[c.spot].name
@@ -645,6 +658,7 @@ func _on_landed(c: Dictionary) -> void:
 	var parts := [["h3", spot_name], ["h2", c.n + ("  ★ LEGEND" if c.legend else "") + ("  · new record" if c.record and not c.junk else "")],
 		["kv", [["Weight", "%s lb" % str(c.w)], ["Value" if c.release else "Lou pays", "Priceless" if c.release else Game.money(c.value)], ["Your best", "%s lb" % str(Game.S.journal[c.n].w)]]]]
 	if c.note != "": parts.append(["sub", c.note])
+	if worn != "": parts.append(["sub", worn])
 	if c.release:
 		parts.append(["p", "You can't sell this. Let it go and the story is worth +%d rep." % c.rep])
 		parts.append(["row", [["Let it go", _release, true, "hot"]]])
@@ -694,8 +708,12 @@ func open_shop() -> void:
 				for c in S.cooler:
 					total += int(c.value)
 					var cc: Dictionary = c
-					parts.append(["item", c.n + (" ★" if c.legend else ""), "%s lb · %s" % [str(c.w), Game.spots[int(c.spot)].name], Game.money(c.value), func(): pass, false,
-						func(ci, r): ItemIcons.draw_catch(ci, cc, r)])
+					if c.junk:
+						parts.append(["item", c.n, "%s lb · %s · Lou pays %s, or strip it for %s" % [str(c.w), Game.spots[int(c.spot)].name, Game.money(c.value), Crafting.PARTS[Crafting.salvage_part(c.n)].to_lower()],
+							"Strip for parts", func(): hud.flash(Crafting.salvage(cc)); open_shop(), true, func(ci, r): ItemIcons.draw_catch(ci, cc, r)])
+					else:
+						parts.append(["item", c.n + (" ★" if c.legend else ""), "%s lb · %s" % [str(c.w), Game.spots[int(c.spot)].name], Game.money(c.value), func(): pass, false,
+							func(ci, r): ItemIcons.draw_catch(ci, cc, r)])
 				parts.append(["row", [["Sell everything for " + Game.money(total), _sell_all, true, "go"]]])
 			last_sale = 0
 		"order":
@@ -927,13 +945,35 @@ func open_home() -> void:
 	var rest := func(h: float):
 		hud.close()
 		menu.fade(func(): Game.skip_to(h); hud.flash("You rest until %s." % Game.clock_text()); Game.save_game(), 0.4, 0.7)
-	hud.open([["h3", "Home sweet home"], ["h2", ["The AC is on.", "Somebody left the TV on.", "It smells like bait in here.", "Home. Feet up."].pick_random()],
-		["p", "Kick back until…"],
-		["item", "Dawn", "The Lunker of the 7th bites at dawn.", "Rest until 6:00 AM", func(): rest.call(6.0), true],
-		["item", "Noon", "Business hours. Lanyard time at the koi pond.", "Rest until 12:00 PM", func(): rest.call(12.0), true],
-		["item", "Dusk", "The golf groundskeeper knocks off at 7.", "Rest until 5:30 PM", func(): rest.call(17.5), true],
-		["item", "Night", "Old Whiskers and the Bridge Troll come out.", "Rest until 9:00 PM", func(): rest.call(21.0), true],
-		["row", [["Back outside", func(): hud.close(), true, "hot"]]]])
+	var tabs := []
+	for td in [["rest", "Rest"], ["bench", "Workbench"]]:
+		var key: String = td[0]
+		tabs.append([td[1], func(): home_tab = key; open_home(), home_tab == key])
+	var parts := [["h3", "Home sweet home"], ["h2", ["The AC is on.", "Somebody left the TV on.", "It smells like bait in here.", "Home. Feet up."].pick_random() if home_tab == "rest" else "The workbench."], ["tabs", tabs]]
+	if home_tab == "rest":
+		parts += [["p", "Kick back until…"],
+			["item", "Dawn", "The Lunker of the 7th bites at dawn.", "Rest until 6:00 AM", func(): rest.call(6.0), true],
+			["item", "Noon", "Business hours. Lanyard time at the koi pond.", "Rest until 12:00 PM", func(): rest.call(12.0), true],
+			["item", "Dusk", "The golf groundskeeper knocks off at 7.", "Rest until 5:30 PM", func(): rest.call(17.5), true],
+			["item", "Night", "Old Whiskers and the Bridge Troll come out.", "Rest until 9:00 PM", func(): rest.call(21.0), true]]
+	else:
+		var have := []
+		for p in Crafting.PARTS:
+			var pid: String = p
+			if Crafting.count(pid) > 0: have.append([func(ci, r): ItemIcons.draw(ci, pid, r), Crafting.PARTS[pid], str(Crafting.count(pid))])
+		if have.is_empty(): parts.append(["sub", "No parts yet. Look for something shiny on the ground by the water around town, or strip the junk you catch at Lou's."])
+		else: parts.append(["kit", "Your parts", have])
+		for l in Crafting.LURES:
+			var lid: String = l.id
+			var need := []
+			for p in l.needs: need.append("%s %d/%d" % [Crafting.PARTS[p].to_lower(), mini(Crafting.count(p), int(l.needs[p])), int(l.needs[p])])
+			var lft := Crafting.left(lid)
+			var ln: String = l.n
+			parts.append(["item", l.n + (" · %d catches left" % lft if lft > 0 else ""), l.ds + " Lasts %d catches. Needs %s." % [int(l.uses), ", ".join(need)], "Make it",
+				func(): Crafting.make(lid); Sound.play("ui_click"); hud.flash("You made a %s. It's on your line now." % ln.to_lower()); open_home(),
+				Crafting.can_make(l), func(ci, r): ItemIcons.draw(ci, lid, r), not Crafting.can_make(l)])
+	parts.append(["row", [["Back outside", func(): hud.close(), true, "hot"]]])
+	hud.open(parts)
 
 # ---------- static drawings ----------
 func _draw_statics(ci: CanvasItem) -> void:
