@@ -28,42 +28,134 @@ static func text(ci: CanvasItem, pos: Vector2, s: String, size: float, col: Colo
 	ci.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 # ---------- buildings ----------
+## A soft drop shadow: a few stacked, slightly grown rectangles so the edge fades out.
+static func soft_shadow(ci: CanvasItem, r: Rect2, off: Vector2, alpha := 0.24) -> void:
+	for k in 4:
+		var g := 0.16 - k * 0.05
+		ci.draw_rect(Rect2(r.position + off - Vector2(g, g) * 0.5, r.size + Vector2(g, g)), Color(0.05, 0.1, 0.08, alpha * (0.3 + k * 0.2)))
+
+static func window(ci: CanvasItem, r: Rect2, frame: Color, shutter := Color(0, 0, 0, 0)) -> void:
+	if shutter.a > 0:
+		ci.draw_rect(Rect2(r.position.x - 0.1, r.position.y, 0.08, r.size.y), shutter)
+		ci.draw_rect(Rect2(r.end.x + 0.02, r.position.y, 0.08, r.size.y), shutter)
+	ci.draw_rect(r.grow(0.035), frame)
+	ci.draw_polygon(PackedVector2Array([r.position, Vector2(r.end.x, r.position.y), r.end, Vector2(r.position.x, r.end.y)]),
+		PackedColorArray([Color("#a8d2e4"), Color("#8cbcd4"), Color("#4f7f99"), Color("#6a9ab4")]))
+	ci.draw_line(Vector2(r.position.x + r.size.x * 0.25, r.end.y), Vector2(r.position.x + r.size.x * 0.65, r.position.y), Color(1, 1, 1, 0.35), 0.04)
+	ci.draw_line(Vector2(r.get_center().x, r.position.y), Vector2(r.get_center().x, r.end.y), frame, 0.025)
+
 static func house(ci: CanvasItem, b: Dictionary) -> void:
 	var x: float = b.x
 	var y: float = b.y
 	var w: float = b.w
 	var h: float = b.h
 	var c := Color(b.color)
-	var wall_h := 0.55
+	var hs := Town.hash2(int(x) * 5, int(y) * 3)
+	var wall_h := 0.62
 	var wy := y + h - wall_h
-	ci.draw_rect(Rect2(x + 0.3, y + 0.2, w + 0.15, h + 0.15), Color(0.08, 0.14, 0.08, 0.24))
-	ci.draw_rect(Rect2(x, wy, w, wall_h), Color("#f6eedc"))
-	ci.draw_rect(Rect2(x + w * 0.75, wy, w * 0.25, wall_h), Color(0, 0, 0, 0.07))
-	for u in [0.5, 0.74]:
-		ci.draw_rect(Rect2(x + w * u, wy + 0.14, 0.42, 0.26), Color("#6f9fb8"))
-		ci.draw_rect(Rect2(x + w * u, wy + 0.14, 0.42, 0.06), Color(1, 1, 1, 0.5))
-	ci.draw_rect(Rect2(x + 0.52, wy + 0.1, 0.42, wall_h - 0.1), Color("#13807b") if b.get("home", false) else Color("#8a5a35"))
-	var rx0 := x - 0.12
-	var rx1 := x + w + 0.12
-	var ry0 := y - 0.28
-	var ry1 := wy + 0.04
+	soft_shadow(ci, Rect2(x - 0.1, y - 0.2, w + 0.2, h + 0.2), Vector2(0.32, 0.24))
+	# walls: stucco with lap siding, a darker east end and a little skirt at the bottom
+	var wall := Color("#f6eedc") if hs < 0.6 else Color("#efe6d2") if hs < 0.85 else Color("#e9f0ea")
+	ci.draw_rect(Rect2(x, wy, w, wall_h), wall)
+	for k in range(1, 5): ci.draw_line(Vector2(x, wy + k * 0.12), Vector2(x + w, wy + k * 0.12), Color(0, 0, 0, 0.035), 0.02)
+	ci.draw_rect(Rect2(x + w * 0.8, wy, w * 0.2, wall_h), Color(0, 0, 0, 0.07))
+	ci.draw_rect(Rect2(x, y + h - 0.07, w, 0.07), shade(wall, -0.25))
+	var trim := shade(c, -0.3)
+	for u in [0.48, 0.72]: window(ci, Rect2(x + w * u, wy + 0.17, 0.4, 0.27), Color("#fbf8f0"), trim)
+	# front door with a step and a porch light
+	var door: Color = Color("#13807b") if b.get("home", false) else [Color("#8a5a35"), Color("#3d5a73"), Color("#7a3b3b"), Color("#4d6b4a")][int(hs * 4)]
+	ci.draw_rect(Rect2(x + 0.48, wy + 0.1, 0.48, wall_h - 0.1), Color("#fbf8f0"))
+	ci.draw_rect(Rect2(x + 0.52, wy + 0.14, 0.4, wall_h - 0.14), door)
+	ci.draw_rect(Rect2(x + 0.56, wy + 0.2, 0.32, 0.12), shade(door, 0.15))
+	ci.draw_circle(Vector2(x + 0.84, wy + 0.4), 0.025, Color("#e8c84a"))
+	ci.draw_rect(Rect2(x + 0.42, y + h - 0.03, 0.6, 0.1), Color("#d8d1c1"))
+	ci.draw_circle(Vector2(x + 1.06, wy + 0.2), 0.04, Color("#fff2c8"))
+	# hip roof: four facets with shingle courses, lit from the top left
+	var rx0 := x - 0.14
+	var rx1 := x + w + 0.14
+	var ry0 := y - 0.3
+	var ry1 := wy + 0.06
 	var rh := ry1 - ry0
 	var ins := minf(rh / 2, (rx1 - rx0) / 2)
 	var cy := (ry0 + ry1) / 2
-	poly(ci, [Vector2(rx0, ry0), Vector2(rx1, ry0), Vector2(rx1 - ins, cy), Vector2(rx0 + ins, cy)], shade(c, 0.16))
-	poly(ci, [Vector2(rx0, ry1), Vector2(rx1, ry1), Vector2(rx1 - ins, cy), Vector2(rx0 + ins, cy)], shade(c, -0.1))
-	poly(ci, [Vector2(rx0, ry0), Vector2(rx0 + ins, cy), Vector2(rx0, ry1)], shade(c, 0.04))
-	poly(ci, [Vector2(rx1, ry0), Vector2(rx1 - ins, cy), Vector2(rx1, ry1)], shade(c, -0.24))
-	for k in range(1, 4):
-		var f := k / 4.0
+	var top := shade(c, 0.16)
+	var south := shade(c, -0.08)
+	ci.draw_polygon(PackedVector2Array([Vector2(rx0, ry0), Vector2(rx1, ry0), Vector2(rx1 - ins, cy), Vector2(rx0 + ins, cy)]), PackedColorArray([shade(top, 0.06), top, top, shade(top, -0.04)]))
+	ci.draw_polygon(PackedVector2Array([Vector2(rx0 + ins, cy), Vector2(rx1 - ins, cy), Vector2(rx1, ry1), Vector2(rx0, ry1)]), PackedColorArray([south, south, shade(south, -0.1), shade(south, -0.1)]))
+	poly(ci, [Vector2(rx0, ry0), Vector2(rx0 + ins, cy), Vector2(rx0, ry1)], shade(c, 0.06))
+	poly(ci, [Vector2(rx1, ry0), Vector2(rx1 - ins, cy), Vector2(rx1, ry1)], shade(c, -0.26))
+	var line := Color(0, 0, 0, 0.09)
+	var rows := 5
+	for k in range(1, rows + 1):
+		var f := float(k) / (rows + 1)
 		var inn := ins * (1 - f)
-		ci.draw_line(Vector2(rx0 + inn + 0.05, cy + (ry1 - cy) * f), Vector2(rx1 - inn - 0.05, cy + (ry1 - cy) * f), Color(0, 0, 0, 0.08), 0.03)
-		ci.draw_line(Vector2(rx0 + inn + 0.05, cy - (cy - ry0) * f), Vector2(rx1 - inn - 0.05, cy - (cy - ry0) * f), Color(0, 0, 0, 0.08), 0.03)
-	ci.draw_line(Vector2(rx0 + ins, cy), Vector2(rx1 - ins, cy), shade(c, 0.42), 0.05)
-	ci.draw_rect(Rect2(rx0, ry0, rx1 - rx0, rh), Color(0, 0, 0, 0.2), false, 0.03)
-	ci.draw_rect(Rect2(x, ry1, w, 0.08), Color(0, 0, 0, 0.16))
-	if Town.hash2(int(x), int(y)) > 0.55:
-		ci.draw_rect(Rect2(rx1 - ins - 0.4, cy + 0.08, 0.32, 0.26), Color("#b8c1c6"))
+		var ys := cy + (ry1 - cy) * f
+		var yn := cy - (cy - ry0) * f
+		ci.draw_line(Vector2(rx0 + inn + 0.04, ys), Vector2(rx1 - inn - 0.04, ys), line, 0.025)
+		ci.draw_line(Vector2(rx0 + inn + 0.04, yn), Vector2(rx1 - inn - 0.04, yn), line, 0.025)
+		# staggered shingle tabs on the south facet
+		var sx := rx0 + inn + 0.1 + (0.12 if k % 2 else 0.0)
+		while sx < rx1 - inn - 0.08:
+			ci.draw_line(Vector2(sx, ys - (ry1 - cy) / (rows + 1)), Vector2(sx, ys), Color(0, 0, 0, 0.05), 0.02)
+			sx += 0.24
+	# hips and ridge
+	ci.draw_line(Vector2(rx0, ry0), Vector2(rx0 + ins, cy), shade(c, 0.3), 0.04)
+	ci.draw_line(Vector2(rx1, ry0), Vector2(rx1 - ins, cy), shade(c, -0.4), 0.04)
+	ci.draw_line(Vector2(rx0, ry1), Vector2(rx0 + ins, cy), shade(c, 0.1), 0.04)
+	ci.draw_line(Vector2(rx1, ry1), Vector2(rx1 - ins, cy), shade(c, -0.35), 0.04)
+	ci.draw_line(Vector2(rx0 + ins, cy), Vector2(rx1 - ins, cy), shade(c, 0.45), 0.06)
+	ci.draw_rect(Rect2(rx0, ry0, rx1 - rx0, rh), Color(0, 0, 0, 0.22), false, 0.03)
+	# gutter and the shadow of the eave on the wall
+	ci.draw_rect(Rect2(rx0, ry1 - 0.03, rx1 - rx0, 0.05), shade(c, -0.35))
+	ci.draw_rect(Rect2(x, ry1 + 0.02, w, 0.1), Color(0, 0, 0, 0.14))
+	# rooftop extras: solar panels, a chimney or a vent stack
+	if hs > 0.72 and w >= 4:
+		var px := rx0 + ins + 0.15
+		var pw := (rx1 - ins - 0.15) - px
+		var py := cy + 0.1
+		var ph := (ry1 - cy) * 0.62
+		ci.draw_rect(Rect2(px + 0.05, py + 0.06, pw, ph), Color(0, 0, 0, 0.2))
+		ci.draw_rect(Rect2(px, py, pw, ph), Color("#2a3d5c"))
+		var cols := int(pw / 0.36)
+		for i in range(1, cols): ci.draw_line(Vector2(px + i * pw / cols, py), Vector2(px + i * pw / cols, py + ph), Color("#8aa2c4"), 0.02)
+		ci.draw_line(Vector2(px, py + ph / 2), Vector2(px + pw, py + ph / 2), Color("#8aa2c4"), 0.02)
+		ci.draw_line(Vector2(px, py), Vector2(px + pw, py), Color(1, 1, 1, 0.3), 0.025)
+	elif hs < 0.3:
+		var chx := rx1 - ins - 0.15 - hs * 1.2
+		var chy := cy - 0.38
+		ci.draw_rect(Rect2(chx + 0.06, chy + 0.1, 0.3, 0.34), Color(0, 0, 0, 0.22))
+		ci.draw_rect(Rect2(chx, chy, 0.3, 0.34), Color("#b0624a"))
+		ci.draw_rect(Rect2(chx, chy, 0.3, 0.07), Color("#c97e64"))
+		ci.draw_rect(Rect2(chx + 0.06, chy + 0.02, 0.18, 0.04), Color("#3a2a22"))
+	else:
+		ci.draw_circle(Vector2(rx0 + ins + 0.3, cy - 0.18), 0.06, Color("#6b7378"))
+		ci.draw_circle(Vector2(rx0 + ins + 0.3, cy - 0.19), 0.035, Color("#3a3f42"))
+	# an AC unit on a pad by the east wall
+	if Town.hash2(int(x), int(y)) > 0.45:
+		var ax := x + w + 0.06
+		var ay := wy + 0.2
+		ci.draw_rect(Rect2(ax + 0.05, ay + 0.06, 0.34, 0.34), Color(0, 0, 0, 0.2))
+		ci.draw_rect(Rect2(ax, ay, 0.34, 0.34), Color("#c9ced2"))
+		ci.draw_circle(Vector2(ax + 0.17, ay + 0.17), 0.12, Color("#6f7a80"))
+		ci.draw_line(Vector2(ax + 0.07, ay + 0.17), Vector2(ax + 0.27, ay + 0.17), Color("#c9ced2"), 0.02)
+		ci.draw_line(Vector2(ax + 0.17, ay + 0.07), Vector2(ax + 0.17, ay + 0.27), Color("#c9ced2"), 0.02)
+	# a strip of flowers along the front
+	var fl: Color = [Color("#f48fb1"), Color("#f7d64a"), Color("#e2583e"), Color("#c9b6e4")][int(Town.hash2(int(y), int(x)) * 4)]
+	var fx := x + 1.15
+	while fx < x + w - 0.1:
+		ci.draw_circle(Vector2(fx, y + h + 0.02), 0.1, Color("#3a8a42"))
+		if Town.hash2(int(fx * 10), int(y)) > 0.4: ci.draw_circle(Vector2(fx - 0.03, y + h - 0.02), 0.04, fl)
+		fx += 0.22
+
+static func hvac(ci: CanvasItem, ux: float, uy: float, sz := 0.7) -> void:
+	ci.draw_rect(Rect2(ux + 0.1, uy + 0.12, sz, sz * 0.72), Color(0, 0, 0, 0.22))
+	ci.draw_rect(Rect2(ux, uy, sz, sz * 0.72), Color("#c9ced2"))
+	ci.draw_rect(Rect2(ux, uy, sz, 0.05), Color("#e4e8ea"))
+	ci.draw_rect(Rect2(ux, uy + sz * 0.72 - 0.05, sz, 0.05), Color("#9aa3a8"))
+	var fc := Vector2(ux + sz * 0.5, uy + sz * 0.36)
+	ci.draw_circle(fc, sz * 0.25, Color("#59646a"))
+	for k in 3: ci.draw_line(fc, fc + Vector2.from_angle(k * TAU / 3 + ux) * sz * 0.22, Color("#9aa6ad"), 0.035)
+	ci.draw_arc(fc, sz * 0.25, 0, TAU, 16, Color("#8b9196"), 0.025)
 
 static func flat(ci: CanvasItem, b: Dictionary) -> void:
 	var x: float = b.x
@@ -75,25 +167,64 @@ static func flat(ci: CanvasItem, b: Dictionary) -> void:
 	var small := kind == "booth" or kind == "bath" or kind == "atc"
 	var fh := 0.45 if small else 0.85
 	var fy := y + h - fh
-	ci.draw_rect(Rect2(x + 0.35, y + 0.2, w + 0.2, h + 0.2), Color(0.08, 0.12, 0.12, 0.24))
-	ci.draw_rect(Rect2(x, fy, w, fh), shade(c, -0.24))
+	soft_shadow(ci, Rect2(x, y - 0.3, w, h + 0.3), Vector2(0.38, 0.24))
+	# the front wall, with a band of windows and their frames
+	var wallc := shade(c, -0.24)
+	ci.draw_polygon(PackedVector2Array([Vector2(x, fy), Vector2(x + w, fy), Vector2(x + w, y + h), Vector2(x, y + h)]),
+		PackedColorArray([shade(wallc, 0.05), shade(wallc, 0.05), shade(wallc, -0.1), shade(wallc, -0.1)]))
 	if not small:
 		var wx := x + 0.3
 		while wx < x + w - 0.5:
-			ci.draw_rect(Rect2(wx, fy + 0.2, 0.55, 0.38), Color(0.63, 0.8, 0.88, 0.9))
-			ci.draw_rect(Rect2(wx, fy + 0.2, 0.55, 0.08), Color(1, 1, 1, 0.35))
+			var r := Rect2(wx, fy + 0.2, 0.55, 0.38)
+			ci.draw_rect(r.grow(0.03), shade(wallc, -0.3))
+			ci.draw_polygon(PackedVector2Array([r.position, Vector2(r.end.x, r.position.y), r.end, Vector2(r.position.x, r.end.y)]),
+				PackedColorArray([Color(0.72, 0.87, 0.94), Color(0.62, 0.8, 0.9), Color(0.36, 0.55, 0.66), Color(0.45, 0.64, 0.75)]))
+			ci.draw_line(Vector2(wx + 0.1, fy + 0.58), Vector2(wx + 0.35, fy + 0.2), Color(1, 1, 1, 0.3), 0.04)
+			ci.draw_rect(Rect2(wx - 0.03, fy + 0.58, 0.61, 0.04), shade(wallc, 0.25))
 			wx += 0.9
+	ci.draw_rect(Rect2(x, y + h - 0.06, w, 0.06), shade(wallc, -0.3))
+	# the roof: membrane with seams, a raised parapet lit from the top left
 	ci.draw_rect(Rect2(x, y - 0.3, w, h - fh + 0.3), c)
-	ci.draw_rect(Rect2(x + 0.16, y - 0.14, w - 0.32, h - fh - 0.02), shade(c, -0.07))
-	ci.draw_rect(Rect2(x, y - 0.3, w, 0.06), shade(c, 0.3))
+	var inner := Rect2(x + 0.16, y - 0.14, w - 0.32, h - fh - 0.02)
+	var mem := shade(c, -0.07)
+	ci.draw_polygon(PackedVector2Array([inner.position, Vector2(inner.end.x, inner.position.y), inner.end, Vector2(inner.position.x, inner.end.y)]),
+		PackedColorArray([shade(mem, 0.03), mem, shade(mem, -0.03), mem]))
+	var sx := inner.position.x + 1.0
+	while sx < inner.end.x - 0.2:
+		ci.draw_line(Vector2(sx, inner.position.y), Vector2(sx, inner.end.y), Color(0, 0, 0, 0.04), 0.025)
+		sx += 1.0
+	for k in int(w * h * 0.8):
+		var gx := inner.position.x + Town.hash2(k * 3, int(x * 7 + y)) * inner.size.x
+		var gy := inner.position.y + Town.hash2(int(y * 5 + x), k * 7) * inner.size.y
+		ci.draw_rect(Rect2(gx, gy, 0.05, 0.05), Color(0, 0, 0, 0.06) if k % 2 else Color(1, 1, 1, 0.07))
+	# inner shadow under the parapet's north and west edges
+	ci.draw_rect(Rect2(inner.position.x, inner.position.y, inner.size.x, 0.08), Color(0, 0, 0, 0.1))
+	ci.draw_rect(Rect2(inner.position.x, inner.position.y, 0.08, inner.size.y), Color(0, 0, 0, 0.08))
+	ci.draw_rect(Rect2(x, y - 0.3, w, 0.06), shade(c, 0.32))
+	ci.draw_rect(Rect2(x, y - 0.3, 0.06, h - fh + 0.3), shade(c, 0.22))
+	ci.draw_rect(Rect2(x + w - 0.06, y - 0.3, 0.06, h - fh + 0.3), shade(c, -0.15))
+	ci.draw_rect(Rect2(x, fy - 0.06, w, 0.06), shade(c, -0.2))
 	ci.draw_rect(Rect2(x, fy, w, 0.07), Color(0, 0, 0, 0.18))
 	if w * h >= 20 and kind != "shop" and kind != "mega":
 		for k in int(w * h / 18):
 			var ux := x + 0.5 + Town.hash2(k, int(x) * 3 + int(y)) * (w - 1.6)
 			var uy := y + 0.1 + Town.hash2(int(y) + k, int(x)) * maxf(0.2, h - fh - 1.1)
-			ci.draw_rect(Rect2(ux + 0.1, uy + 0.1, 0.7, 0.5), Color(0, 0, 0, 0.2))
-			ci.draw_rect(Rect2(ux, uy, 0.7, 0.5), Color("#c9ced2"))
-			ci.draw_circle(Vector2(ux + 0.35, uy + 0.25), 0.17, Color("#9aa6ad"))
+			hvac(ci, ux, uy)
+		# skylights and vent pipes
+		for k in int(w * h / 24):
+			var kx := x + 0.6 + Town.hash2(k + 50, int(x)) * (w - 1.8)
+			var ky := y + 0.2 + Town.hash2(int(x) + 9, k + 50) * maxf(0.2, h - fh - 1.0)
+			ci.draw_rect(Rect2(kx + 0.06, ky + 0.06, 0.6, 0.36), Color(0, 0, 0, 0.18))
+			ci.draw_rect(Rect2(kx, ky, 0.6, 0.36), Color("#dfe4e7"))
+			ci.draw_rect(Rect2(kx + 0.06, ky + 0.06, 0.48, 0.24), Color("#8fc4dc"))
+			ci.draw_line(Vector2(kx + 0.1, ky + 0.26), Vector2(kx + 0.3, ky + 0.08), Color(1, 1, 1, 0.5), 0.03)
+		for k in 2:
+			var vp := Vector2(x + 0.5 + Town.hash2(k + 80, int(y)) * (w - 1.0), y + 0.05 + Town.hash2(int(y), k + 80) * maxf(0.1, h - fh - 0.6))
+			ci.draw_circle(vp + Vector2(0.05, 0.05), 0.08, Color(0, 0, 0, 0.2))
+			ci.draw_circle(vp, 0.08, Color("#8b9196"))
+			ci.draw_circle(vp, 0.045, Color("#3a3f42"))
+	elif not small and kind != "shop" and kind != "mega":
+		hvac(ci, x + w * 0.62, y + 0.05, 0.55)
 	var ink := Color("#22313a")
 	match kind:
 		"shop":
@@ -156,12 +287,17 @@ static func sky_geom(b: Dictionary) -> Vector2:
 
 static func sky_shadow(ci: CanvasItem, b: Dictionary) -> void:
 	var g := sky_geom(b)
-	var L := g.x * 0.55
 	var x: float = b.x
 	var y: float = b.y
 	var w: float = b.w
 	var h: float = b.h
-	poly(ci, [Vector2(x + w, y), Vector2(x + w + L, y + L * 0.35), Vector2(x + w + L, y + h + L * 0.35), Vector2(x + L, y + h + L * 0.35), Vector2(x, y + h), Vector2(x + w, y + h)], Color(0.06, 0.1, 0.18, 0.2))
+	# a long shadow, softer and lighter the further it falls from the tower
+	for k in 4:
+		var L := g.x * (0.3 + k * 0.1)
+		var gr := k * 0.12
+		poly(ci, [Vector2(x + w, y - gr), Vector2(x + w + L + gr, y + L * 0.35 - gr), Vector2(x + w + L + gr, y + h + L * 0.35 + gr), Vector2(x + L, y + h + L * 0.35 + gr), Vector2(x, y + h), Vector2(x + w, y + h)], Color(0.06, 0.1, 0.18, 0.075))
+	# contact shadow right at the foot
+	ci.draw_rect(Rect2(x - 0.1, y + h - 0.05, w + 0.3, 0.2), Color(0.05, 0.08, 0.12, 0.18))
 
 static func sky_windows(b: Dictionary) -> Array:
 	var g := sky_geom(b)
@@ -186,25 +322,63 @@ static func sky(ci: CanvasItem, b: Dictionary) -> void:
 	var w: float = b.w
 	var h: float = b.h
 	var c := Color(b.color)
-	poly(ci, [Vector2(x + w, y), Vector2(x + w, y + h), Vector2(x + w + dx, y + h - H), Vector2(x + w + dx, y - H)], shade(c, -0.45))
+	var glass_b: bool = b.get("glass", false)
+	# east side, in shade, with its floors
+	var side := shade(c, -0.45)
+	ci.draw_polygon(PackedVector2Array([Vector2(x + w, y), Vector2(x + w, y + h), Vector2(x + w + dx, y + h - H), Vector2(x + w + dx, y - H)]),
+		PackedColorArray([side, shade(side, -0.15), shade(side, 0.08), shade(side, 0.12)]))
+	var fl := 0.46
+	var z := fl
+	while z < H - 0.2:
+		var sxp := x + w + dx * (z / H)
+		ci.draw_line(Vector2(sxp, y + h - z), Vector2(sxp, y - z), Color(0, 0, 0, 0.12), 0.03)
+		z += fl
+	# south face: shaded from the street up, floor bands, windows
 	var face := PackedVector2Array([Vector2(x, y + h), Vector2(x + w, y + h), Vector2(x + w + dx, y + h - H), Vector2(x + dx, y + h - H)])
 	var bot := shade(c, -0.34)
-	var top := shade(c, -0.06)
-	ci.draw_polygon(face, PackedColorArray([bot, bot, top, top]))
-	var glass := Color(0.8, 0.93, 0.98, 0.72) if b.get("glass", false) else Color(0.12, 0.2, 0.27, 0.42)
-	for r in b.wins: ci.draw_rect(r, glass)
-	if b.get("glass", false):
-		var sx0 := x + w * 0.2
-		poly(ci, [Vector2(sx0, y + h), Vector2(sx0 + 1.0, y + h), Vector2(sx0 + 1.0 + dx, y + h - H), Vector2(sx0 + dx, y + h - H)], Color(1, 1, 1, 0.1))
-	ci.draw_rect(Rect2(x, y + h - 0.3, w, 0.3), shade(c, -0.55))
-	ci.draw_rect(Rect2(x + w / 2 - 0.4, y + h - 0.26, 0.8, 0.24), Color(1, 0.94, 0.78, 0.55))
+	var top := shade(c, -0.04)
+	ci.draw_polygon(face, PackedColorArray([bot, shade(bot, -0.06), shade(top, -0.04), top]))
+	z = 0.35 + fl - 0.06
+	while z < H - 0.1:
+		var k0 := z / H
+		ci.draw_line(Vector2(x + dx * k0, y + h - z), Vector2(x + w + dx * k0, y + h - z), Color(1, 1, 1, 0.07) if glass_b else Color(0, 0, 0, 0.08), 0.04)
+		z += fl
+	var glass := Color(0.8, 0.93, 0.98, 0.72) if glass_b else Color(0.12, 0.2, 0.27, 0.5)
+	for r in b.wins:
+		ci.draw_rect(r, glass)
+		if not glass_b:
+			ci.draw_rect(Rect2(r.position.x, r.end.y, r.size.x, 0.03), Color(1, 1, 1, 0.14))
+			ci.draw_rect(Rect2(r.position.x, r.position.y, r.size.x, 0.05), Color(0.6, 0.75, 0.85, 0.25))
+	if glass_b:
+		# curtain wall: mullions and two diagonal sky reflections
+		var cols: int = maxi(1, int((w - 0.3) / 0.5))
+		for i in range(cols + 1):
+			var u := float(i) / cols
+			ci.draw_line(Vector2(x + u * w, y + h - 0.3), Vector2(x + u * w + dx, y + h - H), Color(0.2, 0.32, 0.4, 0.25), 0.025)
+		for band in [[0.12, 0.9, 0.14], [0.55, 0.35, 0.08]]:
+			var sx0: float = x + w * band[0]
+			var bw: float = band[1]
+			poly(ci, [Vector2(sx0, y + h - 0.3), Vector2(sx0 + bw, y + h - 0.3), Vector2(sx0 + bw + dx + 1.2, y + h - H), Vector2(sx0 + dx + 1.2, y + h - H)], Color(1, 1, 1, band[2]))
+	# lobby: dark glass, a canopy and a warm light inside
+	ci.draw_rect(Rect2(x, y + h - 0.32, w, 0.32), shade(c, -0.55))
+	ci.draw_rect(Rect2(x + 0.15, y + h - 0.28, w - 0.3, 0.24), Color(0.1, 0.16, 0.2, 0.85))
+	ci.draw_rect(Rect2(x + w / 2 - 0.45, y + h - 0.27, 0.9, 0.22), Color(1, 0.94, 0.78, 0.6))
+	ci.draw_rect(Rect2(x + w / 2 - 0.6, y + h - 0.36, 1.2, 0.08), shade(c, 0.2))
 	ci.draw_polyline(PackedVector2Array([Vector2(x, y + h), Vector2(x + dx, y + h - H), Vector2(x + w + dx, y + h - H), Vector2(x + w + dx, y - H)]), Color(0, 0, 0, 0.25), 0.04)
+	ci.draw_line(Vector2(x + w, y + h), Vector2(x + w + dx, y + h - H), Color(1, 1, 1, 0.12), 0.03)
 	if b.get("logo", false): text(ci, Vector2(x + w / 2 + dx * 0.9, y + h - H + 0.7), "MARLOWE", 0.45, Color(1, 1, 1, 0.92))
 	var rx := x + dx
 	var ry := y - H
 	ci.draw_rect(Rect2(rx, ry, w, h), shade(c, 0.14))
-	ci.draw_rect(Rect2(rx + 0.18, ry + 0.18, w - 0.36, h - 0.36), shade(c, -0.06))
+	var rin := Rect2(rx + 0.18, ry + 0.18, w - 0.36, h - 0.36)
+	ci.draw_polygon(PackedVector2Array([rin.position, Vector2(rin.end.x, rin.position.y), rin.end, Vector2(rin.position.x, rin.end.y)]),
+		PackedColorArray([shade(c, -0.02), shade(c, -0.06), shade(c, -0.1), shade(c, -0.06)]))
+	for k in int(w * h * 0.6):
+		ci.draw_rect(Rect2(rin.position.x + Town.hash2(k, int(x) + 3) * rin.size.x, rin.position.y + Town.hash2(int(y) + 3, k) * rin.size.y, 0.05, 0.05), Color(0, 0, 0, 0.06))
+	ci.draw_rect(Rect2(rin.position.x, rin.position.y, rin.size.x, 0.1), Color(0, 0, 0, 0.12))
+	ci.draw_rect(Rect2(rin.position.x, rin.position.y, 0.1, rin.size.y), Color(0, 0, 0, 0.08))
 	ci.draw_rect(Rect2(rx, ry, w, 0.06), shade(c, 0.4)); ci.draw_rect(Rect2(rx, ry, 0.06, h), shade(c, 0.4))
+	ci.draw_rect(Rect2(rx, ry + h - 0.06, w, 0.06), shade(c, -0.2)); ci.draw_rect(Rect2(rx + w - 0.06, ry, 0.06, h), shade(c, -0.3))
 	if b.get("heli", false):
 		var cc := Vector2(rx + w / 2, ry + h / 2)
 		var rr := minf(w, h) * 0.34
@@ -219,9 +393,20 @@ static func sky(ci: CanvasItem, b: Dictionary) -> void:
 		for k in maxi(1, int(w * h / 14)):
 			var ux := rx + 0.45 + Town.hash2(k, int(x) * 3 + int(y)) * (w - 1.5)
 			var uy := ry + 0.45 + Town.hash2(int(y) + k, int(x)) * (h - 1.4)
-			ci.draw_rect(Rect2(ux + 0.1, uy + 0.1, 0.65, 0.5), Color(0, 0, 0, 0.2))
-			ci.draw_rect(Rect2(ux, uy, 0.65, 0.5), Color("#c9ced2"))
-			ci.draw_circle(Vector2(ux + 0.32, uy + 0.25), 0.16, Color("#9aa6ad"))
+			hvac(ci, ux, uy, 0.65)
+		# a stair and elevator housing, and on some a water tank
+		var hx := rx + w * 0.18
+		var hy := ry + h * 0.55
+		ci.draw_rect(Rect2(hx + 0.12, hy + 0.12, 1.1, 0.8), Color(0, 0, 0, 0.22))
+		ci.draw_rect(Rect2(hx, hy, 1.1, 0.8), shade(c, 0.05))
+		ci.draw_rect(Rect2(hx, hy, 1.1, 0.07), shade(c, 0.35))
+		ci.draw_rect(Rect2(hx + 0.3, hy + 0.55, 0.3, 0.25), shade(c, -0.4))
+		if Town.hash2(int(x), int(y) * 7) > 0.5 and w >= 6:
+			var tc := Vector2(rx + w * 0.72, ry + h * 0.68)
+			ci.draw_circle(tc + Vector2(0.12, 0.1), 0.42, Color(0, 0, 0, 0.22))
+			ci.draw_circle(tc, 0.42, Color("#9b7a55"))
+			ci.draw_circle(tc, 0.32, Color("#b8956a"))
+			ci.draw_arc(tc, 0.37, 0, TAU, 20, Color("#5c4632"), 0.03)
 	if b.get("ant", false):
 		var ax := rx + w * 0.75
 		var ay := ry + h * 0.4
@@ -289,14 +474,106 @@ static func person(ci: CanvasItem, p: Vector2, dir: float, shirt: Color, hat: Co
 	if hat.a > 0: ellipse(ci, p + Vector2(0, -0.27), 0.25, 0.14, hat)
 	if rod: ci.draw_line(p + Vector2(0, -0.1), p + Vector2(cos(dir) * 1.3, sin(dir) * 1.3 - 0.6), Color("#3d2b1a"), 0.05)
 
+static func rrect(c: Vector2, hw: float, hh: float, r: float) -> PackedVector2Array:
+	var pts := PackedVector2Array()
+	for q in 4:
+		var cc := c + Vector2(hw - r if q == 0 or q == 3 else -hw + r, hh - r if q < 2 else -hh + r)
+		for i in 4:
+			var a := q * PI / 2 + i * PI / 6
+			pts.append(cc + Vector2(cos(a), sin(a)) * r)
+	return pts
+
 static func car(ci: CanvasItem, p: Vector2, rot: float, col: Color, L := 1.75, W := 0.85) -> void:
 	ci.draw_set_transform(p, rot, Vector2.ONE)
-	ci.draw_rect(Rect2(-L / 2 + 0.08, -W / 2 + 0.1, L, W), Color(0, 0, 0, 0.25))
-	ci.draw_rect(Rect2(-L / 2, -W / 2, L, W), col)
-	ci.draw_rect(Rect2(L * 0.08, -W * 0.38, L * 0.18, W * 0.76), Color(0.08, 0.14, 0.18, 0.75))
-	ci.draw_rect(Rect2(-L * 0.36, -W * 0.36, L * 0.12, W * 0.72), Color(0.08, 0.14, 0.18, 0.75))
-	ci.draw_rect(Rect2(-L * 0.22, -W * 0.34, L * 0.3, W * 0.68), Color(1, 1, 1, 0.22))
+	var sh := Vector2(0.12, 0.1).rotated(-rot)
+	for k in 3: ci.draw_colored_polygon(rrect(sh, L / 2 + 0.04 * k, W / 2 + 0.04 * k, 0.2), Color(0, 0, 0, 0.1))
+	# wheels peeking out, body, then a lighter hood and roof
+	for wx in [-L * 0.3, L * 0.3]:
+		for wy in [-W / 2, W / 2]: ci.draw_rect(Rect2(wx - 0.13, wy - 0.06, 0.26, 0.12), Color("#1d1f21"))
+	ci.draw_colored_polygon(rrect(Vector2.ZERO, L / 2, W / 2, 0.18), shade(col, -0.18))
+	ci.draw_colored_polygon(rrect(Vector2(0, -0.02), L / 2 - 0.04, W / 2 - 0.06, 0.16), col)
+	ci.draw_colored_polygon(rrect(Vector2(L * 0.32, 0), L * 0.14, W * 0.38, 0.1), shade(col, 0.1))
+	# windshield, roof, rear window
+	ci.draw_colored_polygon(PackedVector2Array([Vector2(L * 0.2, -W * 0.38), Vector2(L * 0.08, -W * 0.36), Vector2(L * 0.08, W * 0.36), Vector2(L * 0.2, W * 0.38)]), Color(0.1, 0.16, 0.22, 0.85))
+	ci.draw_colored_polygon(rrect(Vector2(-L * 0.08, 0), L * 0.16, W * 0.35, 0.08), shade(col, 0.14))
+	ci.draw_line(Vector2(-L * 0.2, -W * 0.25), Vector2(L * 0.05, -W * 0.25), Color(1, 1, 1, 0.25), 0.04)
+	ci.draw_colored_polygon(PackedVector2Array([Vector2(-L * 0.24, -W * 0.36), Vector2(-L * 0.34, -W * 0.33), Vector2(-L * 0.34, W * 0.33), Vector2(-L * 0.24, W * 0.36)]), Color(0.1, 0.16, 0.22, 0.85))
+	ci.draw_line(Vector2(L * 0.19, -W * 0.3), Vector2(L * 0.1, W * 0.1), Color(1, 1, 1, 0.3), 0.03)
+	# lights and mirrors
+	for sy in [-1, 1]:
+		ci.draw_rect(Rect2(L / 2 - 0.08, sy * W * 0.3 - 0.07, 0.07, 0.14), Color("#fff4cf"))
+		ci.draw_rect(Rect2(-L / 2 + 0.01, sy * W * 0.3 - 0.07, 0.06, 0.14), Color("#c8322a"))
+		ci.draw_rect(Rect2(L * 0.1, sy * (W / 2 + 0.02) - 0.03, 0.1, 0.06), shade(col, -0.25))
 	ci.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+const CAR_COLORS := ["#e2583e", "#f1f1ee", "#2b7ea6", "#3d4a52", "#f2b134", "#9aa6ad", "#5bb5a9", "#7a3b3b", "#f4efe4", "#22313a"]
+
+## A street lamp in the 3/4 view: its foot is at p, its light hangs over the street.
+static func lamp_post(ci: CanvasItem, p: Vector2) -> void:
+	var top := p + Vector2(0, -1.15)
+	ci.draw_line(p + Vector2(0.04, 0.02), p + Vector2(0.75, 0.42), Color(0, 0, 0, 0.18), 0.07)
+	ci.draw_circle(p + Vector2(0.78, 0.45), 0.12, Color(0, 0, 0, 0.12))
+	ellipse(ci, p + Vector2(0, 0.02), 0.11, 0.06, Color("#3d4a52"))
+	ci.draw_line(p, top, Color("#4d585f"), 0.07)
+	ci.draw_line(p + Vector2(-0.015, 0), top + Vector2(-0.015, 0), Color(1, 1, 1, 0.18), 0.02)
+	ci.draw_line(top, top + Vector2(0.28, -0.05), Color("#4d585f"), 0.05)
+	ellipse(ci, top + Vector2(0.34, -0.02), 0.16, 0.07, Color("#3d4a52"))
+	ellipse(ci, top + Vector2(0.34, 0.01), 0.11, 0.04, Color("#fff2c8"))
+
+## A boat tied up in a slip, bow to the north. t bobs it on the water.
+static func moored_boat(ci: CanvasItem, p: Vector2, t: float, col: Color, sail := false) -> void:
+	var bob := sin(t * 1.3 + p.x) * 0.04
+	var rot := sin(t * 0.9 + p.x * 2.0) * 0.03
+	var L := 3.0
+	var W := 1.15
+	ci.draw_set_transform(p + Vector2(0.18, 0.22), rot, Vector2.ONE)
+	ci.draw_colored_polygon(_hull(L, W * 1.05), Color(0.02, 0.1, 0.16, 0.25))
+	ci.draw_set_transform(p + Vector2(0, bob), rot, Vector2.ONE)
+	# water stirring around the hull
+	ci.draw_arc(Vector2(0, L * 0.1), W * 0.75, 0, TAU, 20, Color(1, 1, 1, 0.12 + 0.06 * sin(t * 2.0 + p.x)), 0.05)
+	ci.draw_colored_polygon(_hull(L, W), Color("#f4f4f0"))
+	ci.draw_colored_polygon(_hull(L * 0.92, W * 0.84), Color("#e4e6e3"))
+	ci.draw_polyline(_hull(L, W), col, 0.06, true)
+	if sail:
+		ci.draw_rect(Rect2(-0.32, L * 0.08, 0.64, 0.75), Color("#d8cdb4"))
+		ci.draw_rect(Rect2(-0.26, L * 0.12, 0.52, 0.3), Color(0.12, 0.2, 0.27, 0.7))
+		ci.draw_line(Vector2(0, -L * 0.18), Vector2(0, L * 0.38), Color("#b3a68a"), 0.09)
+		ci.draw_line(Vector2(0, -L * 0.18), Vector2(0, L * 0.38), col, 0.05)
+		ci.draw_circle(Vector2(0, -L * 0.18), 0.09, Color("#8b9196"))
+		ci.draw_line(Vector2(0, -L * 0.18), Vector2(0, -L * 0.48), Color(0.3, 0.3, 0.3, 0.6), 0.015)
+	else:
+		# center console with its windshield, a cooler seat and the outboard
+		ci.draw_rect(Rect2(-0.28, -L * 0.02, 0.56, 0.5), Color("#cfd3d1"))
+		ci.draw_rect(Rect2(-0.26, -L * 0.04, 0.52, 0.12), Color(0.12, 0.2, 0.27, 0.75))
+		ci.draw_rect(Rect2(-0.2, L * 0.16, 0.4, 0.3), col)
+		ci.draw_rect(Rect2(-0.3, -L * 0.05, 0.6, 0.06), Color("#9aa3a8"))
+	ci.draw_rect(Rect2(-0.18, L * 0.47, 0.36, 0.3), Color("#2a2e31"))
+	ci.draw_rect(Rect2(-0.12, L * 0.49, 0.24, 0.08), Color("#5a6166"))
+	ci.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+static func _hull(L: float, W: float) -> PackedVector2Array:
+	var pts := PackedVector2Array()
+	for i in 9:
+		var a := PI + i * PI / 8
+		pts.append(Vector2(cos(a) * W / 2, -L * 0.2 + sin(a) * L * 0.3))
+	pts.append(Vector2(W / 2, L * 0.48)); pts.append(Vector2(-W / 2, L * 0.48))
+	return pts
+
+## A gull seen from above: flap goes from -1 (wings down) to 1 (up).
+static func gull(ci: CanvasItem, p: Vector2, dir: float, flap: float, s := 1.0) -> void:
+	ci.draw_set_transform(p, dir, Vector2(s, s))
+	var span := 0.55 * (0.7 + 0.3 * absf(flap))
+	var bend := flap * 0.12
+	for sd in [-1.0, 1.0]:
+		var wing := PackedVector2Array([Vector2(0.06, 0), Vector2(0.02 - bend, sd * span * 0.5), Vector2(-0.16 - bend, sd * span), Vector2(-0.12, sd * span * 0.45), Vector2(-0.1, 0)])
+		ci.draw_colored_polygon(wing, Color("#f4f6f6"))
+		ci.draw_line(Vector2(-0.16 - bend, sd * span), Vector2(-0.12 - bend * 0.5, sd * span * 0.75), Color("#3d4a52"), 0.05)
+	ellipse(ci, Vector2.ZERO, 0.2, 0.06, Color("#ffffff"))
+	ci.draw_circle(Vector2(0.16, 0), 0.05, Color("#f4f6f6"))
+	ci.draw_line(Vector2(0.2, 0), Vector2(0.27, 0), Color("#f2b134"), 0.03)
+	ci.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+static func lamp_head(p: Vector2) -> Vector2: return p + Vector2(0.34, -1.14)
 
 static func fish_shadow(ci: CanvasItem, p: Vector2, dir: float, L: float, alpha: float, glow := false, wob := 0.0) -> void:
 	var col := Color(0.47, 1.0, 0.67, alpha) if glow else Color(0.03, 0.11, 0.17, alpha)

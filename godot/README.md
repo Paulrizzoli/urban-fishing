@@ -35,6 +35,7 @@ The current version is in `project.godot` (`config/version`) and shows on the ti
 
 - [x] The whole map: town, golf course, power station, Sunsplash Jungle, Heron Lakes, the airport, downtown, the bay and offshore
 - [x] New look: smooth water depth, an animated water shader, textured lawns, roofs, 3D-style skyscrapers
+- [x] v0.7.0 graphics pass: rippling water with caustics, foam and glints, lily pads and reeds, detailed houses, roofs and towers, worn streets with curbs, drains and manholes, lamp posts, parked cars, moored boats and gulls
 - [x] Day and night with real 2D lights: street lamps, lit office windows, dusk glow
 - [x] Fish shadows in every body of water, all 17 spots' fish and legends
 - [x] The fishing minigame: aim, cast power, twitching, nibble and bite, the reel fight

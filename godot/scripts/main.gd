@@ -9,22 +9,7 @@ const OLDTIMER := Vector2(37.4, 49.4)
 const ROSA := Vector2(34.4, 165.6)
 const STORY_LINES_OK := ["Lou whistles. The regulars nod.", "Somebody buys you a soda.", "Lou writes it on the whiteboard."]
 const STORY_LINES_NO := ["Lou laughs so hard he has to sit down.", "A regular holds his hands two inches apart.", "\"Sure it was, buddy.\""]
-const WATER_SHADER := """
-shader_type canvas_item;
-uniform sampler2D water_mask : filter_linear;
-void fragment() {
-	vec4 c = texture(TEXTURE, UV);
-	float m = texture(water_mask, UV).r;
-	if (m > 0.02) {
-		vec2 p = UV * vec2(112.0, 184.0);
-		float w = sin(p.x * 2.3 + TIME * 1.1 + sin(p.y * 1.7 + TIME * 0.8)) * sin(p.y * 2.9 - TIME * 0.9 + sin(p.x * 1.3 - TIME * 0.5));
-		float caustic = smoothstep(0.55, 1.0, w);
-		float glint = smoothstep(0.985, 1.0, sin(p.x * 7.0 + TIME * 2.0) * sin(p.y * 5.0 - TIME * 1.6));
-		c.rgb += (caustic * 0.10 + glint * 0.35) * m;
-	}
-	COLOR = c;
-}
-"""
+const GROUND_SHADER := preload("res://shaders/ground.gdshader")
 
 var world: Node2D
 var ents: Node2D
@@ -50,6 +35,8 @@ var marina_tab := "boats"
 var journal_tab := "spots"
 var weather: Weather
 var ground_tex: Texture2D
+var ground_mat: ShaderMaterial
+var open_lamps: Array = []    # street lamps whose glow isn't hidden behind a tower
 var ach_t := 0.0
 var menu: Menu
 var saved_shown := -10.0
@@ -88,9 +75,12 @@ func _ready() -> void:
 	ground.scale = Vector2.ONE / Ground.PX
 	ground.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	var mat := ShaderMaterial.new()
-	var sh := Shader.new(); sh.code = WATER_SHADER; mat.shader = sh
+	mat.shader = GROUND_SHADER
 	mat.set_shader_parameter("water_mask", Ground.make_water_mask())
+	mat.set_shader_parameter("materials", Ground.make_material_tex())
+	mat.set_shader_parameter("map_size", Vector2(Town.MW, Town.MH))
 	ground.material = mat
+	ground_mat = mat
 	ground.z_index = -10
 	world.add_child(ground)
 	for cy in ceili(Town.MH / 8.0):
@@ -149,6 +139,17 @@ func _ready() -> void:
 		Art.person(ci, ROSA, PI / 2 + 0.35, Color("#e2583e"), Color("#fbf3e2"), true)
 		ci.draw_circle(ROSA + Vector2(-0.42, 0.1), 0.14, Color("#9aa6ad")), ROSA.y))
 	ents.add_child(Drawer.make(func(ci): ci.draw_rect(Rect2(OLDTIMER.x - 0.5, OLDTIMER.y + 0.15, 0.3, 0.3), Color("#2c5f8a")), OLDTIMER.y + 0.01))
+	# boats tied up at the marina
+	for mb in [[93.5, "#2b7ea6", false], [103.5, "#e2583e", true], [108.5, "#13807b", false]]:
+		var mp := Vector2(mb[0], 160.4)
+		var mc := Color(mb[1])
+		var ms: bool = mb[2]
+		ents.add_child(Drawer.make(func(ci): Art.moored_boat(ci, mp, Time.get_ticks_msec() / 1000.0, mc, ms), mp.y + 1.2, true))
+	for lp in Town.lamps:
+		var t := Town.t_at(floori(lp.x), floori(lp.y))
+		if Town.is_water_t(t) or t == Town.T.BLD: continue
+		var lpp: Vector2 = lp
+		ents.add_child(Drawer.make(func(ci): Art.lamp_post(ci, lpp), lp.y))
 	for bs in Story.BUS:
 		var bp: Vector2 = bs[1]
 		ents.add_child(Drawer.make(func(ci): draw_bus_stop(ci, bp), bp.y - 0.2))
@@ -176,6 +177,9 @@ func _ready() -> void:
 	var wxd := Drawer.make(func(ci): Weather.ripples(ci, _view_tiles()), 0, true)
 	wxd.z_index = 4
 	world.add_child(wxd)
+	var gulls := Drawer.make(_draw_gulls, 0, true)
+	gulls.z_index = 6
+	world.add_child(gulls)
 	var labels := Drawer.make(_draw_labels)
 	labels.z_index = 6
 	world.add_child(labels)
@@ -400,6 +404,8 @@ func _lighting() -> void:
 	elif h >= 5.5 and h < 8: dusk = sin((h - 5.5) / 2.5 * PI) * 0.12
 	c = c.lerp(Color(1, 0.72, 0.55), dusk)
 	night.color = c
+	ground_mat.set_shader_parameter("sun", clampf(1.0 - dk / 0.5, 0.0, 1.0) * (1.0 - Game.wx.cloud * 0.55))
+	ground_mat.set_shader_parameter("rain", Game.wx.rain)
 	var on := dk > 0.15
 	var view := Rect2(cam.get_screen_center_position() - get_viewport_rect().size / cam.zoom / 2, get_viewport_rect().size / cam.zoom).grow(6 * TS)
 	for l in lamp_lights:
@@ -784,6 +790,15 @@ func _draw_statics(ci: CanvasItem) -> void:
 		ci.draw_rect(Rect2(b.x0, b.y0, 1, hh), Color("#d8d2c4")); ci.draw_rect(Rect2(b.x1, b.y0, 1, hh), Color("#d8d2c4"))
 		ci.draw_rect(Rect2(b.x0, b.y0, 0.14, hh), Color("#8b8f96")); ci.draw_rect(Rect2(b.x1 + 0.86, b.y0, 0.14, hh), Color("#8b8f96"))
 		ci.draw_rect(Rect2(b.x1 + 1, b.y0, 0.35, hh), Color(0, 0, 0, 0.25))
+	# parked cars in the lots
+	for d in Town.decor:
+		if d.k != "parking": continue
+		for x in range(d.x0, d.x1 + 1):
+			var hh := Town.hash2(x * 17, d.y0 * 5)
+			if hh > 0.55: continue
+			var col := Color(Art.CAR_COLORS[int(Town.hash2(x, d.y0 * 3) * Art.CAR_COLORS.size())])
+			var cyy: float = d.y0 + 1.15 + (0.12 if hh > 0.3 else 0.0)
+			Art.car(ci, Vector2(x + 0.53, cyy), PI / 2 if hh > 0.2 else -PI / 2, col, 1.65, 0.8)
 	# fences, walls and gates
 	for y in Town.MH:
 		for x in Town.MW:
@@ -845,9 +860,51 @@ func _draw_night_glow(ci: CanvasItem) -> void:
 			i += 1
 		if b.get("ant", false) and int(t * 1.2 + b.x) % 2 == 0:
 			ci.draw_circle(Vector2(b.x + g.y + b.w * 0.75, b.y - g.x + b.h * 0.4 - 1.1), 0.14, Color(1, 0.3, 0.23))
-	for lp in Town.lamps:
-		if view.has_point(lp): ci.draw_circle(lp, 0.16, Color(1, 0.9, 0.62, 0.8 * dk / 0.62))
+	if open_lamps.is_empty():
+		for lp in Town.lamps:
+			var hidden := Town.is_water_t(Town.t_at(floori(lp.x), floori(lp.y)))
+			for b in Town.buildings:
+				if b.kind != "sky": continue
+				var g := Art.sky_geom(b)
+				if Rect2(b.x - 0.2, b.y - g.x, b.w + g.y + 0.4, b.h + g.x).has_point(Art.lamp_head(lp)) and lp.y < b.y + b.h: hidden = true
+			if not hidden: open_lamps.append(lp)
+	for lp in open_lamps:
+		if not view.has_point(lp): continue
+		var hd := Art.lamp_head(lp)
+		var a := dk / 0.62
+		ci.draw_circle(hd, 0.42, Color(1, 0.85, 0.55, 0.12 * a))
+		ci.draw_circle(hd, 0.22, Color(1, 0.88, 0.6, 0.3 * a))
+		ellipse_glow(ci, hd + Vector2(0, 0.02), a)
 	if view.has_point(Vector2(51.4, 31.6)): Art.text(ci, Vector2(51.4, 31.6), "OPEN", 0.4, Color(1, 0.4, 0.33, 0.9))
+
+## Gulls wheeling over the water by day.
+const GULL_SPOTS := [Vector2(95, 162), Vector2(20, 163), Vector2(32, 52), Vector2(52, 170), Vector2(30, 166), Vector2(79, 128), Vector2(61, 101), Vector2(88, 14), Vector2(70, 52), Vector2(105, 79), Vector2(60, 176)]
+
+func _draw_gulls(ci: CanvasItem) -> void:
+	var h := Game.hour()
+	if h < 6.3 or h > 19.6 or Game.wx.rain > 0.5: return
+	var view := _view_tiles().grow(3)
+	var t := Time.get_ticks_msec() / 1000.0
+	var birds := []
+	for i in GULL_SPOTS.size():
+		var c: Vector2 = GULL_SPOTS[i]
+		if c.distance_to(view.get_center()) > view.size.length() / 2 + 8: continue
+		for k in 2 + i % 2:
+			var r := 3.0 + Town.hash2(i, k) * 4.0
+			var sp := (0.12 + Town.hash2(k, i) * 0.08) * (1.0 if (i + k) % 2 else -1.0)
+			var a := t * sp + Town.hash2(i * 3, k * 5) * TAU
+			var p := c + Vector2(cos(a) * r, sin(a) * r * 0.7)
+			var flap := sin(t * 7.0 + i + k * 2.0)
+			if fmod(t * 0.3 + k + i, 3.0) > 1.4: flap = 0.25    # gliding
+			var alt := 2.2 + Town.hash2(k, i * 7) * 1.0
+			birds.append([p, a + (PI / 2 if sp > 0 else -PI / 2), flap, alt])
+	# no shadows on purpose: on the water they read as fish
+	for bd in birds:
+		var p: Vector2 = bd[0] - Vector2(bd[3] * 0.55, bd[3] * 0.8)
+		if view.has_point(p): Art.gull(ci, p, bd[1], bd[2], 0.85)
+
+func ellipse_glow(ci: CanvasItem, p: Vector2, a: float) -> void:
+	Art.ellipse(ci, p, 0.12, 0.05, Color(1, 0.97, 0.85, 0.95 * a))
 
 func _view_tiles() -> Rect2:
 	return Rect2(cam.get_screen_center_position() / TS - get_viewport_rect().size / cam.zoom / TS / 2, get_viewport_rect().size / cam.zoom / TS).grow(2)

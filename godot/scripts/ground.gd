@@ -98,14 +98,39 @@ static func make_texture() -> ImageTexture:
 	base.blit_rect_mask(grass, gmask, Rect2i(0, 0, MW * PX, MH * PX), Vector2i.ZERO)
 	return ImageTexture.create_from_image(base)
 
-## A small texture that marks the water, for the shimmer shader. One pixel per tile, sampled smoothly.
+## A small texture that describes the water, for the water shader. One pixel per tile, sampled smoothly:
+## red marks water, green is how far it is from shore (shallow to deep), blue marks the storm drain's murky water.
 static func make_water_mask() -> ImageTexture:
+	var img := Image.create(Town.MW, Town.MH, false, Image.FORMAT_RGBA8)
+	for y in Town.MH:
+		for x in Town.MW:
+			var t: int = Town.tile[Town.idx(x, y)]
+			if not Town.is_water_t(t):
+				img.set_pixel(x, y, Color(0, 0, 0, 1)); continue
+			var d: int = Town.depth[Town.idx(x, y)]
+			var k := clampf((float(d if d > 0 else 9) - 1.0) / 6.0, 0.0, 1.0)
+			img.set_pixel(x, y, Color(1.0, k, 1.0 if t == Town.T.SWATER else 0.0, 1))
+	return ImageTexture.create_from_image(img)
+
+## What each tile's ground is made of, for the ground shader's surface texture. One pixel per tile, sampled sharply.
+## 0 nothing, 1 lawn, 2 asphalt, 3 sidewalk and concrete, 4 sand, 5 water, 6 fairway, 7 dirt path, 8 plaza, 9 dock
+static func make_material_tex() -> ImageTexture:
+	var T := Town.T
 	var img := Image.create(Town.MW, Town.MH, false, Image.FORMAT_L8)
 	for y in Town.MH:
 		for x in Town.MW:
 			var t: int = Town.tile[Town.idx(x, y)]
-			var v := 0.0
-			if t == Town.T.WATER or t == Town.T.WARM or t == Town.T.DEEP: v = 1.0
-			elif t == Town.T.SWATER: v = 0.35
-			img.set_pixel(x, y, Color(v, v, v))
+			if t == T.TREE or t == T.BUSH: t = Town.T.GRASS if is_lawn(x, y) else under(x, y)
+			var m := 0
+			match t:
+				T.GRASS: m = 1
+				T.ROAD, T.RUNWAY: m = 2
+				T.WALK, T.CONC, T.DOOR, T.PGATE, T.HGATE, T.GATE, T.GAP, T.BLD: m = 3
+				T.SAND: m = 4
+				T.WATER, T.DEEP, T.SWATER, T.WARM: m = 5
+				T.FAIR: m = 6
+				T.PATH, T.HIDE: m = 7
+				T.PLAZA: m = 8
+				T.DOCK: m = 9
+			img.set_pixel(x, y, Color8(m, m, m))
 	return ImageTexture.create_from_image(img)
