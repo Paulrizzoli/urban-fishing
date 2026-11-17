@@ -501,13 +501,134 @@ static func _quad(a: Vector2, b: Vector2, c: Vector2, f: float) -> Vector2:
 	return a.lerp(b, f).lerp(b.lerp(c, f), f)
 
 # ---------- people, cars, fish ----------
-static func person(ci: CanvasItem, p: Vector2, dir: float, shirt: Color, hat: Color = Color(0, 0, 0, 0), rod := false) -> void:
-	ellipse(ci, p + Vector2(0, 0.28), 0.36, 0.15, Color(0, 0, 0, 0.25))
-	ellipse(ci, p, 0.32, 0.26, shirt)
-	ellipse(ci, p + Vector2(0, -0.04), 0.26, 0.18, shade(shirt, 0.12))
-	ci.draw_circle(p + Vector2(0, -0.22), 0.17, Color("#e0b48c"))
-	if hat.a > 0: ellipse(ci, p + Vector2(0, -0.27), 0.25, 0.14, hat)
-	if rod: ci.draw_line(p + Vector2(0, -0.1), p + Vector2(cos(dir) * 1.3, sin(dir) * 1.3 - 0.6), Color("#3d2b1a"), 0.05)
+const SKINS := ["#e0b48c", "#c68a5e", "#8d5a3b", "#f1c9a5", "#a86f4a"]
+const HAIRS := ["#3a2a1e", "#1e1a18", "#8a5a35", "#c9a574", "#6b6f72"]
+
+## Someone standing in town: Lou's regulars, guards, staff. rod makes them fish toward dir.
+static func person(ci: CanvasItem, p: Vector2, dir: float, shirt: Color, hat: Color = Color(0, 0, 0, 0), rod := false, phase := 0.0, moving := false) -> void:
+	var hs := Town.hash2(int(p.x * 3), int(p.y * 3))
+	var look := { "shirt": shirt, "pants": Color("#22313a") if shirt.v < 0.45 else [Color("#4a5a6a"), Color("#c9b48a"), Color("#3d5a73"), Color("#6b5a48")][int(hs * 4)],
+		"skin": Color(SKINS[int(hs * 5)]), "hair": Color(HAIRS[int(Town.hash2(int(p.y), int(p.x)) * 5)]), "hat": hat,
+		"hat_kind": "wide" if rod else "cap" }
+	if rod:
+		var tip := p + Vector2(cos(dir) * 1.3, sin(dir) * 1.3 - 0.6)
+		character(ci, p, dir, look, phase, false, 2, tip)
+		# their line drops to a bobber out on the water
+		var bp := p + Vector2.from_angle(dir) * 2.3 + Vector2(0, 0.1)
+		if Town.is_water_t(Town.t_at(floori(bp.x), floori(bp.y))):
+			var t := Time.get_ticks_msec() / 1000.0 + p.x
+			var bb := bp + Vector2(0, sin(t * 2.5) * 0.03)
+			ci.draw_polyline(PackedVector2Array([tip, (tip + bb) / 2 + Vector2(0, 0.35), bb]), Color(1, 1, 1, 0.5), 0.02)
+			ellipse(ci, bb + Vector2(0, 0.06), 0.16, 0.05, Color(1, 1, 1, 0.3))
+			ci.draw_circle(bb, 0.06, Color("#e2583e"))
+			ci.draw_circle(bb + Vector2(0, -0.02), 0.03, Color.WHITE)
+	else:
+		character(ci, p, dir, look, phase, moving)
+
+## A person in the 3/4 view. p is the middle of the body: the feet are 0.27 below it and the head 0.3 above.
+## look: shirt, pants, skin, hair, hat (alpha 0 for none), hat_kind ("wide" or "cap"), and extras:
+## dots (a loud fishing shirt), tie, lanyard, seated (in a boat: no legs).
+## rod: 0 none, 1 carried on the shoulder, 2 fishing, with its tip at tip. bend bows it toward the line.
+static func character(ci: CanvasItem, p: Vector2, face: float, look: Dictionary, phase := 0.0, moving := false, rod := 0, tip := Vector2.ZERO, bend := 0.0) -> void:
+	var fx := cos(face)
+	var fy := sin(face)
+	var fwd := Vector2(fx, fy * 0.5)
+	var stride := sin(phase) * 0.11 if moving else 0.0
+	var pb := p + Vector2(0, -absf(sin(phase)) * 0.035 if moving else 0.0)
+	var shirt: Color = look.shirt
+	var skin: Color = look.get("skin", Color("#e0b48c"))
+	var pants: Color = look.get("pants", Color("#4a5a6a"))
+	var seated: bool = look.get("seated", false)
+	if not seated:
+		ellipse(ci, p + Vector2(0.03, 0.29), 0.3, 0.12, Color(0, 0, 0, 0.28))
+		# legs, the far one first
+		var lat := Vector2(0.085 * maxf(0.35, absf(fy)), 0)
+		var legs := []
+		for i in [-1, 1]:
+			var foot: Vector2 = Vector2(p.x, p.y + 0.26) + lat * i + fwd * stride * i
+			legs.append([foot, Vector2(pb.x, pb.y + 0.06) + lat * i * 0.9])
+		legs.sort_custom(func(a, b): return a[0].y < b[0].y)
+		for lg in legs:
+			ci.draw_line(lg[1], lg[0], pants, 0.1)
+			ci.draw_line(lg[1] + Vector2(-0.03, 0), lg[0] + Vector2(-0.03, 0), shade(pants, 0.15), 0.025)
+			ellipse(ci, lg[0] + Vector2(fx * 0.03, 0.015), 0.065, 0.04, Color("#2a2420"))
+	# the far arm goes behind the body
+	var grip := pb + fwd * 0.22 + Vector2(0, -0.04)
+	var arms := []
+	for i in [-1, 1]:
+		var sh: Vector2 = pb + Vector2(i * 0.165, -0.1)
+		var hand: Vector2
+		if rod == 2: hand = grip + Vector2(-fy, fx) * 0.035 * i
+		elif rod == 1 and i == 1: hand = sh + Vector2(0.02, -0.04)
+		else: hand = sh + Vector2(i * 0.02, 0.17) - fwd * stride * i * 0.9
+		arms.append([sh, hand, i])
+	var far_i := 1 if fx < 0 else -1
+	for ar in arms:
+		if ar[2] == far_i and rod != 2: _arm(ci, ar[0], ar[1], shirt, skin)
+	# body: a rounded trunk, lit from the top left
+	var tor := PackedVector2Array([pb + Vector2(-0.17, -0.14), pb + Vector2(0.17, -0.14), pb + Vector2(0.14, 0.09), pb + Vector2(-0.14, 0.09)])
+	ci.draw_polygon(tor, PackedColorArray([shade(shirt, 0.12), shirt, shade(shirt, -0.2), shade(shirt, -0.08)]))
+	ci.draw_circle(pb + Vector2(-0.15, -0.11), 0.045, shade(shirt, 0.1))
+	ci.draw_circle(pb + Vector2(0.15, -0.11), 0.045, shade(shirt, -0.05))
+	if seated: ci.draw_rect(Rect2(pb.x - 0.14, pb.y + 0.06, 0.28, 0.06), pants)
+	else: ci.draw_rect(Rect2(pb.x - 0.14, pb.y + 0.05, 0.28, 0.05), shade(pants, -0.2))
+	if look.get("dots", false):
+		for d in [Vector2(-0.08, -0.07), Vector2(0.07, 0.0), Vector2(0.02, -0.1), Vector2(-0.06, 0.04), Vector2(0.1, -0.09)]:
+			ci.draw_circle(pb + d, 0.025, Color("#f2b134"))
+			ci.draw_circle(pb + d + Vector2(0.015, 0.012), 0.012, Color("#fbf3e2"))
+	if look.get("tie", false):
+		poly(ci, [pb + Vector2(-0.06, -0.14), pb + Vector2(0.06, -0.14), pb + Vector2(0, -0.04)], Color.WHITE)
+		ci.draw_line(pb + Vector2(0, -0.12), pb + Vector2(0, 0.04), Color("#e2583e"), 0.04)
+	if look.get("lanyard", false):
+		ci.draw_polyline(PackedVector2Array([pb + Vector2(-0.07, -0.14), pb + Vector2(0, -0.02), pb + Vector2(0.07, -0.14)]), Color("#2b7ea6"), 0.025)
+		ci.draw_rect(Rect2(pb.x - 0.05, pb.y - 0.03, 0.1, 0.07), Color.WHITE)
+	for ar in arms:
+		if ar[2] != far_i or rod == 2: _arm(ci, ar[0], ar[1], shirt, skin)
+	if rod == 2 and fy < -0.2: _rod(ci, grip, tip, bend)
+	# head: neck, hair at the back, face toward where they look
+	var hc := pb + Vector2(0, -0.3)
+	ci.draw_rect(Rect2(hc.x - 0.04, hc.y + 0.08, 0.08, 0.08), shade(skin, -0.15))
+	var hair: Color = look.get("hair", Color("#3a2a1e"))
+	ci.draw_circle(hc, 0.145, skin)
+	ci.draw_circle(hc - fwd * 0.05 + Vector2(0, -0.035), 0.13, hair)
+	if fy > -0.55:
+		ci.draw_circle(hc + fwd * 0.04 + Vector2(0, 0.02), 0.11, skin)
+		if fy > -0.25:
+			var side := 1.0 - absf(fx) * 0.55
+			for i in [-1, 1]:
+				ci.draw_circle(hc + Vector2(fx * 0.07 + i * 0.045 * side, 0.025 + fy * 0.02), 0.017, Color("#22201e"))
+	ci.draw_circle(hc + Vector2(-0.05, -0.05), 0.04, Color(1, 1, 1, 0.12))
+	var hat: Color = look.get("hat", Color(0, 0, 0, 0))
+	if hat.a > 0:
+		if look.get("hat_kind", "wide") == "cap":
+			ci.draw_circle(hc + Vector2(0, -0.04), 0.135, hat)
+			ellipse(ci, hc + fwd * 0.14 + Vector2(0, -0.03), 0.1, 0.055, shade(hat, -0.15), face)
+			ci.draw_circle(hc + Vector2(-0.04, -0.09), 0.05, shade(hat, 0.2))
+		else:
+			ellipse(ci, hc + Vector2(0.01, -0.035), 0.26, 0.14, Color(0, 0, 0, 0.12))
+			ellipse(ci, hc + Vector2(0, -0.05), 0.25, 0.135, hat)
+			ellipse(ci, hc + Vector2(0, -0.09), 0.14, 0.09, shade(hat, 0.12))
+			ci.draw_arc(hc + Vector2(0, -0.075), 0.14, 0.15, PI - 0.15, 10, shade(hat, -0.35), 0.025)
+	if rod == 2 and fy >= -0.2: _rod(ci, grip, tip, bend)
+	elif rod == 1:
+		# over the shoulder, tip up and back
+		ci.draw_line(pb + Vector2(0.12, 0.02), pb + Vector2(0.32 - fx * 0.22, -0.95 - fy * 0.08), Color("#3d2b1a"), 0.04)
+		ci.draw_circle(pb + Vector2(0.15, -0.06), 0.035, Color("#9aa6ad"))
+
+static func _arm(ci: CanvasItem, sh: Vector2, hand: Vector2, shirt: Color, skin: Color) -> void:
+	var mid := sh.lerp(hand, 0.45)
+	ci.draw_line(sh, mid, shade(shirt, -0.08), 0.08)
+	ci.draw_line(mid, hand, skin, 0.06)
+	ci.draw_circle(hand, 0.038, skin)
+
+static func _rod(ci: CanvasItem, grip: Vector2, tip: Vector2, bend: float) -> void:
+	var mid := (grip + tip) / 2 + Vector2(0, -0.12 + bend * 0.35)
+	var pts := PackedVector2Array()
+	for i in 9: pts.append(_quad(grip, mid, tip, i / 8.0))
+	ci.draw_line(grip - (pts[1] - grip) * 0.6, grip, Color("#2a2420"), 0.07)
+	ci.draw_polyline(pts.slice(0, 5), Color("#3d2b1a"), 0.05)
+	ci.draw_polyline(pts.slice(4), Color("#4d3a26"), 0.032)
+	ci.draw_circle(grip + (pts[1] - grip) * 0.4 + Vector2(0, 0.03), 0.04, Color("#9aa6ad"))
 
 static func rrect(c: Vector2, hw: float, hh: float, r: float) -> PackedVector2Array:
 	var pts := PackedVector2Array()

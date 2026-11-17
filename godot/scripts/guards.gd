@@ -105,6 +105,7 @@ func update(dt: float) -> void:
 	var pz := zone_at(player.position)
 	for w in watchers:
 		var on := active(w)
+		var was: Vector2 = w.pos
 		if w.kind == "cam":
 			var k := (sin(t * TAU / w.period) + 1) / 2
 			w.dir = lerpf(w.sweep[0], w.sweep[1], k)
@@ -120,6 +121,8 @@ func update(dt: float) -> void:
 				else:
 					w.pos += to.normalized() * s
 					w.dir += wrapf(to.angle() - w.dir, -PI, PI) * minf(1.0, dt * 6)
+		w.moving = w.pos.distance_squared_to(was) > 0.000001
+		if w.moving: w.phase = w.get("phase", 0.0) + dt * 9.0
 		w.seen = not (plane_loud() and pz == 7) and can_see(w)
 		if w.seen:
 			if w.kind != "cam": w.dir += wrapf((player.position - w.pos).angle() - w.dir, -PI, PI) * minf(1.0, dt * 3)
@@ -177,7 +180,7 @@ func _draw_watcher(ci: CanvasItem, w: Dictionary) -> void:
 				ci.draw_rect(Rect2(p.x - 0.65, p.y + 0.05, 1.3, 0.38), Color("#3d4a52"))
 				ci.draw_rect(Rect2(p.x - 0.65, p.y + 0.05, 1.3, 0.08), Color("#8b9196"))
 			else:
-				Art.person(ci, p, w.dir, Color("#3d4a52"), navy)
+				Art.person(ci, p, w.dir, Color("#3d4a52"), navy, false, w.get("phase", 0.0), w.get("moving", false))
 				var dp: Vector2 = p - Vector2.from_angle(w.dir) * 0.7 + Vector2(0, 0.2)
 				Art.ellipse(ci, dp, 0.18, 0.1, Color("#c98a5a"), w.dir)
 				ci.draw_circle(dp + Vector2.from_angle(w.dir) * 0.18 + Vector2(0, -0.03), 0.08, Color("#c98a5a"))
@@ -203,19 +206,19 @@ func _draw_watcher(ci: CanvasItem, w: Dictionary) -> void:
 			ci.draw_rect(Rect2(p.x - 0.55, p.y - 0.65, 1.1, 1.1), Color("#e9e4d8"))
 			ci.draw_rect(Rect2(p.x - 0.55, p.y - 0.4, 0.15, 0.6), Color("#9fc4d6"))
 			Art.person(ci, p, w.dir, navy, navy)
-		"staff": Art.person(ci, p, w.dir, Color("#2f8a3e"), Color("#d9c28a"))
+		"staff": Art.person(ci, p, w.dir, Color("#2f8a3e"), Color("#d9c28a"), false, w.get("phase", 0.0), w.get("moving", false))
 		"hoa":
 			var dp: Vector2 = p - Vector2.from_angle(w.dir) * 0.75 + Vector2(0, 0.15)
 			ci.draw_line(p, dp, Color("#8a5a35"), 0.03)
 			Art.ellipse(ci, dp, 0.2, 0.13, Color("#f4efe4"), w.dir)
-			Art.person(ci, p, w.dir, Color("#f3a6a0"), Color("#f4efe4"))
+			Art.person(ci, p, w.dir, Color("#f3a6a0"), Color("#f4efe4"), false, w.get("phase", 0.0), w.get("moving", false))
 			ci.draw_rect(Rect2(p.x + 0.15, p.y - 0.05, 0.18, 0.22), Color("#fbf3e2"))
 		"truck":
 			Art.car(ci, p, w.dir, Color("#f1f1ee"), 2.0, 0.95)
 			ci.draw_set_transform(p, w.dir, Vector2.ONE)
 			ci.draw_rect(Rect2(0.05, -0.32, 0.14, 0.64), Color("#f2b134") if int(Time.get_ticks_msec() / 300) % 2 else Color("#e2583e"))
 			ci.draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
-		_: Art.person(ci, p, w.dir, navy, navy)
+		_: Art.person(ci, p, w.dir, navy, navy, false, w.get("phase", 0.0), w.get("moving", false))
 	if w.alert > 0.05 and w.kind != "cam":
 		Art.text(ci, p + Vector2(0, -0.65), "!" if w.alert > 0.6 else "?", 0.6, Color("#e2583e"), Color.WHITE)
 

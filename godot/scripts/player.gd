@@ -10,6 +10,8 @@ var path: Array = []
 var walk_grid := AStarGrid2D.new()
 var boat_grids := {}      # "kayak" / "skiff" -> AStarGrid2D, built the first time you launch
 var fishing_pose := false
+var rod_pull := 0        # set by Fishing: -1 / 0 / 1 while you pull against a fish
+var rod_bend := 0.0      # set by Fishing: how hard the rod bows under the line's tension
 var wake: Array = []
 
 func _ready() -> void:
@@ -202,26 +204,20 @@ func _draw() -> void:
 			var pa := sin(bob * 0.6) * 0.5
 			draw_line(Vector2(-0.1 + pa * 0.3, -0.75), Vector2(0.1 - pa * 0.3, 0.75), Color("#3d2b1a"), 0.06)
 		draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
-	var p := Vector2(0, -absf(sin(bob)) * 0.06 if moving and not in_boat() else 0.0)
 	var z := zone_of(position)
-	var shirt := Color("#13807b")
-	if Game.S.gear.has("polo") and z == 1: shirt = Color.WHITE
-	elif Game.S.gear.has("suit") and z == 8: shirt = Color("#3d4a52")
-	if not in_boat(): Art.ellipse(self, Vector2(0, 0.3), 0.38, 0.16, Color(0, 0, 0, 0.28))
-	Art.ellipse(self, p, 0.34, 0.28, shirt)
-	if shirt == Color("#13807b"):
-		for d in [Vector2(-0.15, -0.05), Vector2(0.12, 0.08), Vector2(0.05, -0.12)]: draw_circle(p + d, 0.05, Color("#f2b134"))
-	if shirt == Color("#3d4a52"):
-		Art.poly(self, [p + Vector2(-0.08, -0.2), p + Vector2(0.08, -0.2), p + Vector2(0, 0.05)], Color.WHITE)
-		draw_rect(Rect2(p.x - 0.025, p.y - 0.15, 0.05, 0.16), Color("#e2583e"))
-	if Game.S.gear.has("lanyard") and z == 2:
-		draw_rect(Rect2(p.x - 0.04, p.y - 0.05, 0.08, 0.2), Color("#2b7ea6")); draw_rect(Rect2(p.x - 0.08, p.y + 0.12, 0.16, 0.1), Color.WHITE)
-	draw_circle(p + Vector2(0, -0.24), 0.18, Color("#e0b48c"))
-	Art.ellipse(self, p + Vector2(0, -0.3), 0.3, 0.17, Color("#f2f2f2") if Game.S.gear.has("polo") and z == 1 else Color("#c9a574"))
-	draw_circle(p + Vector2(0, -0.32), 0.14, Color(0, 0, 0, 0.12))
-	var rl := 1.1 if fishing_pose else 0.7
-	var a := face if fishing_pose else face + 0.6
-	draw_line(p + Vector2(cos(a), sin(a)) * 0.2 + Vector2(0, -0.05), p + Vector2(cos(a) * rl, sin(a) * rl - (0.4 if fishing_pose else 0.15)), Color("#3d2b1a"), 0.06)
+	var look := { "shirt": Color("#13807b"), "pants": Color("#c9b48a"), "skin": Color("#e0b48c"), "hair": Color("#6b4a2a"),
+		"hat": Color("#c9a574"), "hat_kind": "wide", "dots": true, "seated": in_boat() }
+	if Game.S.gear.has("polo") and z == 1:
+		look.shirt = Color.WHITE; look.dots = false; look.hat = Color("#f2f2f2"); look.hat_kind = "cap"
+	elif Game.S.gear.has("suit") and z == 8:
+		look.shirt = Color("#3d4a52"); look.dots = false; look.tie = true; look.pants = Color("#2c353b")
+	if Game.S.gear.has("lanyard") and z == 2: look.lanyard = true
+	var walking := moving and not in_boat()
+	if fishing_pose:
+		var tip := rod_tip() - position + (Vector2.from_angle(face + rod_pull * 0.5) - Vector2.from_angle(face)) * 0.95
+		Art.character(self, Vector2.ZERO, face, look, bob, false, 2, tip, rod_bend)
+	else:
+		Art.character(self, Vector2.ZERO, face, look, bob, walking, 1)
 
 func rod_tip() -> Vector2:
 	return position + Vector2(cos(face) * 0.95, sin(face) * 0.95 - 0.4)
