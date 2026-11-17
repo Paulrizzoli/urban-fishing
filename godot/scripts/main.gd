@@ -352,6 +352,13 @@ func _ready() -> void:
 			_slam_weigh()
 		if a == "--toast": Game.add_news("Local Angler Buys Garage-Sale Rod, Announces 'Big Plans'")
 		if a == "--cast": fishing.start_cast()
+		if a.begins_with("--bait="): Game.S.bait = a.substr(7)
+		if a.begins_with("--bob="): # a line already out at player + (dx, dy), in "wait" or another state
+			var v := a.substr(6).split(",")
+			fishing.bob = player.position + Vector2(float(v[0]), float(v[1])); fishing.spot = fishing.region_at(fishing.bob)
+			fishing.state = v[2] if v.size() > 2 else "wait"; fishing.quiet = true
+			player.face = (fishing.bob - player.position).angle()
+		if a.begins_with("--twitch="): fishing.twitch_side(int(a.substr(9)))
 		if a == "--land": fishing.fish = Game.spots[1].fish[5]; fishing.fw = 44.2; fishing.spot = 1; fishing._land()
 
 func _fit_zoom() -> void:
@@ -526,6 +533,11 @@ func _draw_bloom(ci: CanvasItem) -> void:
 	var h := Game.hour()
 	var view := _view_tiles().grow(3)
 	var warm := Color(1.0, 0.72, 0.38)
+	# a home-made glow lure on the line lights up the water around it
+	if Game.S.bait == "glowlure" and fishing.bob != null and fishing.state in ["wait", "nibble", "bite"] and fishing.manhole < 0:
+		var gp: Vector2 = fishing.bob + fishing.slide
+		_glow(ci, gp, 0.9, Color(0.55, 1.0, 0.35, 0.45 * a * (0.8 + 0.2 * sin(Time.get_ticks_msec() / 400.0))))
+		_glow(ci, gp, 0.3, Color(0.75, 1.0, 0.55, 0.5 * a))
 	for lp in open_lamps:
 		if not view.has_point(lp): continue
 		var hd := Art.lamp_head(lp)
@@ -624,7 +636,8 @@ func _unhandled_input(e: InputEvent) -> void:
 		elif e.pressed and k == KEY_K: _toggle_boat()
 		elif e.pressed and k == KEY_J and fishing.state == "idle": open_journal()
 		elif e.pressed and k == KEY_M and fishing.state == "idle": open_map()
-		elif e.pressed and fishing.state == "wait" and (k == KEY_LEFT or k == KEY_A or k == KEY_RIGHT or k == KEY_D): fishing.action_down(); fishing.action_up()
+		elif e.pressed and fishing.state == "wait" and (k == KEY_LEFT or k == KEY_A): fishing.twitch_side(-1)
+		elif e.pressed and fishing.state == "wait" and (k == KEY_RIGHT or k == KEY_D): fishing.twitch_side(1)
 	elif e is InputEventMouseButton and e.button_index == MOUSE_BUTTON_LEFT:
 		if not e.pressed:
 			fishing.action_up(); return

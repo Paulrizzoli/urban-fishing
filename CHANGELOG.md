@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.15 | Nov 17, 2026 | The bait or lure you have on shows on the water, a thin line, and twitching left and right |
 | v0.9.14 | Nov 17, 2026 | Your house on the map, and a living room that fills up as you play |
 | v0.9.13 | Nov 17, 2026 | Fish that bump off the edge and swim away instead of circling into walls |
 | v0.9.12 | Nov 17, 2026 | Town traffic: cars driving the streets, with headlights at night |
@@ -39,6 +40,25 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.15 · See what's on your hook
+
+_Nov 17, 2026 · Builds: `UrbanFishing-v0.9.15-windows.zip`, `UrbanFishing-v0.9.15-godot-project.zip`_
+
+- The red-and-white bobber is gone. Whatever you have on the line now sits on the water at the end of it, pointing up the line toward you, and changes when you switch bait with B:
+  - **Worms**: a pink nightcrawler on the hook, both ends wriggling
+  - **Live shrimp**: curled on the hook, kicking its tail, antennae out front
+  - **Spinner lure**: the gold body with a silver blade that spins and flashes, and a red tuft
+  - **Hot dogs**: a chunk of hot dog with a streak of mustard
+  - **White bread**: a doughy ball going soft and shedding crumbs
+  - **Frozen squid**: a pink strip with its tentacles trailing
+  - The home-made lures look like they do at the workbench: the **spoon** wobbles and a glint slides across it, the **bottle-cap popper** pushes a little bulge of water ahead of its cup, the **feather jig**'s feathers open and close, and the **glow lure** lights up the water around it after dark
+- A nibble jiggles the bait, and on a bite it gets pulled under (it fades and goes blue-green) with the "!" over it
+- Your line is thin now, like the other anglers' lines, instead of a thick white cord. It's a little brighter while you're reeling, and still turns red when it's about to snap
+- Twitching works like the browser game again: while you wait, **◀** (or A) twitches the lure to the left and **▶** (or D) twitches it to the right, with a little tug toward you. The lure darts across instead of jumping, tilts as it goes, and leaves a ripple. A sideways twitch draws fish in just like a forward one. Before, both arrows just pulled the lure toward you
+- Tapping F / Space still twitches it toward you, and holding still reels it in
+- The hint while you wait says so: "Tap to twitch the lure toward you, ◀ ▶ to twitch it left or right"
+- Test hooks for checking this from the command line: `--bait=<id>`, `--bob=dx,dy[,state]` (a line already out) and `--twitch=-1|1`
 
 ## v0.9.14 · Home on the map, and a living room worth coming back to
 

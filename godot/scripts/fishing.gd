@@ -47,6 +47,9 @@ var blind := false
 var holding := false
 var pull := 0              # -1 / 0 / 1 from the arrow keys
 var turn := 0
+# the lure darting when you twitch it: the gap between where it's drawn and where it is, easing to nothing, and its tilt
+var slide := Vector2.ZERO
+var twitch_tilt := 0.0
 # manholes: every cover drawn in the street can be pried up and fished with Lou's pry bar
 var manholes: Array = []   # tile centres, worked out once from the street tiles
 var manhole := -1          # the manhole being fished, or -1
@@ -379,7 +382,7 @@ func action_down() -> void:
 			if manhole >= 0: splash = 0.25; splash_big = false; return
 			var a: float = (player.position - bob).angle()
 			var n: Vector2 = bob + Vector2.from_angle(a) * 0.3
-			if is_water(n): bob = n
+			if is_water(n): slide += bob - n; bob = n
 			splash = 0.25; splash_big = false
 		"nibble":
 			emit_signal("message", "Too early! It spat the hook."); Sound.play("splash", -4)
@@ -398,12 +401,28 @@ func action_down() -> void:
 
 func action_up() -> void: holding = false
 
+## Left or right while waiting: twitch the lure across the water, left on screen for left and right
+## for right, with a little tug toward you. It draws fish in like a forward twitch (as in the browser game).
+func twitch_side(dir: int) -> void:
+	if state != "wait" or bob == null: return
+	twitch = 1.4; splash = 0.25; splash_big = false
+	twitch_tilt = -dir
+	Sound.play("plop", -10.0)
+	if manhole >= 0: return
+	var toward: Vector2 = (player.position - bob).normalized()
+	var n: Vector2 = bob + Vector2(dir * 0.42, 0) + toward * 0.08
+	if is_water(n) and region_at(n) == spot and n.distance_to(player.position) >= 1.0:
+		slide += bob - n; bob = n
+		WaterFx.ripple(n, 0.35)
+
 func update(dt: float) -> void:
 	update_shadows(dt)
 	var rl: Dictionary = Game.rod()
 	var rt: float = rl.t
 	var rr: float = rl.r
 	if splash > 0: splash -= dt
+	slide *= pow(0.0005, dt)
+	twitch_tilt = move_toward(twitch_tilt, 0.0, dt * 3.0)
 	player.fishing_pose = state != "idle"
 	player.rod_pull = pull if state == "reel" else 0
 	player.rod_bend = clampf(tension, 0.0, 1.2) if state == "reel" else (0.25 if state == "bite" else 0.0)
@@ -479,7 +498,7 @@ func update(dt: float) -> void:
 			elif progress <= 0:
 				state = "idle"; holding = false; drop_target(20); emit_signal("message", "It got away."); Sound.play("splash")
 			elif progress >= 1: _land()
-	if state == "idle": bob = null; manhole = -1
+	if state == "idle": bob = null; manhole = -1; slide = Vector2.ZERO
 	queue_redraw()
 
 func _land() -> void:
@@ -548,7 +567,7 @@ func draw_line_layer(ci: CanvasItem) -> void:
 		return
 	if state == "idle" or bob == null: return
 	if manhole >= 0: _draw_open_manhole(ci, manholes[manhole])
-	var b: Vector2 = bob
+	var b: Vector2 = bob + slide
 	var dip := 0.0
 	# the bobber rides the little waves, rocking side to side, and sends out slow rings
 	var sway := Vector2(sin(now * 1.3 + b.y) * 0.03, sin(now * 1.7 + b.x) * 0.025)
@@ -562,11 +581,14 @@ func draw_line_layer(ci: CanvasItem) -> void:
 	if state == "wait": dip = sin(now * 3) * 0.04
 	elif state == "nibble": dip = maxf(0, sin(now * 24)) * 0.08
 	elif state == "bite": dip = 0.2 + sin(now * 30) * 0.05
-	var r := player.rod_tip() + (Vector2.from_angle(player.face + pull * 0.5) - Vector2.from_angle(player.face)) * 0.95
+	var rp: int = pull if state == "reel" else 0
+	var r := player.rod_tip() + (Vector2.from_angle(player.face + rp * 0.5) - Vector2.from_angle(player.face)) * 0.95
 	var ctrl := (r + b) / 2 + (-perp * ang * 0.4 if state == "reel" else Vector2(0, 0.4))
 	var line := PackedVector2Array()
 	for i in 13: line.append(Art._quad(r, ctrl, b + Vector2(0, dip), i / 12.0))
-	ci.draw_polyline(line, Color(1, 0.67, 0.59, 0.95) if state == "reel" and tension > BAND[1] else Color(1, 1, 1, 0.85), 0.05)
+	# a thin line, like the other anglers' (it was a thick white cord before)
+	var lc := Color(1, 0.67, 0.59, 0.9) if state == "reel" and tension > BAND[1] else Color(1, 1, 1, 0.75 if state == "reel" else 0.6)
+	ci.draw_polyline(line, lc, 0.022, true)
 	if state == "reel":
 		if target == null: Art.fish_shadow(ci, b, (b - player.position).angle() + ang * 0.8, clampf(0.34 + sqrt(maxf(fw, 1)) * 0.19, 0.32, 2.8), 0.4, false, now * 14)
 		# the fish fights at the surface: churned water and spray, more of it the harder it pulls
@@ -582,9 +604,12 @@ func draw_line_layer(ci: CanvasItem) -> void:
 		var rr := 0.35 + sin(now * 9) * 0.08
 		ci.draw_set_transform(b, 0, Vector2(1, 0.5)); ci.draw_arc(Vector2.ZERO, rr + 0.25, 0, TAU, 24, Color(1, 1, 1, 0.5), 0.05); ci.draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
 	else:
-		Art.ellipse(ci, b + Vector2(0, 0.12), 0.3 + absf(dip), 0.1, Color(1, 1, 1, 0.35))
-		ci.draw_arc(b + Vector2(0, dip - 0.06), 0.13, PI, TAU, 12, Color("#e2583e"), 0.13)
-		ci.draw_arc(b + Vector2(0, dip - 0.06), 0.065, 0, PI, 12, Color.WHITE, 0.13)
+		Art.ellipse(ci, b + Vector2(0, 0.08), 0.26 + absf(dip), 0.09, Color(1, 1, 1, 0.3))
+		# whatever is on the hook: the bait or lure you have on, pointing up the line toward you
+		var la := (r - b).angle() + twitch_tilt * 0.6
+		var jig := Vector2(sin(now * 31) * 0.035, 0) if state == "nibble" else Vector2.ZERO
+		var sink := 0.0 if state == "wait" else 0.25 if state == "nibble" else 0.7
+		LureArt.draw(ci, Game.S.bait, b + jig + Vector2(0, dip * 0.5), la, sink, now, Game.darkness())
 		if state == "bite": Art.text(ci, b + Vector2(0, -0.45), "!", 0.7, Color("#e2583e"), Color.WHITE)
 	if splash > 0:
 		var big := 1.0 if splash_big else 0.45
