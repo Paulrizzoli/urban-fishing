@@ -465,12 +465,19 @@ static func bush(ci: CanvasItem, x: int, y: int) -> void:
 static func tree(ci: CanvasItem, x: int, y: int, t: float) -> void:
 	var h := Town.hash2(x, y)
 	if (y < 33 and h < 0.5) or (Town.zone[Town.idx(x, y)] == 1 and h < 0.35):
+		# a leafy tree: the crown leans and its clumps rustle with the wind
+		var wd := TownLife.wind()
+		var lean := Vector2(sin(t * 0.8 + x * 0.6 + y) * 0.025 * wd + (wd - 1.0) * 0.04, 0)
 		ellipse(ci, Vector2(x + 0.9, y + 0.9), 1.0, 0.55, Color(0.08, 0.16, 0.08, 0.25))
-		ci.draw_circle(Vector2(x + 0.5, y + 0.45), 0.78, Color("#2c6a30"))
-		for p in [[0.25, 0.25, 0.48], [0.82, 0.32, 0.42], [0.5, 0.72, 0.45]]: ci.draw_circle(Vector2(x + p[0], y + p[1]), p[2], Color("#3b8a3f"))
-		ci.draw_circle(Vector2(x + 0.12, y + 0.1), 0.22, Color("#5aa95a")); ci.draw_circle(Vector2(x + 0.6, y + 0.05), 0.18, Color("#5aa95a"))
+		ci.draw_circle(Vector2(x + 0.5, y + 0.45) + lean * 0.6, 0.78, Color("#2c6a30"))
+		var i := 0
+		for p in [[0.25, 0.25, 0.48], [0.82, 0.32, 0.42], [0.5, 0.72, 0.45]]:
+			var rs := Vector2(sin(t * 2.3 * wd + i * 2.1 + x), cos(t * 1.9 * wd + i + y)) * 0.012 * wd
+			ci.draw_circle(Vector2(x + p[0], y + p[1]) + lean + rs, p[2], Color("#3b8a3f")); i += 1
+		ci.draw_circle(Vector2(x + 0.12, y + 0.1) + lean * 1.3, 0.22, Color("#5aa95a")); ci.draw_circle(Vector2(x + 0.6, y + 0.05) + lean * 1.3, 0.18, Color("#5aa95a"))
 		return
-	var sway := sin(t * 1.1 + x * 0.7 + y) * 0.05
+	var wnd := TownLife.wind()
+	var sway := sin(t * 1.1 * (0.8 + wnd * 0.2) + x * 0.7 + y) * 0.05 * wnd + (wnd - 1.0) * 0.06
 	var c := Vector2(x + 0.55 + sway, y + 0.2)
 	ellipse(ci, Vector2(x + 1.1, y + 0.95), 0.95, 0.4, Color(0.08, 0.16, 0.08, 0.22))
 	var trunk := PackedVector2Array()
@@ -481,7 +488,7 @@ static func tree(ci: CanvasItem, x: int, y: int, t: float) -> void:
 	for k in range(1, 4): ci.draw_line(Vector2(x + 0.37, y + 0.95 - k * 0.2), Vector2(x + 0.52, y + 0.93 - k * 0.2), Color(0.24, 0.16, 0.08, 0.5), 0.03)
 	var a0 := h * TAU
 	for i in 7:
-		var a := a0 + i * TAU / 7 + sin(t * 1.4 + i + x) * 0.04
+		var a := a0 + i * TAU / 7 + sin(t * 1.4 * (0.8 + wnd * 0.2) + i + x) * 0.04 * wnd
 		var L := 0.78 + Town.hash2(i, x + y) * 0.15
 		var tip := c + Vector2(cos(a) * L, sin(a) * L * 0.62 + 0.1)
 		var perp := Vector2(-sin(a), cos(a)) * 0.17

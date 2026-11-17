@@ -41,6 +41,10 @@ var ground_tex: Texture2D
 var ground_mat: ShaderMaterial
 var water_fx: WaterFx
 var traffic: Traffic
+var town_life: TownLife
+## Flagpoles outside City Hall, the marina, the golf club and Lou's, and the fountains in the plaza pool and Bayfront Park pond.
+const FLAGS := [[Vector2(9.4, 146.7), "town"], [Vector2(85.0, 145.7), "marina"], [Vector2(65.0, 30.8), "golf"], [Vector2(52.6, 32.6), "shop"]]
+const FOUNTAINS := [[Vector2(60.5, 130.7), 1.0], [Vector2(30.5, 127.6), 0.7]]
 var glow_tex: GradientTexture2D
 var open_lamps: Array = []    # street lamps whose glow isn't hidden behind a tower
 var ach_t := 0.0
@@ -202,6 +206,18 @@ func _ready() -> void:
 	traffic.player = player
 	add_child(traffic)
 	traffic.setup(ents)
+	town_life = TownLife.new()
+	town_life.player = player
+	add_child(town_life)
+	town_life.setup(ents)
+	for fl in FLAGS:
+		var fp: Vector2 = fl[0]
+		var fs: String = fl[1]
+		ents.add_child(Drawer.make(func(ci): TownLife.flag(ci, fp, fs, Time.get_ticks_msec() / 1000.0 + fp.x), fp.y, true))
+	for fo in FOUNTAINS:
+		var fop: Vector2 = fo[0]
+		var fob: float = fo[1]
+		ents.add_child(Drawer.make(func(ci): TownLife.fountain(ci, fop, Time.get_ticks_msec() / 1000.0 + fop.x, fob), fop.y + 0.1, true))
 	var overlay := Drawer.make(guards.draw_overlay, 0, true)
 	overlay.z_index = 7
 	world.add_child(overlay)
