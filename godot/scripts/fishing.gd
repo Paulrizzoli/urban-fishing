@@ -272,6 +272,7 @@ func release_cast() -> void:
 	bob = p; spot = region_at(p); state = "wait"; t = 0.0; wait_t = 0.0; target = null; blind = false; twitch = 0.0
 	Sound.play("cast"); Sound.play_later("plop", 0.22, -2.0 if quiet else 2.0)
 	splash = 0.35 if quiet else 0.7; splash_big = not quiet
+	WaterFx.ripple(p, 0.6 if quiet else 1.1)
 	if not quiet:
 		for s in shadows:
 			if s.reg == spot and s.pos.distance_to(p) < 2.4 + err * 4: s.spook = 2.2; s.wary = 7.0; s.go = false
@@ -466,6 +467,15 @@ func draw_line_layer(ci: CanvasItem) -> void:
 	if manhole >= 0: _draw_open_manhole(ci, manholes[manhole])
 	var b: Vector2 = bob
 	var dip := 0.0
+	# the bobber rides the little waves, rocking side to side, and sends out slow rings
+	var sway := Vector2(sin(now * 1.3 + b.y) * 0.03, sin(now * 1.7 + b.x) * 0.025)
+	if state != "reel": b += sway
+	if state == "wait" or state == "nibble":
+		for i in 2:
+			var kr := fmod(now * 0.6 + i * 0.5, 1.0)
+			ci.draw_set_transform(b + Vector2(0, 0.06), 0, Vector2(1, 0.45))
+			ci.draw_arc(Vector2.ZERO, 0.18 + kr * 0.55, 0, TAU, 24, Color(1, 1, 1, 0.3 * (1.0 - kr)), 0.035)
+			ci.draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
 	if state == "wait": dip = sin(now * 3) * 0.04
 	elif state == "nibble": dip = maxf(0, sin(now * 24)) * 0.08
 	elif state == "bite": dip = 0.2 + sin(now * 30) * 0.05
