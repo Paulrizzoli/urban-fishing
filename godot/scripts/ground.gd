@@ -53,6 +53,99 @@ static func under(x: int, y: int) -> int:
 			if c[v] > bn: bn = c[v]; best = v
 	return best
 
+# ---------- coastlines ----------
+# Where sand meets open water (beaches, Bird Key) the shoreline follows a smooth, gently wavy curve
+# instead of the tile grid. Land is blurred over a few tiles and cut at the halfway mark, which
+# rounds every corner while keeping straight shores where they were. Only the look changes:
+# walking and boating still use the tiles.
+
+const CSUB := 8                  # coast and water-mask pixels per tile
+static var _land := PackedFloat32Array()   # blurred land, one value per tile center
+static var _coast := {}          # Vector2i tile -> true for tiles whose pixels follow the curve
+static var water_img: Image      # water color per tile (with a one-tile border), set by make_texture
+static var water_tex: ImageTexture
+
+## How much each spot is land, CSUB pixels per tile, for the shader to draw a smooth, anti-aliased shoreline.
+static func make_coast_tex() -> ImageTexture:
+	_build_coast()
+	var img := Image.create(Town.MW, Town.MH, false, Image.FORMAT_L8)
+	for y in Town.MH:
+		for x in Town.MW:
+			img.set_pixel(x, y, Color.BLACK if Town.is_water_t(Town.tile[Town.idx(x, y)]) else Color.WHITE)
+	img.resize(Town.MW * CSUB, Town.MH * CSUB, Image.INTERPOLATE_NEAREST)
+	for key in _coast:
+		for j in CSUB:
+			for i in CSUB:
+				var f := clampf(land_at(Vector2(key.x + (i + 0.5) / CSUB, key.y + (j + 0.5) / CSUB)), 0.0, 1.0)
+				img.set_pixel(key.x * CSUB + i, key.y * CSUB + j, Color(f, f, f))
+	return ImageTexture.create_from_image(img)
+
+static func _sandy(x: int, y: int) -> bool:
+	var t := Town.t_at(x, y)
+	if t == Town.T.SAND: return true
+	return (t == Town.T.TREE or t == Town.T.BUSH) and under(x, y) == Town.T.SAND
+
+static func _build_coast() -> void:
+	if not _land.is_empty(): return
+	var MW := Town.MW
+	var MH := Town.MH
+	var raw := PackedFloat32Array(); raw.resize(MW * MH)
+	for i in MW * MH: raw[i] = 0.0 if Town.is_water_t(Town.tile[i]) else 1.0
+	var wts := [0.054, 0.244, 0.403, 0.244, 0.054]   # gaussian, sigma about one tile
+	var tmp := PackedFloat32Array(); tmp.resize(MW * MH)
+	_land.resize(MW * MH)
+	for y in MH:
+		for x in MW:
+			var v := 0.0
+			for k in 5: v += wts[k] * raw[y * MW + clampi(x + k - 2, 0, MW - 1)]
+			tmp[y * MW + x] = v
+	for y in MH:
+		for x in MW:
+			var v := 0.0
+			for k in 5: v += wts[k] * tmp[clampi(y + k - 2, 0, MH - 1) * MW + x]
+			_land[y * MW + x] = v
+	for y in MH:
+		for x in MW:
+			var t: int = Town.tile[Town.idx(x, y)]
+			var wet := Town.is_water_t(t)
+			if not (wet or t == Town.T.SAND): continue
+			var has_w := false
+			var has_s := false
+			for dy in range(-1, 2):
+				for dx in range(-1, 2):
+					if not Town.inb(x + dx, y + dy): continue
+					if Town.is_water_t(Town.t_at(x + dx, y + dy)): has_w = true
+					elif _sandy(x + dx, y + dy): has_s = true
+			if has_w and has_s: _coast[Vector2i(x, y)] = true
+
+static func is_coast(x: int, y: int) -> bool:
+	_build_coast()
+	return _coast.has(Vector2i(x, y))
+
+## How much a point (in tiles) is land, 0 to 1, with the coast at 0.5.
+static func land_at(p: Vector2) -> float:
+	_build_coast()
+	var fx := clampf(p.x - 0.5, 0.0, Town.MW - 1.001)
+	var fy := clampf(p.y - 0.5, 0.0, Town.MH - 1.001)
+	var x0 := floori(fx)
+	var y0 := floori(fy)
+	var u := fx - x0
+	var v := fy - y0
+	var x1 := mini(x0 + 1, Town.MW - 1)
+	var y1 := mini(y0 + 1, Town.MH - 1)
+	var a := lerpf(_land[y0 * Town.MW + x0], _land[y0 * Town.MW + x1], u)
+	var b := lerpf(_land[y1 * Town.MW + x0], _land[y1 * Town.MW + x1], u)
+	# a gentle wobble so long shores aren't ruler-straight
+	var w := sin(p.x * 1.7 + sin(p.y * 0.9) * 2.0) * 0.5 + sin(p.y * 2.3 + p.x * 0.6) * 0.5
+	return lerpf(a, b, v) + w * 0.045
+
+## For a point on a coast tile: is it dry land? Elsewhere the tile decides.
+static func dry_at(p: Vector2) -> bool:
+	var x := floori(p.x)
+	var y := floori(p.y)
+	if not is_coast(x, y): return not Town.is_water_t(Town.t_at(x, y))
+	return land_at(p) >= 0.5
+
 static func make_texture() -> ImageTexture:
 	var MW := Town.MW
 	var MH := Town.MH
@@ -64,6 +157,7 @@ static func make_texture() -> ImageTexture:
 	var wmask := Image.create(MW + 2, MH + 2, false, Image.FORMAT_RGBA8)
 	var gmask := Image.create(gw * 3, gh * 3, false, Image.FORMAT_RGBA8)
 	var water := Image.create(MW + 2, MH + 2, false, Image.FORMAT_RGBA8)
+	water_img = water
 	water.fill(Color("#74d6d4"))
 	for y in MH:
 		for x in MW:
@@ -81,6 +175,17 @@ static func make_texture() -> ImageTexture:
 				water.set_pixel(x + 1, y + 1, Color(pal[0]).lerp(Color(pal[1]), k))
 			elif is_lawn(x, y):
 				gmask.set_pixel(x, y, Color.WHITE)
+	# land next to the water borrows its neighbors' water color, so water drawn there by the coast blends in
+	for y in MH:
+		for x in MW:
+			if Town.is_water_t(Town.tile[Town.idx(x, y)]) or not is_coast(x, y): continue
+			var sum := Color(0, 0, 0, 0)
+			var n := 0
+			for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1), Vector2i(1, 1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(-1, -1)]:
+				if Town.inb(x + d.x, y + d.y) and Town.is_water_t(Town.t_at(x + d.x, y + d.y)):
+					sum += water.get_pixel(x + d.x + 1, y + d.y + 1); n += 1
+			if n > 0: water.set_pixel(x + 1, y + 1, sum / n)
+	water_tex = ImageTexture.create_from_image(water)
 	base.resize(MW * PX, MH * PX, Image.INTERPOLATE_NEAREST)
 	wmask.resize((MW + 2) * PX, (MH + 2) * PX, Image.INTERPOLATE_NEAREST)
 	gmask.resize(gw * 3 * PX, gh * 3 * PX, Image.INTERPOLATE_NEAREST)
@@ -96,6 +201,24 @@ static func make_texture() -> ImageTexture:
 			grass.set_pixel(x, y, Color8(int(110 + h * 26 - h2 * 10), int(168 + h * 24), int(78 + h2 * 24)))
 	grass.resize(gw * 3 * PX, gh * 3 * PX, Image.INTERPOLATE_BILINEAR)
 	base.blit_rect_mask(grass, gmask, Rect2i(0, 0, MW * PX, MH * PX), Vector2i.ZERO)
+	# 4. smooth coastlines: sand and water swap pixels along the curve, with damp sand and a pale rim of shallows
+	_build_coast()
+	var sand := Color("#ecdcab")
+	var damp := Color("#d6c08c")
+	for key in _coast:
+		var tx: int = key.x
+		var ty: int = key.y
+		var was_water := Town.is_water_t(Town.tile[Town.idx(tx, ty)])
+		for j in PX:
+			for i in PX:
+				var f := land_at(Vector2(tx + (i + 0.5) / PX, ty + (j + 0.5) / PX))
+				var px := tx * PX + i
+				var py := ty * PX + j
+				if f >= 0.5:
+					base.set_pixel(px, py, sand.lerp(damp, clampf(1.0 - (f - 0.5) / 0.09, 0.0, 1.0) * 0.8))
+				else:
+					var wc: Color = base.get_pixel(px, py) if was_water else water.get_pixel(px + PX, py + PX)
+					base.set_pixel(px, py, wc.lerp(Color("#d9f4ea"), clampf(1.0 - (0.5 - f) / 0.06, 0.0, 1.0) * 0.45))
 	return ImageTexture.create_from_image(base)
 
 ## A small texture that describes the water, for the water shader. One pixel per tile, sampled smoothly:
@@ -110,10 +233,23 @@ static func make_water_mask() -> ImageTexture:
 			var d: int = Town.depth[Town.idx(x, y)]
 			var k := clampf((float(d if d > 0 else 9) - 1.0) / 6.0, 0.0, 1.0)
 			img.set_pixel(x, y, Color(1.0, k, 1.0 if t == Town.T.SWATER else 0.0, 1))
+	# finer on the coasts, so the foam and the damp sand follow the curved shoreline
+	img.resize(Town.MW * CSUB, Town.MH * CSUB, Image.INTERPOLATE_BILINEAR)
+	_build_coast()
+	for key in _coast:
+		for j in CSUB:
+			for i in CSUB:
+				var px: int = key.x * CSUB + i
+				var py: int = key.y * CSUB + j
+				var f := land_at(Vector2(key.x + (i + 0.5) / CSUB, key.y + (j + 0.5) / CSUB))
+				var c := img.get_pixel(px, py)
+				c.r = clampf(0.5 + (0.5 - f) * 1.6, 0.0, 1.0)
+				img.set_pixel(px, py, c)
 	return ImageTexture.create_from_image(img)
 
 ## What each tile's ground is made of, for the ground shader's surface texture. One pixel per tile, sampled sharply.
-## 0 nothing, 1 lawn, 2 asphalt, 3 sidewalk and concrete, 4 sand, 5 water, 6 fairway, 7 dirt path, 8 plaza, 9 dock
+## 0 nothing, 1 lawn, 2 asphalt, 3 sidewalk and concrete, 4 sand, 5 water, 6 fairway, 7 dirt path, 8 plaza, 9 dock,
+## 10 sand on a curved coast, 11 water on a curved coast
 static func make_material_tex() -> ImageTexture:
 	var T := Town.T
 	var img := Image.create(Town.MW, Town.MH, false, Image.FORMAT_L8)
@@ -133,4 +269,9 @@ static func make_material_tex() -> ImageTexture:
 				T.PLAZA: m = 8
 				T.DOCK: m = 9
 			img.set_pixel(x, y, Color8(m, m, m))
+	# coast tiles: 10 sandy, 11 watery; the shader draws the curved shoreline across them
+	_build_coast()
+	for key in _coast:
+		var m := 11 if Town.is_water_t(Town.tile[Town.idx(key.x, key.y)]) else 10
+		img.set_pixel(key.x, key.y, Color8(m, m, m))
 	return ImageTexture.create_from_image(img)
