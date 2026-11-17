@@ -316,7 +316,7 @@ func action_up() -> void: holding = false
 
 func update(dt: float) -> void:
 	update_shadows(dt)
-	var rl: Dictionary = Game.rods[Game.rod_level()]
+	var rl: Dictionary = Game.rod()
 	var rt: float = rl.t
 	var rr: float = rl.r
 	if splash > 0: splash -= dt
@@ -363,7 +363,7 @@ func update(dt: float) -> void:
 		"bite":
 			t += dt
 			if target != null: target.pos = bob - Vector2.from_angle(target.dir) * target.len * 0.45
-			if t > 0.95 + Game.rod_level() * 0.1:
+			if t > 0.95 + float(Game.rod().hook):
 				emit_signal("message", "Missed it! Hook it the moment it dips.")
 				drop_target(8); state = "wait"; wait_t = 0.0; t = 0.0; blind = false
 		"reel":

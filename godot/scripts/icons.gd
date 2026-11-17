@@ -52,6 +52,13 @@ static func draw(ci: CanvasItem, id: String, r: Rect2, t := 0.0) -> void:
 		"p_wire": _wire(ci)
 		"p_glow": _glowstick(ci, t)
 		"spoon": _spoon_lure(ci)
+		"p_glass": _blank_part(ci, Color("#c4b85a"))
+		"p_graphite": _blank_part(ci, Color("#2b2f36"))
+		"p_reel": _reel_part(ci, false)
+		"p_bigreel": _reel_part(ci, true)
+		"p_cork": _corks(ci)
+		"p_foam": _foam(ci)
+		"p_tape": _tape(ci)
 		"popper": _popper(ci)
 		"jig": _jig(ci)
 		"glowlure": _glow_lure(ci, t)
@@ -733,3 +740,76 @@ static func _glow_lure(ci: CanvasItem, t: float) -> void:
 		hp.append(hc + Vector2(sx * 3.6, -3.5))
 		ci.draw_polyline(hp, SILVER, 1.8, true)
 	ci.draw_line(Vector2(32, 44), Vector2(32, 52), SILVER, 1.8)
+
+# ---------- rod parts and the home-built rod ----------
+
+## A home-built rod from its stats dictionary (blank, reel and grip ids).
+static func draw_homerod(ci: CanvasItem, st: Dictionary, r: Rect2) -> void:
+	var s := minf(r.size.x, r.size.y) / 64.0
+	ci.draw_set_transform(r.position + (r.size - Vector2(64, 64) * s) / 2.0, 0.0, Vector2(s, s))
+	var blank := Color("#2b2f36") if st.get("blank", "") == "p_graphite" else Color("#c4b85a")
+	var handle: Color = { "p_cork": Color("#c79a62"), "p_foam": Color("#3a3a3a") }.get(st.get("grip", ""), Color("#9aa4aa"))
+	_rod(ci, blank, CORAL, handle, 3.3, "conv" if st.get("reel", "") == "p_bigreel" else "spin", "home")
+	if st.get("grip", "") == "":
+		for i in 3:
+			var p := Vector2(7, 57).lerp(Vector2(17.6, 46.4), (i + 0.5) / 3.0)
+			ci.draw_line(p + Vector2(-3, -3), p + Vector2(3, 3), Color(INK, 0.4), 0.8)
+	ci.draw_set_transform(Vector2.ZERO)
+
+static func _blank_part(ci: CanvasItem, col: Color) -> void:
+	var a := Vector2(8, 56); var b := Vector2(56, 8)
+	ci.draw_line(a, b, INK, 6.4, true)
+	ci.draw_colored_polygon(PackedVector2Array([a + Vector2(-1.9, -1.9), b + Vector2(-0.7, -0.7), b + Vector2(0.7, 0.7), a + Vector2(1.9, 1.9)]), col)
+	ci.draw_line(a + Vector2(-0.8, -0.8), b, Color(1, 1, 1, 0.35), 0.8, true)
+	for f in [0.35, 0.6, 0.82]:
+		var p := a.lerp(b, f)
+		ci.draw_line(p + Vector2(-2.6, -1.0), p + Vector2(1.0, 2.6), CORAL if col.v > 0.5 else SEA, 1.6)
+	# a chipped end and a tag
+	ci.draw_circle(a, 3.0, INK); ci.draw_circle(a, 1.8, Art.shade(col, -0.2))
+	_rr(ci, Vector2(44, 38), 7, 4.5, 1.5, Color("#f3e6c9"), 1.4)
+	ci.draw_line(Vector2(38, 36), Vector2(34, 30), INK, 1.0)
+
+static func _reel_part(ci: CanvasItem, big: bool) -> void:
+	if big:
+		_rr(ci, Vector2(32, 34), 18, 13, 5, Color("#c98f2a"))
+		ci.draw_line(Vector2(16, 34), Vector2(48, 34), Color("#8a5a1a"), 1.6)
+		for p in [Vector2(20, 26), Vector2(44, 42), Vector2(26, 44)]: ci.draw_circle(p, 1.8, Color("#8a4a2a"))
+		ci.draw_line(Vector2(50, 34), Vector2(58, 26), INK, 2.6)
+		_el(ci, Vector2(58.5, 25.5), 3.4, 2.4, Color("#3a3a3a"))
+		_rr(ci, Vector2(32, 18), 14, 2.5, 1, SILVER, 1.4)
+	else:
+		_el(ci, Vector2(28, 36), 14, 15, Color("#7d8a93"))
+		_el(ci, Vector2(38, 36), 7, 13, SILVER, 0, 1.6)
+		ci.draw_line(Vector2(38, 23), Vector2(38, 49), Color("#8a959c"), 1.0)
+		for p in [Vector2(22, 30), Vector2(26, 44), Vector2(18, 38)]: ci.draw_circle(p, 2.0, Color("#a0582e"))
+		ci.draw_line(Vector2(28, 21), Vector2(28, 10), INK, 3.4); ci.draw_line(Vector2(28, 21), Vector2(28, 10), SILVER, 1.6)
+		_rr(ci, Vector2(28, 9), 8, 2, 1, SILVER, 1.4)
+		ci.draw_line(Vector2(16, 36), Vector2(6, 46), INK, 2.0)
+		_el(ci, Vector2(5.5, 47), 2.6, 2.6, Color("#3a3a3a"), 0, 1.2)
+
+static func _corks(ci: CanvasItem) -> void:
+	for c in [[Vector2(22, 40), 0.3], [Vector2(40, 34), -0.5], [Vector2(32, 22), 0.9]]:
+		var p: Vector2 = c[0]; var rot: float = c[1]
+		var body := PackedVector2Array()
+		for q in Art.rrect(Vector2.ZERO, 12, 6.5, 2.5): body.append(p + q.rotated(rot))
+		_shape(ci, body, Color("#c79a62"), 1.6)
+		ci.draw_line(p + Vector2(-12, 0).rotated(rot), p + Vector2(-12, 0).rotated(rot) + Vector2(0, 0), INK, 1)
+		_el(ci, p + Vector2(11, 0).rotated(rot), 1.8, 6.2, Color("#8a3a4a"), rot, 1.2)
+		for k in 4: ci.draw_circle(p + Vector2(-6 + k * 4, (k % 2) * 2 - 1).rotated(rot), 0.7, Color("#9c7444"))
+
+static func _foam(ci: CanvasItem) -> void:
+	var body := PackedVector2Array()
+	for q in Art.rrect(Vector2.ZERO, 24, 9, 8): body.append(Vector2(32, 34) + q.rotated(-0.5))
+	_shape(ci, body, Color("#5cc8c0"))
+	for k in 5:
+		var p := Vector2(32, 34) + Vector2(-16 + k * 8, 0).rotated(-0.5)
+		ci.draw_line(p + Vector2(0, -8).rotated(-0.5), p + Vector2(0, 8).rotated(-0.5), Color(1, 1, 1, 0.3), 1.2)
+	var end := Vector2(32, 34) + Vector2(22, 0).rotated(-0.5)
+	_el(ci, end, 3.5, 8.5, Color("#7fe0d8"), -0.5, 1.4)
+	ci.draw_circle(end, 2.4, Color("#2a8a84"))
+
+static func _tape(ci: CanvasItem) -> void:
+	ci.draw_circle(Vector2(30, 34), 20, INK); ci.draw_circle(Vector2(30, 34), 18, Color("#a9b2b8"))
+	ci.draw_arc(Vector2(30, 34), 14, 0, TAU, 24, Color("#8a959c"), 1.2, true)
+	ci.draw_circle(Vector2(30, 34), 9.5, INK); ci.draw_circle(Vector2(30, 34), 8, Color("#e9dcc0"))
+	_shape(ci, PackedVector2Array([Vector2(46, 44), Vector2(58, 50), Vector2(56, 56), Vector2(44, 49)]), Color("#a9b2b8"), 1.6)
