@@ -516,6 +516,8 @@ func _lighting() -> void:
 	ground_mat.set_shader_parameter("sun", clampf(1.0 - dk / 0.5, 0.0, 1.0) * (1.0 - Game.wx.cloud * 0.55))
 	ground_mat.set_shader_parameter("sky_col", sky_tint(h))
 	ground_mat.set_shader_parameter("rain", Game.wx.rain)
+	ground_mat.set_shader_parameter("wetness", Weather.wetness(int(Game.S.day), h))
+	ground_mat.set_shader_parameter("mist", Weather.mist(int(Game.S.day), h))
 	var on := dk > 0.15
 	var view := Rect2(cam.get_screen_center_position() - get_viewport_rect().size / cam.zoom / 2, get_viewport_rect().size / cam.zoom).grow(6 * TS)
 	for l in lamp_lights:

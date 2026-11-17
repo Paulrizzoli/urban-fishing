@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.17 | Nov 17, 2026 | Weather: wet streets and puddles, morning mist, storm clouds |
 | v0.9.16 | Nov 17, 2026 | Town life: people out walking, trees in the wind, flags and fountains |
 | v0.9.15 | Nov 17, 2026 | The bait or lure you have on shows on the water, a thin line, and twitching left and right |
 | v0.9.14 | Nov 17, 2026 | Your house on the map, and a living room that fills up as you play |
@@ -41,6 +42,16 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.17 · Weather you can see on the ground
+
+_Nov 17, 2026 · Builds: `UrbanFishing-v0.9.17-windows.zip`, `UrbanFishing-v0.9.17-godot-project.zip`, screenshots in `screenshots/v0.9.17/`_
+
+- Rain soaks the streets. Roads, sidewalks, the plaza and the docks go darker, puddles form and reflect the sky, and raindrops ring in the puddles while it's still raining.
+- After the rain stops, the streets dry out over about four hours, and the puddles shrink as they go.
+- Mist drifts over the ponds, the canal and the bay around dawn (about 5 to 8:30 AM), and spills onto the banks. It's thicker the morning after a wet day.
+- On storm and rainy days the cloud shadows are bigger, darker and move faster. Low, ragged storm cloud blows across the screen, and lightning lights it up.
+- Cloud shadows have soft edges now, with no rings.
 
 ## v0.9.16 · Town life
 

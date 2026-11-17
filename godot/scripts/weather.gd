@@ -5,6 +5,8 @@ extends CanvasLayer
 ## lightning, and a soft vignette. Raindrop rings on the water are drawn in the world (ripples()).
 
 var flash := 0.0
+static var blob: GradientTexture2D   # a soft round blob for cloud shadows and clouds
+static var flash_now := 0.0     # the current lightning flash, for the clouds drawn in the world
 var node: Control
 var vignette: GradientTexture2D
 
@@ -26,6 +28,25 @@ static func compute(day: int, h: float) -> Dictionary:
 		cloud = 0.85
 		if h > 8 and h < 19: rain = maxf(0.0, minf(0.75, minf(h - 8, 19 - h)) * (0.55 + 0.45 * sin(h * 1.7)))
 	return { "k": k, "rain": rain, "cloud": cloud, "storm": storm }
+
+## How wet the streets are: soaked while it rains, drying out over about four hours after it stops.
+static func wetness(day: int, h: float) -> float:
+	var w := 0.0
+	for k in 17:
+		var hh := h - k * 0.25
+		var dd := day
+		if hh < 0: hh += 24.0; dd -= 1
+		if dd < 1: break
+		var r: float = compute(dd, hh).rain
+		if r > 0.01: w = maxf(w, minf(1.0, r * 1.6) * (1.0 - k / 17.0))
+	return w
+
+## Mist over the water around dawn, thicker the morning after a wet day.
+static func mist(day: int, h: float) -> float:
+	var m := smoothstep(4.6, 5.8, h) * (1.0 - smoothstep(7.3, 8.9, h))
+	if m <= 0: return 0.0
+	var yk := kind(day - 1) if day > 1 else "sunny"
+	return m * (0.8 if yk == "rain" or yk == "storm" else 0.55)
 
 static func label() -> String:
 	var wx: Dictionary = Game.wx
@@ -56,6 +77,7 @@ func _ready() -> void:
 
 func _process(dt: float) -> void:
 	if flash > 0: flash = maxf(0, flash - dt * 2.5)
+	flash_now = flash
 	if Game.wx.storm and randf() < dt * 0.1:
 		if Game.flashes: flash = 1.0
 		Sound.play_later("thunder", randf_range(0.4, 1.8))
@@ -86,18 +108,42 @@ static func ripples(ci: CanvasItem, view: Rect2) -> void:
 	var wx: Dictionary = Game.wx
 	var t := Time.get_ticks_msec() / 1000.0
 	var dk := Game.darkness()
-	# cloud shadows sliding across town
-	var a: float = (0.05 + wx.cloud * 0.09) * (1 - dk * 1.8)
+	# cloud shadows sliding across town; on storm days big dark ones, and low ragged cloud blowing over
+	if blob == null:
+		blob = GradientTexture2D.new()
+		blob.width = 64; blob.height = 64
+		blob.fill = GradientTexture2D.FILL_RADIAL
+		blob.fill_from = Vector2(0.5, 0.5); blob.fill_to = Vector2(1.0, 0.5)
+		var g := Gradient.new()
+		g.offsets = PackedFloat32Array([0.0, 0.45, 1.0])
+		g.colors = PackedColorArray([Color(1, 1, 1, 1), Color(1, 1, 1, 0.6), Color(1, 1, 1, 0)])
+		blob.gradient = g
+	var heavy := clampf((float(wx.cloud) - 0.7) / 0.2, 0.0, 1.0)
+	var a: float = (0.05 + wx.cloud * 0.09 + heavy * 0.12) * (1 - dk * 1.8)
 	if a > 0.01:
 		var span := Town.MW + 50.0
-		for i in 14:
-			var cx := fmod(Town.hash2(i, 1) * span + t * (0.5 + Town.hash2(i, 3) * 0.4), span) - 25
+		var n := 14 + int(heavy * 10)
+		for i in n:
+			var cx := fmod(Town.hash2(i, 1) * span + t * (0.5 + Town.hash2(i, 3) * 0.4) * (1.0 + heavy * 1.5), span) - 25
 			var cy := Town.hash2(i, 2) * Town.MH
-			if cx < view.position.x - 12 or cx > view.end.x + 12 or cy < view.position.y - 10 or cy > view.end.y + 10: continue
+			if cx < view.position.x - 14 or cx > view.end.x + 14 or cy < view.position.y - 12 or cy > view.end.y + 12: continue
 			for j in 4:
 				var o := Vector2((Town.hash2(i, j + 10) - 0.5) * 9, (Town.hash2(i, j + 20) - 0.5) * 4)
-				var r := 3 + Town.hash2(i, j + 30) * 3.5
-				for k in 4: ci.draw_circle(Vector2(cx, cy) + o, r * (1.0 - k * 0.22), Color(0.08, 0.14, 0.22, a * 0.3))
+				var r := (3 + Town.hash2(i, j + 30) * 3.5) * (1.0 + heavy * 0.5)
+				ci.draw_texture_rect(blob, Rect2(Vector2(cx, cy) + o - Vector2(r, r) * 1.3, Vector2(r, r) * 2.6), false, Color(0.06, 0.1, 0.16, a * 0.9))
+	if heavy > 0.05:
+		var fl := flash_now
+		var span2 := view.size.x + 30.0
+		for i in 18:
+			var sp := 2.2 + Town.hash2(i, 4) * 1.5
+			var cx := view.position.x - 15 + fmod(Town.hash2(i, 5) * span2 + t * sp, span2)
+			var cy := view.position.y - 4 + Town.hash2(i, 6) * (view.size.y + 8)
+			for j in 5:
+				var o := Vector2((Town.hash2(i, j + 40) - 0.5) * 7, (Town.hash2(i, j + 50) - 0.5) * 2.5)
+				var r := 1.4 + Town.hash2(i, j + 60) * 2.0
+				var shade := 0.36 + Town.hash2(i, j) * 0.12 + fl * 0.5
+				ci.draw_texture_rect(blob, Rect2(Vector2(cx, cy) + o - Vector2(r, r * 0.8), Vector2(r * 2, r * 1.6)), false, Color(shade, shade + 0.03, shade + 0.07, 0.24 * heavy * (1 - dk)))
+				ci.draw_texture_rect(blob, Rect2(Vector2(cx, cy) + o - Vector2(r, r) * 0.7 + Vector2(-0.3, -0.4), Vector2(r, r) * 1.2), false, Color(shade + 0.18, shade + 0.2, shade + 0.24, 0.1 * heavy * (1 - dk)))
 	if wx.rain <= 0.05: return
 	for k in int(90 * wx.rain):
 		var ph := t * 1.5 + k * 0.37
