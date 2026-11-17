@@ -2,14 +2,15 @@
 """Renders all of Urban Fishing's music and sound effects from code.
 
 Every sound is synthesized here (oscillators, filtered noise and a small reverb), so the
-audio is original and has no outside license. The music follows the procedural tunes in
-the browser version (index.html, `Music`): surf, steel, prowl, reactor, miami, swamp, yacht.
+audio is original and has no outside license. The game's music is rendered from the browser
+version's own Web Audio code by tools/render_web_music.js; the approximate music here is only
+written with --music.
 
 Needs numpy, scipy and ffmpeg (with libvorbis). Run from the repo root:
     python3 tools/make_audio.py
-Writes godot/audio/music_*.ogg, sfx_*.ogg and amb_*.ogg.
+Writes godot/audio/sfx_*.ogg and amb_*.ogg.
 """
-import os, subprocess, tempfile, wave
+import os, subprocess, sys, tempfile, wave
 import numpy as np
 from scipy.signal import butter, lfilter, fftconvolve
 
@@ -282,6 +283,8 @@ def write(name, x):
     print(name, "%.1fs" % (len(x) / SR))
 
 if __name__ == "__main__":
-    for k in STYLES: write("music_" + k, music(k))
+    # the music comes from the browser version's own code: tools/render_web_music.js
+    if "--music" in sys.argv:
+        for k in STYLES: write("music_" + k, music(k))
     for k, fn in list(globals().items()):
         if k.startswith("sfx_") or k.startswith("amb_"): write(k, fn())

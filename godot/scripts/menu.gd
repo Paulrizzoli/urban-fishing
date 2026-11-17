@@ -10,6 +10,9 @@ const INK := Color("#22313a")
 const CORAL := Color("#e2583e")
 const SUN := Color("#f2b134")
 const SETTINGS_PATH := "user://settings.cfg"
+## Music styles, with the names the browser version's music picker used.
+const STYLES := [["auto", "Auto"], ["surf", "Surf"], ["steel", "Steel drum"], ["prowl", "Night prowl"],
+	["miami", "Miami nights"], ["swamp", "Swamp blues"], ["reactor", "Meltdown"], ["yacht", "Yacht rock"]]
 const SIZES := [Vector2i(1280, 720), Vector2i(1600, 900), Vector2i(1920, 1080)]
 
 const CONTROLS := [
@@ -31,7 +34,7 @@ var title: Control
 var title_open := false
 var fade_rect: ColorRect
 var fade_layer: CanvasLayer
-var settings := { "fullscreen": false, "size": 0, "vsync": true, "flashes": true, "master": 8, "music": 6, "sfx": 8, "ambience": 6 }
+var settings := { "fullscreen": false, "size": 0, "vsync": true, "flashes": true, "master": 8, "music": 6, "sfx": 8, "ambience": 6, "style": "auto" }
 
 func _ready() -> void:
 	layer = 5
@@ -189,11 +192,17 @@ func show_settings(from_pause := false) -> void:
 	for i in SIZES.size():
 		var ii := i
 		sizes.append(["%d × %d" % [SIZES[i].x, SIZES[i].y], func(): settings.size = ii; apply_settings(); back.call(), settings.size == ii])
+	var styles := [[], []]
+	for i in STYLES.size():
+		var st: String = STYLES[i][0]
+		styles[i / 4].append([STYLES[i][1], func(): settings.style = st; apply_settings(); back.call(), settings.style == st])
 	var vol := func(k: String, label: String) -> Array:
 		return ["vol", label, int(settings[k]), func(v): settings[k] = clampi(v, 0, 10); apply_settings(); back.call()]
 	hud.open([["h3", "Settings"], ["h2", "Settings"],
 		["head", "Sound"],
 		vol.call("master", "Master"), vol.call("music", "Music"), vol.call("sfx", "Effects"), vol.call("ambience", "Ambience"),
+		["head", "Music style", "Auto picks a tune for where you are"],
+		["tabs", styles[0]], ["tabs", styles[1]],
 		["head", "Display"],
 		["tabs", [["Windowed", func(): settings.fullscreen = false; apply_settings(); back.call(), not settings.fullscreen], ["Full screen", func(): settings.fullscreen = true; apply_settings(); back.call(), settings.fullscreen]]],
 		["head", "Window size", "used when windowed"],
@@ -212,6 +221,7 @@ func load_settings() -> void:
 
 func apply_settings(save := true) -> void:
 	Game.flashes = settings.flashes
+	Sound.style = settings.style if STYLES.any(func(x): return x[0] == settings.style) else "auto"
 	Sound.set_volume("Master", settings.master / 10.0)
 	Sound.set_volume("Music", settings.music / 10.0)
 	Sound.set_volume("SFX", settings.sfx / 10.0)

@@ -339,6 +339,7 @@ func _process(dt: float) -> void:
 ## Which tune fits: sneaking music on private ground, the reactor hum at the power station,
 ## swamp blues at dawn and dusk and in Sunsplash Jungle, Miami synths at night, yacht rock downtown by day.
 func _want_music() -> String:
+	if Sound.style != "auto": return Sound.style
 	if menu.title_open: return "miami" if Game.darkness() > 0.3 else "surf"
 	var z := Player.zone_of(player.position)
 	if z == 3: return "reactor"

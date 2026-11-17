@@ -1,6 +1,7 @@
 extends Node
 ## Autoload "Sound": music, ambience and sound effects, with Master, Music, SFX and Ambience buses.
-## All the audio files are rendered from code by tools/make_audio.py.
+## The music is the browser version's own tunes, rendered by tools/render_web_music.js;
+## the sound effects and ambience are rendered from code by tools/make_audio.py.
 
 const TRACKS := ["surf", "steel", "prowl", "reactor", "miami", "swamp", "yacht"]
 const FADE := 1.6
@@ -9,6 +10,7 @@ var streams := {}
 var music: Array[AudioStreamPlayer] = []
 var cur := -1                # which of the two music players is live
 var track := ""
+var style := "auto"           # a fixed music style from Settings, or "auto"
 var amb := {}                # "day", "night", "rain" -> AudioStreamPlayer
 var reel: AudioStreamPlayer
 var pool: Array[AudioStreamPlayer] = []
