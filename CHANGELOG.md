@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.10 | Nov 17, 2026 | Life on the water: wakes, ripples, jumping fish, a bobbing float and reflections |
 | v0.9.9 | Nov 17, 2026 | Build your own rod from a blank, a reel and a grip you find around town |
 | v0.9.8 | Nov 17, 2026 | A starter area you can actually get out of: manholes, the golf course, easier first orders, Lou's note on day 7 |
 | v0.9.7 | Nov 17, 2026 | A round, natural-looking Maple Park Pond |
@@ -34,6 +35,16 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.10 · Life on the water
+
+_Nov 17, 2026 · Builds: `UrbanFishing-v0.9.10-windows.zip`, `UrbanFishing-v0.9.10-godot-project.zip`, screenshots in `screenshots/v0.9.10/`_
+
+- Your kayak and skiff leave a V-shaped wake of foam that spreads out and fades behind you. The skiff also churns the water behind the motor and pushes a bow wave.
+- Rings of ripples spread out where your lure lands (smaller for a quiet cast) and where a fish goes back in.
+- Every few seconds a fish jumps somewhere on screen: one of the fish shadows you can see, or out in open water. It arcs out, drips, and lands with a soft plop.
+- The bobber rocks on the waves and sends out slow rings while you wait for a bite.
+- Towers, flats and the marina are reflected in the water in front of them. At night their lit windows shimmer in the reflection; by day there are light streaks. Moored boats and street lamps reflect in the water too.
 
 ## v0.9.9 · Build your own rod
 

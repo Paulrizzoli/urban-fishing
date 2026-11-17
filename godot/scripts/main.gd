@@ -39,6 +39,7 @@ var journal_tab := "spots"
 var weather: Weather
 var ground_tex: Texture2D
 var ground_mat: ShaderMaterial
+var water_fx: WaterFx
 var glow_tex: GradientTexture2D
 var open_lamps: Array = []    # street lamps whose glow isn't hidden behind a tower
 var ach_t := 0.0
@@ -115,6 +116,10 @@ func _ready() -> void:
 	fishing = Fishing.new()
 	fishing.z_index = -5
 	world.add_child(fishing)
+	var refl := WaterFx.new()
+	refl.mode = "under"
+	refl.z_index = -6
+	world.add_child(refl)
 	# everything that stands up is y-sorted
 	ents = Node2D.new()
 	ents.y_sort_enabled = true
@@ -160,6 +165,13 @@ func _ready() -> void:
 	ents.add_child(player)
 	for k in ["kayak", "skiff"]: ents.add_child(ParkedBoat.new(k))
 	fishing.player = player
+	water_fx = WaterFx.new()
+	water_fx.z_index = -4
+	water_fx.player = player
+	water_fx.fishing = fishing
+	world.add_child(water_fx)
+	refl.player = player
+	refl.fishing = fishing
 	ents.add_child(Drawer.make(func(ci):
 		ci.draw_rect(Rect2(ROSA.x + 0.25, ROSA.y - 0.05, 0.36, 0.3), Color("#e9e4d8"))
 		Art.person(ci, ROSA, PI / 2 + 0.35, Color("#e2583e"), Color("#fbf3e2"), true)
@@ -506,6 +518,14 @@ func _draw_bloom(ci: CanvasItem) -> void:
 		var hd := Art.lamp_head(lp)
 		_glow(ci, hd, 0.7, Color(warm, 0.5 * a))
 		_glow(ci, lp + Vector2(0.2, 0.2), 2.6, Color(warm, 0.16 * a))
+		# a wobbling streak of lamplight on water just below it
+		for k in range(1, 4):
+			var wp: Vector2 = lp + Vector2(0.34, k)
+			if Town.is_water_t(Town.t_at(floori(wp.x), floori(wp.y))):
+				var tt := Time.get_ticks_msec() / 1000.0
+				for j in 4:
+					var wob := sin(tt * 2.2 + j * 1.9 + lp.x) * 0.12
+					ci.draw_rect(Rect2(wp.x - 0.18 + wob, wp.y - 0.4 + j * 0.25, 0.36 - j * 0.05, 0.07), Color(warm, 0.35 * a * (1.0 - j * 0.2) / k))
 	# windows in houses and low buildings: lots lit in the evening, a few late at night
 	var lit := 0.7 if (h >= 18 and h < 23) else 0.15 if (h >= 23 or h < 5) else 0.35
 	for b in Town.buildings:

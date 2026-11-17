@@ -218,10 +218,6 @@ func _draw() -> void:
 	if in_boat():
 		var rot := face
 		if boat_kind() == "skiff":
-			for w in wake:
-				var k: float = w.t / 1.6
-				draw_set_transform(w.p - position, w.a, Vector2(1, 0.45))
-				draw_arc(Vector2.ZERO, 0.2 + k * 0.9, 0, TAU, 20, Color(1, 1, 1, 0.5 * (1 - k)), 0.07)
 			draw_set_transform(Vector2(0, 0.1), rot, Vector2.ONE)
 			draw_skiff(self)
 		else:
