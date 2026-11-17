@@ -12,7 +12,7 @@ The first time you open it, Godot takes a few seconds to import the fonts.
 
 ## Versions
 
-The current version is in `project.godot` (`config/version`) and shows on the title screen. See `../CHANGELOG.md` for what changed in each one. `../tools/build_windows.sh <godot binary> <folder>` exports the game and zips it as `UrbanFishing-v<version>-windows.zip`.
+The current version is in `project.godot` (`config/version`) and shows on the title screen. See `../CHANGELOG.md` for what changed in each one. `../tools/build_windows.sh <godot binary> <folder>` exports the game and zips it as `UrbanFishing-v<version>-windows.zip`, plus the Godot project as `UrbanFishing-v<version>-godot-project.zip`.
 
 ## Make a Windows .exe
 

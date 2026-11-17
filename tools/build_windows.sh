@@ -1,5 +1,6 @@
 #!/bin/bash
-# Exports the Windows build and zips it as UrbanFishing-v<version>-windows.zip.
+# Exports the Windows build and zips it as UrbanFishing-v<version>-windows.zip, and zips the
+# Godot project (as committed) as UrbanFishing-v<version>-godot-project.zip.
 # The version comes from application/config/version in godot/project.godot.
 # usage: tools/build_windows.sh <path to the Godot 4.4.1 binary> <output folder>
 set -euo pipefail
@@ -15,3 +16,8 @@ ZIP="$OUT/UrbanFishing-v$VER-windows.zip"
 rm -f "$ZIP"
 (cd export && zip -q -9 "$ZIP" "Urban Fishing.exe")
 echo "$ZIP"
+# and the Godot project itself, ready to open in Godot 4.4 (Import, pick project.godot)
+PZIP="$OUT/UrbanFishing-v$VER-godot-project.zip"
+rm -f "$PZIP"
+git -C "$ROOT" archive --format=zip -9 --prefix="UrbanFishing-v$VER/" -o "$PZIP" HEAD:godot
+echo "$PZIP"

@@ -1,6 +1,6 @@
 # Changelog
 
-Versions of the Godot (desktop) port of Urban Fishing. The version shows on the title screen and in the pause menu, and each Windows build is zipped as `UrbanFishing-v<version>-windows.zip`. To make a new version, bump `config/version` in `godot/project.godot` (and the file and product version in `godot/export_presets.cfg`), add a section here, and run `tools/build_windows.sh`.
+Versions of the Godot (desktop) port of Urban Fishing. The version shows on the title screen and in the pause menu, and each Windows build is zipped as `UrbanFishing-v<version>-windows.zip`. To make a new version, bump `config/version` in `godot/project.godot` (and the file and product version in `godot/export_presets.cfg`), add a section here, and run `tools/build_windows.sh`, which also zips the Godot project as `UrbanFishing-v<version>-godot-project.zip`.
 
 ## v0.5.0 · The old game's music
 
