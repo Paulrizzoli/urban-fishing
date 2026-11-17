@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.14 | Nov 17, 2026 | Your house on the map, and a living room that fills up as you play |
 | v0.9.13 | Nov 17, 2026 | Fish that bump off the edge and swim away instead of circling into walls |
 | v0.9.12 | Nov 17, 2026 | Town traffic: cars driving the streets, with headlights at night |
 | v0.9.11 | Nov 17, 2026 | A desktop icon: a bobber in a Port Mullet sunset |
@@ -38,6 +39,22 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.14 · Home on the map, and a living room worth coming back to
+
+_Nov 17, 2026 · Builds: `UrbanFishing-v0.9.14-windows.zip`, `UrbanFishing-v0.9.14-godot-project.zip`_
+
+- Your house is on the map (M): a little yellow house with a red roof and "Home" next to it, at every zoom. A new **Home** button next to Find me jumps the map straight to it
+- Going home now shows your living room, drawn in the same style as Lou's shop, and it fills up as you play:
+  - **My Legends**: every legend you land gets mounted on a wooden shield above the couch, heaviest first, with an empty one waiting for the next. The card lists who's up there and how much they weighed
+  - **Slam cups**: gold, silver and bronze cups on the shelf for every top-three finish at the Mullet Bay Slam
+  - **The rod rack** holds every rod you own, plus the one you built yourself (with a star). The surf rod of legend glints
+  - **The workbench**: the parts you've found hang on the pegboard, a lure you made sits on the bench, and a cash jar fills up with what you're carrying. Your cooler is by the door
+  - **The big tank** sits under the window once you buy it, with fish like the ones you've caught swimming in it. Before that it's a goldfish bowl
+  - **The window** shows the real time of day and weather: sun, dusk, the moon and stars, rain running down the glass, and a palm swaying outside. At night the room dims and the floor lamp comes on
+  - **A calendar** with today's day (Slam days circled), and Lou's note taped to the window once he's called
+  - **Chum**, a ginger cat asleep on the couch, breathing, flicking a tail and snoring little z's. There's a **Pet Chum** button
+- The big line at the top of the home card talks about the room as it is: the legend staring at you from the wall, the tank bubbling, rain on the window, the lamp on at night
 
 ## v0.9.13 · Fish that bounce off the edges
 

@@ -26,7 +26,7 @@ func _ready() -> void:
 	box.add_theme_constant_override("separation", 6)
 	box.position = Vector2(12, 12)
 	add_child(box)
-	for d in [["+", func(): zoom_by(1.5)], ["−", func(): zoom_by(1 / 1.5)], ["Whole map", show_all], ["Find me", find_me]]:
+	for d in [["+", func(): zoom_by(1.5)], ["−", func(): zoom_by(1 / 1.5)], ["Whole map", show_all], ["Find me", find_me], ["Home", find_home]]:
 		var b: Button = main.hud._button(d[0], d[1], true)
 		b.custom_minimum_size = Vector2(44 if d[0].length() == 1 else 0, 40)
 		b.focus_mode = Control.FOCUS_NONE
@@ -72,6 +72,28 @@ func find_me() -> void:
 	center = main.player.position
 	clamp_center(); queue_redraw()
 
+## Zooms in around your house.
+func find_home() -> void:
+	zoom = 2.5
+	center = home_pos()
+	clamp_center(); queue_redraw()
+
+## The middle of your house, in tiles.
+static func home_pos() -> Vector2:
+	for b in Town.buildings:
+		if b.get("home", false): return Vector2(b.x + b.w / 2.0, b.y + b.h / 2.0)
+	return Vector2(10, 10)
+
+## A little house with a red roof and a yellow star, so you can spot home at any zoom.
+func _home_marker(p: Vector2, sz: float) -> void:
+	var w := sz; var h := sz * 0.75
+	var body := Rect2(p + Vector2(-w / 2, -h * 0.35), Vector2(w, h * 0.85))
+	draw_circle(p + Vector2(0, sz * 0.05), sz * 0.95, Color(0.98, 0.95, 0.89, 0.85))
+	draw_rect(body, Color("#f6c86d")); draw_rect(body, Color("#22313a"), false, 2)
+	var roof := PackedVector2Array([p + Vector2(-w * 0.68, -h * 0.3), p + Vector2(0, -h * 1.05), p + Vector2(w * 0.68, -h * 0.3)])
+	draw_colored_polygon(roof, Color("#e2583e")); draw_polyline(roof + PackedVector2Array([roof[0]]), Color("#22313a"), 2, true)
+	draw_rect(Rect2(p + Vector2(-w * 0.12, h * 0.1), Vector2(w * 0.24, h * 0.4)), Color("#22313a"))
+
 func _gui_input(e: InputEvent) -> void:
 	if e is InputEventMouseButton:
 		if e.button_index == MOUSE_BUTTON_WHEEL_UP and e.pressed: zoom_by(1.15, e.position)
@@ -106,6 +128,11 @@ func _draw() -> void:
 	var fs := int(clampf(7 + kk * 0.9, 10, 20))
 	for l in Town.labels:
 		_text(o + Vector2(l.x, l.y) * kk, l.t, fs, Color("#22313a"), true)
+	# your house
+	var hp := to_screen(home_pos())
+	var hsz := clampf(kk * 1.6, 14, 30)
+	_home_marker(hp, hsz)
+	_text(hp + Vector2(hsz * 0.95 + 3, 5), "Home", 14 if zoom < 2 else 16, Color("#c4572f"), false)
 	# the boats you left somewhere
 	var pk := Player.parked()
 	for kind in pk:
