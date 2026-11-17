@@ -14,7 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
-| v0.10.0 | Nov 17, 2026 | Real-looking people with walk cycles, fish that splash, and light that changes through the day |
+| v0.9.1 | Nov 17, 2026 | Real-looking people with walk cycles, fish that splash, and light that changes through the day |
 | v0.9.0 | Nov 17, 2026 | Three save slots |
 | v0.8.0 | Nov 17, 2026 | Tower sides you can see, and towers you can see through when you walk behind them |
 | v0.7.0 | Nov 17, 2026 | A better-looking Port Mullet (water, buildings, streets, cars, details) |
@@ -28,9 +28,9 @@ Nothing right now.
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
 
-## v0.10.0 · People, splashes and light
+## v0.9.1 · People, splashes and light
 
-_Nov 17, 2026 · Builds: `UrbanFishing-v0.10.0-windows.zip`, `UrbanFishing-v0.10.0-godot-project.zip`, screenshots in `screenshots/v0.10.0/`_
+_Nov 17, 2026 · Builds: `UrbanFishing-v0.9.1-windows.zip`, `UrbanFishing-v0.9.1-godot-project.zip`, screenshots in `screenshots/v0.9.1/`_
 
 - People: you, the guards, staff, Lou and the anglers around town now have bodies with arms and legs, shoes, shading, hair, faces that turn the way they look, and caps or wide-brimmed hats
 - You walk with a walk cycle and a little bounce, carry your rod over your shoulder, and hold it out in both hands when you fish. The rod bows under the line when a fish pulls, and its tip stays on the line. Guards and staff walk their patrols with a walk cycle too
