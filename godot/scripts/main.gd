@@ -10,6 +10,7 @@ const ROSA := Vector2(34.4, 165.6)
 const STORY_LINES_OK := ["Lou whistles. The regulars nod.", "Somebody buys you a soda.", "Lou writes it on the whiteboard."]
 const STORY_LINES_NO := ["Lou laughs so hard he has to sit down.", "A regular holds his hands two inches apart.", "\"Sure it was, buddy.\""]
 const GROUND_SHADER := preload("res://shaders/ground.gdshader")
+const SEE_THROUGH := preload("res://shaders/see_through.gdshader")
 
 var world: Node2D
 var ents: Node2D
@@ -109,7 +110,7 @@ func _ready() -> void:
 		var bb: Dictionary = b
 		var n: Node2D
 		match bb.kind:
-			"sky": n = Drawer.make(func(ci): Art.sky(ci, bb), bb.y + bb.h - 0.05)
+			"sky": n = Drawer.make(func(ci): Art.sky(ci, bb), bb.y + bb.h - 0.05, true)
 			"house": n = Drawer.make(func(ci): Art.house(ci, bb), bb.y + bb.h - 0.05)
 			"tower": n = Drawer.make(func(ci): Art.cooling_tower(ci, bb, Time.get_ticks_msec() / 1000.0), bb.y + bb.h - 0.05, true)
 			"volcano": n = Drawer.make(func(ci): Art.volcano(ci, bb, Time.get_ticks_msec() / 1000.0), bb.y + bb.h - 0.05, true)
@@ -118,6 +119,10 @@ func _ready() -> void:
 		if bb.kind == "sky":
 			sky_nodes.append([n, bb])
 			n.get_child(0).light_mask = 2    # street lamps light the street, not the rooftops
+			var hm := ShaderMaterial.new()
+			hm.shader = SEE_THROUGH
+			n.get_child(0).material = hm
+			bb.see = 0.0
 	for y in Town.MH:
 		for x in Town.MW:
 			var t: int = Town.tile[Town.idx(x, y)]
@@ -180,7 +185,7 @@ func _ready() -> void:
 	var gulls := Drawer.make(_draw_gulls, 0, true)
 	gulls.z_index = 6
 	world.add_child(gulls)
-	var labels := Drawer.make(_draw_labels)
+	var labels := Drawer.make(_draw_labels, 0, true)
 	labels.z_index = 6
 	world.add_child(labels)
 	# camera, night and lamps
@@ -191,6 +196,7 @@ func _ready() -> void:
 	add_child(cam)
 	cam.position = player.position * TS
 	cam.reset_smoothing()
+	Art.view_x = player.position.x
 	night = CanvasModulate.new()
 	add_child(night)
 	var tex := GradientTexture2D.new()
@@ -338,11 +344,16 @@ func _process(dt: float) -> void:
 	hud.chips = _chips()
 	cam.position = player.position * TS
 	_lighting()
+	Art.view_x = cam.get_screen_center_position().x / TS
+	# walk behind a tower and a window opens in it around you, so you can see where you are
 	for pair in sky_nodes:
 		var b: Dictionary = pair[1]
-		var g := Art.sky_geom(b)
-		var behind: bool = player.position.x > b.x - 0.4 and player.position.x < b.x + b.w + g.y + 0.4 and player.position.y > b.y - g.x - 0.5 and player.position.y < b.y + b.h - 0.2
-		pair[0].modulate.a = move_toward(pair[0].modulate.a, 0.36 if behind else 1.0, dt * 4)
+		var behind: bool = Art.sky_bounds(b).grow(0.4).has_point(player.position) and player.position.y < b.y + b.h - 0.2
+		b.see = move_toward(b.see, 1.0 if behind else 0.0, dt * 4)
+		var m: ShaderMaterial = pair[0].get_child(0).material
+		m.set_shader_parameter("strength", b.see)
+		m.set_shader_parameter("hole", player.position + Vector2(0, -0.3))
+		b.hole = player.position + Vector2(0, -0.3)
 	hud.refresh(near)
 	if _test_shot(): return
 	save_t += dt
@@ -852,11 +863,14 @@ func _draw_night_glow(ci: CanvasItem) -> void:
 	for pair in sky_nodes:
 		var b: Dictionary = pair[1]
 		var g := Art.sky_geom(b)
-		if not view.intersects(Rect2(b.x, b.y - g.x, b.w + g.y, b.h + g.x)): continue
-		var col := Color(1, 0.84, 0.51, 0.75 * dk / 0.62 * pair[0].modulate.a)
+		if not view.intersects(Art.sky_bounds(b)): continue
+		var col := Color(1, 0.84, 0.51, 0.75 * dk / 0.62)
 		var i := 0
 		for r in b.wins:
-			if Town.hash2(i, b.x * 7 + Game.S.day) < lit: ci.draw_rect(r, col)
+			if Town.hash2(i, b.x * 7 + Game.S.day) < lit:
+				var dd: float = r.get_center().distance_to(player.position + Vector2(0, -0.3))
+				var cut: float = b.see * (1.0 - smoothstep(1.4, 2.6, dd)) * 0.85
+				ci.draw_rect(r, Color(col.r, col.g, col.b, col.a * (1.0 - cut)))
 			i += 1
 		if b.get("ant", false) and int(t * 1.2 + b.x) % 2 == 0:
 			ci.draw_circle(Vector2(b.x + g.y + b.w * 0.75, b.y - g.x + b.h * 0.4 - 1.1), 0.14, Color(1, 0.3, 0.23))
@@ -866,7 +880,7 @@ func _draw_night_glow(ci: CanvasItem) -> void:
 			for b in Town.buildings:
 				if b.kind != "sky": continue
 				var g := Art.sky_geom(b)
-				if Rect2(b.x - 0.2, b.y - g.x, b.w + g.y + 0.4, b.h + g.x).has_point(Art.lamp_head(lp)) and lp.y < b.y + b.h: hidden = true
+				if Rect2(b.x - g.x * 0.4 - 0.2, b.y - g.x, b.w + g.x * 0.8 + 0.4, b.h + g.x).has_point(Art.lamp_head(lp)) and lp.y < b.y + b.h: hidden = true
 			if not hidden: open_lamps.append(lp)
 	for lp in open_lamps:
 		if not view.has_point(lp): continue
