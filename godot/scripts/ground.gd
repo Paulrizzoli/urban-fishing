@@ -61,7 +61,9 @@ static func under(x: int, y: int) -> int:
 
 const CSUB := 8                  # coast and water-mask pixels per tile
 static var _land := PackedFloat32Array()   # blurred land, one value per tile center
-static var _coast := {}          # Vector2i tile -> true for tiles whose pixels follow the curve
+static var _coast := {}          # Vector2i tile -> "sand" or "lawn", for tiles whose pixels follow the curve
+## Natural ponds whose grassy banks follow a curve too. Man-made ones (Heron Lakes, the golf pond) keep their straight edges.
+const NATURAL_PONDS := [1]
 static var water_img: Image      # water color per tile (with a one-tile border), set by make_texture
 static var water_tex: ImageTexture
 
@@ -108,15 +110,21 @@ static func _build_coast() -> void:
 		for x in MW:
 			var t: int = Town.tile[Town.idx(x, y)]
 			var wet := Town.is_water_t(t)
-			if not (wet or t == Town.T.SAND): continue
 			var has_w := false
 			var has_s := false
+			var has_pond := false
+			var has_lawn := false
 			for dy in range(-1, 2):
 				for dx in range(-1, 2):
 					if not Town.inb(x + dx, y + dy): continue
-					if Town.is_water_t(Town.t_at(x + dx, y + dy)): has_w = true
+					if Town.is_water_t(Town.t_at(x + dx, y + dy)):
+						has_w = true
+						if Town.region[Town.idx(x + dx, y + dy)] in NATURAL_PONDS: has_pond = true
 					elif _sandy(x + dx, y + dy): has_s = true
-			if has_w and has_s: _coast[Vector2i(x, y)] = true
+					elif is_lawn(x + dx, y + dy): has_lawn = true
+			if (wet or t == Town.T.SAND) and has_w and has_s: _coast[Vector2i(x, y)] = "sand"
+			elif has_pond and has_lawn and (t == Town.T.GRASS or (wet and Town.region[Town.idx(x, y)] in NATURAL_PONDS)):
+				_coast[Vector2i(x, y)] = "lawn"
 
 static func is_coast(x: int, y: int) -> bool:
 	_build_coast()
@@ -138,6 +146,11 @@ static func land_at(p: Vector2) -> float:
 	# a gentle wobble so long shores aren't ruler-straight
 	var w := sin(p.x * 1.7 + sin(p.y * 0.9) * 2.0) * 0.5 + sin(p.y * 2.3 + p.x * 0.6) * 0.5
 	return lerpf(a, b, v) + w * 0.045
+
+## "sand", "lawn" or "" for a tile that isn't on a curved coast.
+static func coast_kind(x: int, y: int) -> String:
+	_build_coast()
+	return _coast.get(Vector2i(x, y), "")
 
 ## For a point on a coast tile: is it dry land? Elsewhere the tile decides.
 static func dry_at(p: Vector2) -> bool:
@@ -209,13 +222,20 @@ static func make_texture() -> ImageTexture:
 		var tx: int = key.x
 		var ty: int = key.y
 		var was_water := Town.is_water_t(Town.tile[Town.idx(tx, ty)])
+		var lawn: bool = _coast[key] == "lawn"
 		for j in PX:
 			for i in PX:
 				var f := land_at(Vector2(tx + (i + 0.5) / PX, ty + (j + 0.5) / PX))
 				var px := tx * PX + i
 				var py := ty * PX + j
-				if f >= 0.5:
-					base.set_pixel(px, py, sand.lerp(damp, clampf(1.0 - (f - 0.5) / 0.09, 0.0, 1.0) * 0.8))
+				var rim := clampf(1.0 - (f - 0.5) / 0.09, 0.0, 1.0)
+				if f >= 0.5 and lawn:
+					# grass down to a muddy bank
+					base.set_pixel(px, py, grass.get_pixel(px, py).lerp(Color("#6b7a44"), rim * 0.55))
+				elif f >= 0.5:
+					base.set_pixel(px, py, sand.lerp(damp, rim * 0.8))
+				elif lawn:
+					base.set_pixel(px, py, base.get_pixel(px, py) if was_water else water.get_pixel(px + PX, py + PX))
 				else:
 					var wc: Color = base.get_pixel(px, py) if was_water else water.get_pixel(px + PX, py + PX)
 					base.set_pixel(px, py, wc.lerp(Color("#d9f4ea"), clampf(1.0 - (0.5 - f) / 0.06, 0.0, 1.0) * 0.45))
@@ -249,7 +269,7 @@ static func make_water_mask() -> ImageTexture:
 
 ## What each tile's ground is made of, for the ground shader's surface texture. One pixel per tile, sampled sharply.
 ## 0 nothing, 1 lawn, 2 asphalt, 3 sidewalk and concrete, 4 sand, 5 water, 6 fairway, 7 dirt path, 8 plaza, 9 dock,
-## 10 sand on a curved coast, 11 water on a curved coast
+## 10 sand on a curved coast, 11 water on a curved coast, 12 lawn and 13 water on a curved pond bank
 static func make_material_tex() -> ImageTexture:
 	var T := Town.T
 	var img := Image.create(Town.MW, Town.MH, false, Image.FORMAT_L8)
@@ -273,5 +293,6 @@ static func make_material_tex() -> ImageTexture:
 	_build_coast()
 	for key in _coast:
 		var m := 11 if Town.is_water_t(Town.tile[Town.idx(key.x, key.y)]) else 10
+		if _coast[key] == "lawn": m += 2
 		img.set_pixel(key.x, key.y, Color8(m, m, m))
 	return ImageTexture.create_from_image(img)

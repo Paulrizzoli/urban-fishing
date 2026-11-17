@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.7 | Nov 17, 2026 | A round, natural-looking Maple Park Pond |
 | v0.9.6 | Nov 17, 2026 | Make your own lures from parts you find around town |
 | v0.9.5 | Nov 17, 2026 | Driveways from every house to the street |
 | v0.9.3 | Nov 17, 2026 | Pictures of every rod, bait and upgrade in the shop, the marina and the top bar |
@@ -31,6 +32,15 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.7 · A natural Maple Park Pond
+
+_Nov 17, 2026 · Builds: `UrbanFishing-v0.9.7-windows.zip`, `UrbanFishing-v0.9.7-godot-project.zip`, screenshots in `screenshots/v0.9.7/`_
+
+- Maple Park Pond is a soft, uneven, rounded shape instead of a stepped rectangle, and its grassy banks meet the water along a smooth curve. The grass runs down to a muddy edge, with a little shade on the water under the bank
+- The reeds and cattails grow right at the curved water line, the lily pads stay out on the water, and the grass blades stop at the bank
+- The two anglers at the pond stand on the bank instead of in the water
+- Heron Lakes and the golf course pond keep their straight, built edges, since they're man-made
 
 ## v0.9.6 · Home-made lures
 
