@@ -62,6 +62,15 @@ func _ready() -> void:
 		if a.begins_with("--boat="): Game.S.boat = true; Game.S.boat_kind = a.substr(7); Game.S.gear.kayak = 1; Game.S.gear.skiff = 1
 		if a.begins_with("--day="): Game.S.day = int(a.substr(6)); Game.S.min += (Game.S.day - 1) * 1440.0
 		if a.begins_with("--story="): Game.S.saga.ch = int(a.substr(8)) - 1; Game.S.saga.done = int(a.substr(8)) > 1; Game.S.day = maxi(int(Game.S.day), 3)
+		if a == "--gear=all":
+			for g in Game.gear: Game.S.gear[g.id] = 1
+			Game.S.cooler_cap = 30; Game.S.cash = 2000
+		if a.begins_with("--gear=") and a != "--gear=all":
+			for gid in a.substr(7).split("+"): Game.S.gear[gid] = 1
+		if a == "--cooler=sample":
+			for f in [[1, 2], [1, 4], [1, 5], [4, 1], [14, 4], [15, 0], [2, 7], [16, 7]]:
+				var fd: Dictionary = Game.spots[f[0]].fish[f[1]]
+				Game.S.cooler.append({ "n": fd.n, "w": fd.w[0], "value": 20 + f[1] * 7, "spot": f[0], "legend": fd.get("legend", false), "junk": fd.get("junk", false), "day": 1, "tm": 0 })
 		if a.begins_with("--unlock="): Game.S.unlock = int(a.substr(9)); Game.S.started = true
 		if a.begins_with("--act2="): Game.S.saga.finished = true; Game.S.saga.ch = 7; Game.S.act2.ch = int(a.substr(7)) - 1; Game.S.act2.done = int(a.substr(7)) > 1; Game.S.day = maxi(int(Game.S.day), 9)
 	Game.wx = Weather.compute(int(Game.S.day), Game.hour())
@@ -289,6 +298,16 @@ func _ready() -> void:
 		if a == "--open=news": journal_tab = "news"; open_journal()
 		if a == "--beach": _toggle_boat()
 		if a == "--open=map": open_map()
+		if a == "--open=icons": # every item picture, big, for checking the art
+			var ids := ["rod0", "rod1", "rod2", "rod3", "rod4", "worms", "bait", "lure", "hotdog", "bread", "squid", "cooler", "mcooler", "camera", "polo", "lanyard", "flashlight", "waders", "geiger", "prybar", "kayak", "bigtank", "suit", "skiff", "shades", "junk"]
+			var sheet := Control.new(); sheet.custom_minimum_size = Vector2(1180, 600)
+			sheet.draw.connect(func():
+				for i in ids.size():
+					var r := Rect2(Vector2((i % 9) * 130 + 4, (i / 9) * 150 + 4), Vector2(120, 120))
+					sheet.draw_rect(r, Color("#fff8ea"))
+					ItemIcons.draw(sheet, ids[i], r.grow(-8))
+					sheet.draw_string(Game.font_bold, r.position + Vector2(4, 138), ids[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#22313a")))
+			hud.open([["node", sheet]], true)
 		if a == "--open=bus": open_bus(0)
 		if a == "--weigh":
 			Story.sign_up()
@@ -674,7 +693,9 @@ func open_shop() -> void:
 				var total := 0
 				for c in S.cooler:
 					total += int(c.value)
-					parts.append(["item", c.n + (" ★" if c.legend else ""), "%s lb · %s" % [str(c.w), Game.spots[int(c.spot)].name], Game.money(c.value), func(): pass, false])
+					var cc: Dictionary = c
+					parts.append(["item", c.n + (" ★" if c.legend else ""), "%s lb · %s" % [str(c.w), Game.spots[int(c.spot)].name], Game.money(c.value), func(): pass, false,
+						func(ci, r): ItemIcons.draw_catch(ci, cc, r)])
 				parts.append(["row", [["Sell everything for " + Game.money(total), _sell_all, true, "go"]]])
 			last_sale = 0
 		"order":
@@ -687,6 +708,7 @@ func open_shop() -> void:
 				parts.append(["p", "Pays %s and +3 rep, today only. You have %d of %d in your cooler." % [Game.money(o.pay), mini(have, int(o.count)), int(o.count)]])
 				parts.append(["row", [["Hand it over" if have >= o.count else "Not enough yet", _fill_order, have >= o.count, "go"]]])
 		"gear":
+			parts.append(_kit_part())
 			_gear_list(parts, Game.gear.filter(func(g): return not g.has("where")))
 			parts.append(["sub", "Your rod: %s." % Game.rods[Game.rod_level()].name + (" Boats, squid and big-game tackle are at the marina downtown." if S.visited.has("dt") else "")])
 		"note":
@@ -715,7 +737,24 @@ func _gear_list(parts: Array, list: Array) -> void:
 		var locked: bool = g.get("req") != null and not S.gear.has(g.get("req"))
 		var price: int = g.price
 		var btn := "Owned" if owned else "Needs a better rod" if locked else Game.money(price)
-		parts.append(["item", g.n + (" (%d now)" % S.cooler_cap if gid == "cooler" else ""), g.ds, btn, func(): _buy(gid, price, g.has("where")), not owned and not locked and S.cash >= price])
+		parts.append(["item", g.n + (" (%d now)" % S.cooler_cap if gid == "cooler" else ""), g.ds, btn, func(): _buy(gid, price, g.has("where")), not owned and not locked and S.cash >= price,
+			func(ci, r): ItemIcons.draw(ci, gid, r), locked])
+
+## The strip of pictures at the top of the gear lists: your rod, your bait and everything you own.
+func _kit_part() -> Array:
+	var S := Game.S
+	var rl := Game.rod_level()
+	var kit := [[func(ci, r): ItemIcons.draw(ci, "rod%d" % rl, r, Time.get_ticks_msec() / 1000.0), Game.rods[rl].name]]
+	for b in Game.owned_baits():
+		var bid: String = b.id
+		kit.append([func(ci, r): ItemIcons.draw(ci, bid, r), b.n])
+	for g in Game.gear:
+		var gid: String = g.id
+		if gid.begins_with("rod") or Game.baits.any(func(b): return b.get("gear", "") == gid): continue
+		if gid == "cooler" or not S.gear.has(gid): continue
+		kit.append([func(ci, r): ItemIcons.draw(ci, gid, r), g.n])
+	if S.cooler_cap > 5 and not S.gear.has("mcooler"): kit.append([func(ci, r): ItemIcons.draw(ci, "cooler", r), "Cooler (%d)" % S.cooler_cap])
+	return ["kit", "Your kit", kit]
 
 func _sell_all() -> void:
 	var total := 0
@@ -785,6 +824,7 @@ func open_marina() -> void:
 		tabs.append([td[1], func(): marina_tab = key; open_marina(), marina_tab == key])
 	parts.append(["tabs", tabs])
 	if marina_tab == "boats":
+		parts.append(_kit_part())
 		_gear_list(parts, Game.gear.filter(func(g): return g.get("where", "") == "marina"))
 		parts.append(["sub", "The COFFEE CAN is tied up at the docks. Launch it from the bay or the river with K." if S.gear.has("skiff") else "Lou still buys the fish. We just sell the stuff to catch them."])
 	else:
