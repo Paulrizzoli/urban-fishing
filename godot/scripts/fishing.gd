@@ -179,18 +179,66 @@ func spawn_shadow(reg: int) -> void:
 	if f.has("near") or f.get("bridge", false): cand = tiles.filter(func(v): return near_ok(f, v.x, v.y))
 	if cand.is_empty(): return
 	var tp: Vector2i = cand.pick_random()
+	for k in 20:   # not on a tile the curved bank mostly covers
+		if swimmable(Vector2(tp) + Vector2(0.5, 0.5), reg): break
+		tp = cand.pick_random()
+	if not swimmable(Vector2(tp) + Vector2(0.5, 0.5), reg): return
 	var w := fish_weight(f)
 	shadows.append({ "reg": reg, "pos": Vector2(tp) + Vector2(0.5, 0.5), "goal": Vector2(tp) + Vector2(0.5, 0.5), "fish": f, "w": w, "dir": randf() * TAU,
 		"speed": randf_range(0.35, 0.7) * (0.55 if f.get("legend", false) else 1.0), "spook": 0.0, "wary": 0.0, "go": false, "fade": 0.0, "leaving": false,
-		"wob": randf() * TAU, "len": clampf(0.34 + sqrt(w) * 0.19, 0.32, 2.8), "hooked": false, "gone": false })
+		"wob": randf() * TAU, "len": clampf(0.34 + sqrt(w) * 0.19, 0.32, 2.8), "hooked": false, "gone": false, "bounce": 0.0, "bumps": 0 })
 
 func shadow_goal(s: Dictionary) -> void:
 	var tiles: Array = regtiles[s.reg]
 	for k in 14:
 		var v: Vector2i = tiles.pick_random()
 		var p := Vector2(v) + Vector2(0.5, 0.5)
-		if p.distance_to(s.pos) < 5 and near_ok(s.fish, v.x, v.y): s.goal = p; return
+		# only somewhere it can swim to in a straight line, so it never sets off into a bank or an island
+		if p.distance_to(s.pos) < 5 and near_ok(s.fish, v.x, v.y) and clear_swim(s.pos, p, s.reg): s.goal = p; return
 	s.goal = s.pos
+
+## Can a fish be here? Its own water region, and on the curved shores (beaches, Bird Key, Maple Park
+## Pond) the water you can see, with a little room so it doesn't poke its nose into the bank.
+func swimmable(p: Vector2, reg: int, margin := 0.42) -> bool:
+	if region_at(p) != reg or not is_water(p): return false
+	if reg != 7 and Ground.is_coast(floori(p.x), floori(p.y)) and Ground.land_at(p) > margin: return false
+	return true
+
+## Open water all the way from a to b.
+func clear_swim(a: Vector2, b: Vector2, reg: int) -> bool:
+	var n := ceili(a.distance_to(b) / 0.25)
+	for i in range(1, n + 1):
+		if not swimmable(a.lerp(b, float(i) / n), reg): return false
+	return true
+
+## A fish ran into the edge: bump off it like a ball off a wall, nudged a little at random,
+## and swim straight out that way for a moment before picking somewhere new.
+func bounce(s: Dictionary, heading: Vector2) -> void:
+	var open := Vector2.ZERO          # points away from the wall, toward open water
+	for k in 16:
+		var d := Vector2.from_angle(k * TAU / 16)
+		for r in [0.4, 0.8]:
+			if swimmable(s.pos + d * r, s.reg): open += d / r
+	var nd: Vector2
+	if open.length() < 0.01: nd = -heading
+	else:
+		var n := open.normalized()
+		nd = heading.bounce(n) if heading.dot(n) < 0 else heading
+		nd = (nd + n * 0.35).normalized()   # lean out from the wall so corners don't trap it
+	nd = nd.rotated(randf_range(-0.35, 0.35))
+	# keep it only if that way is actually open; otherwise take the nearest open heading
+	if not clear_swim(s.pos, s.pos + nd * 0.6, s.reg):
+		var found := false
+		for k in range(1, 12):
+			for sgn in [1, -1]:
+				var tr := nd.rotated(sgn * k * PI / 12)
+				if not found and clear_swim(s.pos, s.pos + tr * 0.6, s.reg): nd = tr; found = true
+			if found: break
+	s.dir = nd.angle(); s.bounce = randf_range(0.7, 1.3); s.bumps += 1
+	s.goal = s.pos + nd * 2.0
+	if s.go and s.bumps >= 2:   # couldn't find a way to the bait, so it loses interest
+		s.go = false
+		if is_same(s, target): drop_target(0)
 
 func update_shadows(dt: float) -> void:
 	var band := Game.time_band()
@@ -209,19 +257,54 @@ func update_shadows(dt: float) -> void:
 		if s.hooked or (is_same(s, target) and state != "wait"): continue
 		var goal: Vector2 = s.goal
 		var sp: float = s.speed
-		if s.spook > 0 and bob != null:
-			goal = s.pos + (s.pos - bob).normalized() * 3.0; sp *= 2.8
+		var fwd := Vector2(cos(s.dir), sin(s.dir))
+		if s.bounce > 0:
+			# just bumped off the edge: keep swimming out the way it bounced
+			s.bounce -= dt; goal = s.pos + fwd * 2.0
+			if s.spook > 0: sp *= 2.4
+			if s.bounce <= 0: shadow_goal(s)
+		elif s.spook > 0 and bob != null:
+			goal = s.pos + flee_dir(s) * 3.0; sp *= 2.8
 		elif s.go and bob != null and state == "wait":
 			goal = bob; sp *= 1.25
-		elif s.pos.distance_to(s.goal) < 0.3 or randf() < dt * 0.08: shadow_goal(s)
+		else:
+			s.bumps = 0
+			if s.pos.distance_to(s.goal) < 0.3 or randf() < dt * 0.08: shadow_goal(s)
+			goal = s.goal
 		var d: float = s.pos.distance_to(goal)
 		if d > 0.04:
-			var want = (goal - s.pos).angle()
-			s.dir += wrapf(want - s.dir, -PI, PI) * minf(1.0, dt * 4)
-			var np: Vector2 = s.pos + Vector2(cos(s.dir), sin(s.dir)) * minf(d, sp * dt)
-			if is_water(np) and region_at(np) == s.reg: s.pos = np
-			else: shadow_goal(s); s.dir += PI * 0.6
+			if s.bounce <= 0:
+				var want = (goal - s.pos).angle()
+				s.dir += wrapf(want - s.dir, -PI, PI) * minf(1.0, dt * 4)
+			fwd = Vector2(cos(s.dir), sin(s.dir))
+			var np: Vector2 = s.pos + fwd * minf(d, sp * dt)
+			var nose: Vector2 = np + fwd * minf(0.45, s.len * 0.4)
+			# the bait can sit right at the bank, so a fish going for it only needs the water tile there
+			var near_bait: bool = s.go and bob != null and np.distance_to(bob) < 1.0
+			if near_bait and is_water(np) and region_at(np) == s.reg: s.pos = np
+			elif swimmable(np, s.reg) and swimmable(nose, s.reg): s.pos = np
+			elif not swimmable(s.pos, s.reg):
+				# somehow already over the bank (old save, flood going down): head for the nearest open water
+				s.pos = s.pos.move_toward(open_water_near(s.pos, s.reg), sp * dt)
+			else: bounce(s, fwd)
 	shadows = shadows.filter(func(s): return not (s.gone or (s.leaving and s.fade <= 0)))
+
+func open_water_near(p: Vector2, reg: int) -> Vector2:
+	for r in [0.3, 0.6, 1.0, 1.5, 2.0, 3.0]:
+		for k in 12:
+			var c: Vector2 = p + Vector2.from_angle(k * TAU / 12) * r
+			if swimmable(c, reg): return c
+	return p
+
+## Away from the bait, but along open water rather than straight into the bank.
+func flee_dir(s: Dictionary) -> Vector2:
+	var away: Vector2 = (s.pos - bob).normalized()
+	if away == Vector2.ZERO: away = Vector2.from_angle(s.dir)
+	for k in 7:
+		for sgn in [1, -1]:
+			var tr := away.rotated(sgn * k * PI / 8)
+			if clear_swim(s.pos, s.pos + tr * 1.5, s.reg): return tr
+	return away
 
 func visible_shadow(s: Dictionary) -> bool: return not s.leaving and not s.hooked and s.fade > 0.5
 
