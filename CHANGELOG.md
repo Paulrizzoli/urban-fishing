@@ -2,6 +2,19 @@
 
 Versions of the Godot (desktop) port of Urban Fishing. The version shows on the title screen and in the pause menu, and each Windows build is zipped as `UrbanFishing-v<version>-windows.zip`. To make a new version, bump `config/version` in `godot/project.godot` (and the file and product version in `godot/export_presets.cfg`), add a section here, and run `tools/build_windows.sh`, which also zips the Godot project as `UrbanFishing-v<version>-godot-project.zip`.
 
+## v0.7.0 · A better-looking Port Mullet
+
+- Water: a new water shader with light rippling across the surface, caustics shimmering on the shallows, slow swells on deep water, foam lapping at the shore and sun glints that fade at dusk, under clouds and in the rain
+- Ponds and lakes have lily pads (some flowering) and cattails along the banks
+- Houses: shingled hip roofs with ridges and hips, solar panels, chimneys and vent stacks, framed windows with shutters, front doors in different colors with a step and porch light, AC units and flower beds, and soft shadows
+- Shops, offices and other flat roofs: parapets, roof seams and gravel, rooftop AC units with fans, skylights and vent pipes, framed and lit storefront windows
+- Towers: floor lines on both faces, glass curtain walls with mullions and sky reflections, lobbies with canopies, stair housings and water tanks on the roofs, and longer, softer shadows
+- Streets: worn wheel tracks in each lane, gutters along the curbs, a curb lip, storm drain inlets and manhole covers, and patched, grainy asphalt
+- Street lamps now stand on posts you can see by day; at night their light hangs from the lamp head, and lamps hidden behind towers no longer glow through them
+- Cars have wheels, windows, lights and mirrors, and the parking lots have parked cars
+- Lawns, sand, concrete, paths and dock planks have finer surface texture; sand and grass look damp right by the water, and everything darkens a little in the rain
+- Boats tied up in the marina slips bob on the water, and gulls circle over the water by day
+
 ## v0.6.0 · A bigger map, and a town that opens up
 
 - The map (M) fills the window. Zoom with the + and − buttons, the mouse wheel or the + and − keys, drag to move around, double-click to zoom in, "Whole map" and "Find me"
