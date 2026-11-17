@@ -110,16 +110,17 @@ func show_title() -> void:
 	tag.add_theme_color_override("font_color", Color(PAPER, 0.85))
 	box.add_child(tag)
 	var gap := Control.new(); gap.custom_minimum_size = Vector2(0, 8); box.add_child(gap)
-	var has_save: bool = Game.S.started
+	var has_save := false
+	for n in range(1, Game.SLOTS + 1): if not Game.peek_slot(n).is_empty(): has_save = true
 	if has_save:
-		var cb := _title_button("Continue", "hot", func(): _continue())
+		var cb := _title_button("Continue", "hot", func(): show_slots("load"))
 		box.add_child(cb)
 		var info := Label.new()
-		info.text = "Day %d · %s · %s · %s" % [int(Game.S.day), Game.clock_text(), Game.money(Game.S.cash), Game.rep_title()]
+		info.text = "Last played: slot %d · %s" % [Game.slot, _slot_line(Game.S) if Game.S.started else "empty"]
 		info.add_theme_font_size_override("font_size", 13)
 		info.add_theme_color_override("font_color", Color(PAPER, 0.7))
 		box.add_child(info)
-	box.add_child(_title_button("New game", "" if has_save else "hot", func(): new_game()))
+	box.add_child(_title_button("New game", "" if has_save else "hot", func(): show_slots("new") if has_save else _start_fresh(Game.slot)))
 	box.add_child(_title_button("Controls", "", func(): show_controls()))
 	box.add_child(_title_button("Settings", "", func(): show_settings()))
 	box.add_child(_title_button("Quit", "", func(): get_tree().quit()))
@@ -151,15 +152,44 @@ func _continue() -> void:
 		title.queue_free(); title = null; title_open = false
 		title_closed.emit())
 
-func new_game() -> void:
-	if Game.S.started:
-		hud.open([["h3", "New game"], ["h2", "Start over?"], ["p", "Your current game (day %d, %s) will be erased." % [int(Game.S.day), Game.money(Game.S.cash)]],
-			["row", [["Start over", func(): hud.close(); _start_fresh(), true, "go"], ["Keep my game", func(): hud.close(), true, "hot"]]]])
-		return
-	_start_fresh()
+## One line about a saved game: day, time, cash and rep.
+func _slot_line(d: Dictionary) -> String:
+	var m := float(d.get("min", 0.0))
+	var h := int(fmod(m / 60.0, 24.0))
+	return "Day %d · %d:%02d %s · %s · %d rep" % [int(d.get("day", 1)), 12 if h % 12 == 0 else h % 12, int(fmod(m, 60.0)), "AM" if h < 12 else "PM",
+		Game.money(float(d.get("cash", 0))), int(d.get("rep", 0))]
 
-func _start_fresh() -> void:
+## The save slot picker. mode "load" plays a slot, mode "new" starts a new game in one.
+func show_slots(mode: String) -> void:
+	var parts: Array = [["h3", "Save slots"], ["h2", "Pick a game" if mode == "load" else "New game: pick a slot"]]
+	for n in range(1, Game.SLOTS + 1):
+		var d := Game.peek_slot(n)
+		var nn := n
+		var label := "Slot %d%s" % [n, "  ·  last played" if n == Game.slot and not d.is_empty() else ""]
+		if mode == "load":
+			parts.append(["item", label, _slot_line(d) if not d.is_empty() else "Empty", "Play", func(): hud.close(); _play_slot(nn), not d.is_empty()])
+		elif d.is_empty():
+			parts.append(["item", label, "Empty", "Start here", func(): hud.close(); _start_fresh(nn), true])
+		else:
+			parts.append(["item", label, _slot_line(d), "Start over", func(): _confirm_overwrite(nn, d), true])
+	parts.append(["sub", "Each slot is its own game. Playing one never touches the others."])
+	parts.append(["row", [["Back", func(): hud.close(), true, "hot"]]])
+	hud.open(parts)
+
+func _confirm_overwrite(n: int, d: Dictionary) -> void:
+	hud.open([["h3", "New game in slot %d" % n], ["h2", "Start over?"], ["p", "The game in slot %d (%s) will be erased. Your other slots stay as they are." % [n, _slot_line(d)]],
+		["row", [["Keep it", func(): show_slots("new"), true, "hot"], ["Erase and start", func(): hud.close(); _start_fresh(n), true, "go"]]]])
+
+func _play_slot(n: int) -> void:
+	if n == Game.slot: _continue(); return
 	fade(func():
+		Game.use_slot(n)
+		Game.skip_title = true
+		get_tree().reload_current_scene(), 0.4)
+
+func _start_fresh(n: int) -> void:
+	fade(func():
+		Game.use_slot(n)
 		Game.reset()
 		Game.skip_title = true
 		get_tree().reload_current_scene(), 0.4)
@@ -172,7 +202,7 @@ func quit_to_title() -> void:
 
 # ---------- pause menu ----------
 func show_pause() -> void:
-	hud.open([["h3", "Paused · Day %d · %s · v%s" % [int(Game.S.day), Game.clock_text(), Game.version]], ["h2", "Gone fishin'"],
+	hud.open([["h3", "Paused · Slot %d · Day %d · %s · v%s" % [Game.slot, int(Game.S.day), Game.clock_text(), Game.version]], ["h2", "Gone fishin'"],
 		["row", [["Resume", func(): hud.close(), true, "hot"]]],
 		["row", [["Controls", func(): show_controls(true)], ["Settings", func(): show_settings(true)]]],
 		["row", [["Journal", func(): hud.close(); get_parent().open_journal()], ["Map", func(): hud.close(); get_parent().open_map()]]],

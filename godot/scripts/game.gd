@@ -15,7 +15,12 @@ var skip_title := false   # set by New game, so the reload goes straight into th
 var flashes := true       # lightning flashes (a setting)
 var wx := { "k": "sunny", "rain": 0.0, "cloud": 0.1, "storm": false }
 
-const SAVE_PATH := "user://urban_fishing_save.json"
+## Three save slots. Slot 1 is the save file every version before v0.8 wrote, so an old game
+## shows up there as it is. Slots 2 and 3 get their own files.
+const SLOTS := 3
+const SLOT_PATHS := ["user://urban_fishing_save.json", "user://urban_fishing_save_2.json", "user://urban_fishing_save_3.json"]
+const SLOT_CFG := "user://save_slot.cfg"   # remembers which slot you played last
+var slot := 1
 const TS := 32.0                      # pixels per tile
 const MINUTES_PER_SECOND := 4.0       # one game hour every 15 seconds
 
@@ -42,6 +47,8 @@ func _ready() -> void:
 	tips = _load_json("res://data/tips.json")
 	tips2 = _load_json("res://data/tips2.json")
 	orders = _load_json("res://data/orders.json")
+	var cf := ConfigFile.new()
+	if cf.load(SLOT_CFG) == OK: slot = clampi(int(cf.get_value("slots", "last", 1)), 1, SLOTS)
 	load_game()
 
 func _load_json(path: String) -> Variant:
@@ -54,18 +61,39 @@ func fresh() -> Dictionary:
 		"boat": false, "boat_kind": "kayak", "offenses": {}, "order": {}, "park_day": 0, "swept_day": 0, "story": {}, "story_day": 0, "story_told": false,
 		"tips_heard": 0, "rosa": 0, "visited": {}, "busts": 0, "unlock": 1 }.merged(Story.fresh_state())
 
+func save_path(n := slot) -> String: return SLOT_PATHS[clampi(n, 1, SLOTS) - 1]
+
+## What's in a slot, for the slot picker: the saved game, or {} if the slot is empty.
+func peek_slot(n: int) -> Dictionary:
+	var d := _read_save(n)
+	if d.is_empty() or not d.get("started", false): return {}
+	return d
+
+func _read_save(n: int) -> Dictionary:
+	if not FileAccess.file_exists(save_path(n)): return {}
+	var f := FileAccess.open(save_path(n), FileAccess.READ)
+	if f == null: return {}
+	var d: Variant = JSON.parse_string(f.get_as_text())
+	return d if d is Dictionary else {}
+
+## Switches to slot n and loads it (nothing is saved on the way, so the old slot is left as it was).
+func use_slot(n: int) -> void:
+	slot = clampi(n, 1, SLOTS)
+	var cf := ConfigFile.new()
+	cf.set_value("slots", "last", slot)
+	cf.save(SLOT_CFG)
+	load_game()
+
 func load_game() -> void:
 	S = fresh()
-	if FileAccess.file_exists(SAVE_PATH):
-		var f := FileAccess.open(SAVE_PATH, FileAccess.READ)
-		var d: Variant = JSON.parse_string(f.get_as_text())
-		if d is Dictionary:
-			# merge one level deep, so older saves pick up new story and stats fields
-			for k in d:
-				if S.has(k) and S[k] is Dictionary and d[k] is Dictionary and k in ["saga", "act2", "stats"]: S[k].merge(d[k], true)
-				else: S[k] = d[k]
-			# saves from before the map opened up in steps keep the whole town
-			if not d.has("unlock"): S.unlock = Unlocks.LAST
+	var d := _read_save(slot)
+	if not d.is_empty():
+		# merge one level deep, so older saves pick up new story and stats fields
+		for k in d:
+			if S.has(k) and S[k] is Dictionary and d[k] is Dictionary and k in ["saga", "act2", "stats"]: S[k].merge(d[k], true)
+			else: S[k] = d[k]
+		# saves from before the map opened up in steps keep the whole town
+		if not d.has("unlock"): S.unlock = Unlocks.LAST
 	# JSON brings every number back as a float; keep the counters whole
 	for k in ["day", "cash", "rep", "cooler_cap", "unlock"]: S[k] = int(S[k])
 	for k in ["ch", "paid_ch", "left", "fin_day"]: S.saga[k] = int(S.saga[k])
@@ -74,7 +102,7 @@ func load_game() -> void:
 	wx = Weather.compute(int(S.day), hour())
 
 func save_game() -> void:
-	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	var f := FileAccess.open(save_path(), FileAccess.WRITE)
 	if f: f.store_string(JSON.stringify(S)); saved.emit()
 
 func reset() -> void:
