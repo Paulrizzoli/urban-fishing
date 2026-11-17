@@ -5,7 +5,9 @@ config_version=5
 
 config/name="Urban Fishing"
 config/description="A Florida fishing-and-sneaking game set in Port Mullet."
-config/version="0.9.10"
+config/version="0.9.11"
+config/icon="res://icon.png"
+config/windows_native_icon="res://icon.ico"
 run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.4", "GL Compatibility")
 
