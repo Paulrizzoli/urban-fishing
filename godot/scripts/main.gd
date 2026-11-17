@@ -315,6 +315,14 @@ func _ready() -> void:
 		if a == "--open=gear": shop_tab = "gear"; open_shop()
 		if a == "--open=order": shop_tab = "order"; open_shop()
 		if a == "--open=marina": open_marina()
+		if a.begins_with("--legends="): # land the first N legends, for checking the trophy wall
+			var lg := Story.all_fish().filter(func(f): return f.get("legend", false)).slice(0, int(a.substr(10)))
+			for f in lg: Game.S.journal[f.n] = { "w": float(f.w[1]) * 0.9, "spot": 1, "n": 1, "legend": true }
+			for f in Story.all_fish().slice(0, 12):
+				if not f.get("legend", false) and not f.get("junk", false): Game.S.journal[f.n] = { "w": float(f.w[0]), "spot": 1, "n": 1, "legend": false }
+		if a.begins_with("--slam="):
+			for pl in a.substr(7).split(","): Game.S.trophies.append({ "day": 7, "fmt": "big", "place": int(pl), "v": 10.0 })
+		if a == "--open=home": home_tab = "rest"; open_home()
 		if a == "--open=bench": home_tab = "bench"; open_home()
 		if a == "--open=rodbench": home_tab = "rod"; open_home()
 		if a.begins_with("--homerod="): Game.S.homerod = Crafting.rod_stats(Array(a.substr(10).split(","))); Game.S.use_home = true
@@ -995,8 +1003,13 @@ func open_home() -> void:
 	for td in [["rest", "Rest"], ["bench", "Make lures"], ["rod", "Build a rod"]]:
 		var key: String = td[0]
 		tabs.append([td[1], func(): home_tab = key; open_home(), home_tab == key])
-	var parts := [["h3", "Home sweet home" if home_tab == "rest" else "The workbench"], ["h2", ["The AC is on.", "Somebody left the TV on.", "It smells like bait in here.", "Home. Feet up."].pick_random() if home_tab == "rest" else "\"Measure twice.\"" if home_tab == "rod" else "\"Mind the hooks.\""], ["tabs", tabs]]
+	var parts := [["h3", "Home sweet home" if home_tab == "rest" else "The workbench"], ["h2", _home_line() if home_tab == "rest" else "\"Measure twice.\"" if home_tab == "rod" else "\"Mind the hooks.\""], ["tabs", tabs]]
 	if home_tab == "rest":
+		parts.append(["pic", HomeArt.room, 280, true])
+		var m := HomeArt.mounts()
+		if m.is_empty(): parts.append(["sub", "The wall above the couch is waiting for your first legend. Every one you land gets mounted here."])
+		else: parts.append(["sub", "On the wall: " + ", ".join(m.slice(0, 6).map(func(x): return "%s (%s lb)" % [x.n, str(snappedf(x.w, 0.1))])) + (" and %d more" % (m.size() - 6) if m.size() > 6 else "") + "."])
+		parts.append(["row", [["Pet Chum", func(): Sound.play("ui_click"); hud.flash(["Chum purrs like an outboard motor.", "Chum rolls over. It's a trap.", "Chum stretches and goes right back to sleep.", "Chum sniffs your hands. Bait. Approved."].pick_random()), true]]])
 		parts += [["p", "Kick back until…"],
 			["item", "Dawn", "The Lunker of the 7th bites at dawn.", "Rest until 6:00 AM", func(): rest.call(6.0), true],
 			["item", "Noon", "Business hours. Lanyard time at the koi pond.", "Rest until 12:00 PM", func(): rest.call(12.0), true],
@@ -1018,6 +1031,19 @@ func open_home() -> void:
 				Crafting.can_make(l), func(ci, r): ItemIcons.draw(ci, lid, r), not Crafting.can_make(l)])
 	parts.append(["row", [["Back outside", func(): hud.close(), true, "hot"]]])
 	hud.open(parts)
+
+## The big line on the home card: something about the room as it is right now.
+func _home_line() -> String:
+	var S := Game.S
+	var lines := ["The AC is on.", "It smells like bait in here.", "Home. Feet up.", "Chum is asleep on the couch again."]
+	var m := HomeArt.mounts()
+	if not m.is_empty(): lines += ["%s stares at you from the wall." % m[0].n, "%d legends on the wall." % m.size() if m.size() > 1 else "One legend on the wall. Room for more."]
+	if S.gear.has("bigtank"): lines.append("The tank is bubbling away.")
+	if Game.darkness() > 0.4: lines += ["The lamp's on. The street's quiet.", "Crickets outside."]
+	if float(Game.wx.rain) > 0.3: lines.append("Rain on the window.")
+	if S.trophies.any(func(x): return int(x.place) == 1): lines.append("The Slam cup catches the light.")
+	if not S.homerod.is_empty(): lines.append("Your own rod is in the rack.")
+	return lines.pick_random()
 
 func _parts_kit(parts: Array) -> void:
 	var have := []
@@ -1296,7 +1322,7 @@ func open_map() -> void:
 	map_view.locked = Unlocks.map_overlay() if Unlocks.step() < Unlocks.LAST else null
 	map_view.custom_minimum_size = Vector2(0, get_viewport_rect().size.y - 250)
 	hud.open([["h3", "Port Mullet · drag to move, scroll or + and − to zoom"], ["node", map_view],
-		["sub", "Orange dot: you. Red: private, keep your head down. Blue squares: bus stops. Lou's is the red roof by the main road; downtown and the bay are way down south." + ("" if Unlocks.step() >= Unlocks.LAST else " Grey: closed for now. " + Unlocks.goal() + ".")],
+		["sub", "Orange dot: you. The little yellow house is home. Red: private, keep your head down. Blue squares: bus stops. Lou's is the red roof by the main road; downtown and the bay are way down south." + ("" if Unlocks.step() >= Unlocks.LAST else " Grey: closed for now. " + Unlocks.goal() + ".")],
 		["row", [["Close", func(): hud.close(), true, "hot"], ["Journal (J)", open_journal]]]], true)
 
 # ---------- the Route 1 bus ----------
