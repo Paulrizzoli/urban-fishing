@@ -8,12 +8,13 @@ To make a new version, bump `config/version` in `godot/project.godot` (and the f
 
 ## In progress
 
-- Graphics: building sides you can see, and roofs that turn see-through when you walk behind or inside a building
+Nothing right now.
 
 ## Versions at a glance
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.8.0 | Nov 17, 2026 | Tower sides you can see, and towers you can see through when you walk behind them |
 | v0.7.0 | Nov 17, 2026 | A better-looking Port Mullet (water, buildings, streets, cars, details) |
 | v0.6.0 | Nov 17, 2026 | A bigger zoomable map, and a town that opens up in four steps |
 | v0.5.0 | Nov 17, 2026 | The browser version's music, and a music style setting |
@@ -24,6 +25,14 @@ To make a new version, bump `config/version` in `godot/project.godot` (and the f
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.8.0 · Tower sides, and seeing through towers
+
+_Nov 17, 2026 · Builds: `UrbanFishing-v0.8.0-windows.zip`, `UrbanFishing-v0.8.0-godot-project.zip`, screenshots in `screenshots/v0.8.0/`_
+
+- Towers lean away from the middle of the screen, as if you're looking down on the city, so you see the side wall that faces you, with its floors and windows. Walls on the west are in the sun, walls on the east are in shade. Walk past a tower and it turns to show its other side
+- Walk behind a tower and a soft window opens in it around you, so you can see yourself and what's around you while the rest of the tower stays solid. Before, the whole tower faded
+- Lit windows at night fade in that window too, and tower name labels follow the tower's lean
 
 ## v0.7.0 · A better-looking Port Mullet
 

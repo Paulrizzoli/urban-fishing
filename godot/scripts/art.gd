@@ -280,10 +280,21 @@ static func volcano(ci: CanvasItem, b: Dictionary, t: float) -> void:
 		var k := fmod(t * 0.2 + i / 3.0, 1.0)
 		ci.draw_circle(c + Vector2(k * 1.2, -k * 2.5), 0.4 + k * 0.8, Color(0.8, 0.8, 0.8, 0.4 * (1 - k)))
 
-## Skyscraper in a 3/4 view: the roof is lifted by its height and leans a little east.
+## Where the camera is looking, in tiles. Towers lean away from it, like looking down from above,
+## so you see the side of a tower that faces you.
+static var view_x := 56.0
+
+## Skyscraper in a 3/4 view: the roof is lifted by its height (x) and shifted sideways (y),
+## away from the middle of the screen.
 static func sky_geom(b: Dictionary) -> Vector2:
 	var H: float = b.ht * 0.42
-	return Vector2(H, H * 0.16)
+	var lean := clampf((b.x + b.w / 2.0 - view_x) * 0.035, -0.3, 0.3)
+	return Vector2(H, H * lean)
+
+## Everything a tower covers on screen, base and roof.
+static func sky_bounds(b: Dictionary) -> Rect2:
+	var g := sky_geom(b)
+	return Rect2(minf(b.x, b.x + g.y), b.y - g.x, b.w + absf(g.y), b.h + g.x)
 
 static func sky_shadow(ci: CanvasItem, b: Dictionary) -> void:
 	var g := sky_geom(b)
@@ -323,16 +334,31 @@ static func sky(ci: CanvasItem, b: Dictionary) -> void:
 	var h: float = b.h
 	var c := Color(b.color)
 	var glass_b: bool = b.get("glass", false)
-	# east side, in shade, with its floors
-	var side := shade(c, -0.45)
-	ci.draw_polygon(PackedVector2Array([Vector2(x + w, y), Vector2(x + w, y + h), Vector2(x + w + dx, y + h - H), Vector2(x + w + dx, y - H)]),
+	# the side wall that faces the camera: the west one (in the light) when the tower leans east,
+	# the east one (in shade) when it leans west
+	var west := dx > 0.0
+	var ex := x if west else x + w
+	var side := shade(c, -0.14) if west else shade(c, -0.45)
+	ci.draw_polygon(PackedVector2Array([Vector2(ex, y), Vector2(ex, y + h), Vector2(ex + dx, y + h - H), Vector2(ex + dx, y - H)]),
 		PackedColorArray([side, shade(side, -0.15), shade(side, 0.08), shade(side, 0.12)]))
 	var fl := 0.46
 	var z := fl
 	while z < H - 0.2:
-		var sxp := x + w + dx * (z / H)
+		var sxp := ex + dx * (z / H)
 		ci.draw_line(Vector2(sxp, y + h - z), Vector2(sxp, y - z), Color(0, 0, 0, 0.12), 0.03)
 		z += fl
+	if absf(dx) > 0.3:
+		# windows down the side, one column per floor
+		var ww := clampf(absf(dx) * fl / H * 0.55, 0.04, 0.3)
+		var sg := Color(0.8, 0.93, 0.98, 0.5) if glass_b else Color(0.1, 0.17, 0.23, 0.5)
+		z = 0.35 + fl * 0.5
+		while z < H - 0.2:
+			var px := ex + dx * (z / H)
+			var d := 0.45
+			while d < h - 0.3:
+				ci.draw_rect(Rect2(px - ww / 2, y + h - d - z - 0.24, ww, 0.24), sg)
+				d += 0.55
+			z += fl
 	# south face: shaded from the street up, floor bands, windows
 	var face := PackedVector2Array([Vector2(x, y + h), Vector2(x + w, y + h), Vector2(x + w + dx, y + h - H), Vector2(x + dx, y + h - H)])
 	var bot := shade(c, -0.34)
@@ -344,6 +370,7 @@ static func sky(ci: CanvasItem, b: Dictionary) -> void:
 		ci.draw_line(Vector2(x + dx * k0, y + h - z), Vector2(x + w + dx * k0, y + h - z), Color(1, 1, 1, 0.07) if glass_b else Color(0, 0, 0, 0.08), 0.04)
 		z += fl
 	var glass := Color(0.8, 0.93, 0.98, 0.72) if glass_b else Color(0.12, 0.2, 0.27, 0.5)
+	b.wins = sky_windows(b)
 	for r in b.wins:
 		ci.draw_rect(r, glass)
 		if not glass_b:
@@ -364,9 +391,17 @@ static func sky(ci: CanvasItem, b: Dictionary) -> void:
 	ci.draw_rect(Rect2(x + 0.15, y + h - 0.28, w - 0.3, 0.24), Color(0.1, 0.16, 0.2, 0.85))
 	ci.draw_rect(Rect2(x + w / 2 - 0.45, y + h - 0.27, 0.9, 0.22), Color(1, 0.94, 0.78, 0.6))
 	ci.draw_rect(Rect2(x + w / 2 - 0.6, y + h - 0.36, 1.2, 0.08), shade(c, 0.2))
-	ci.draw_polyline(PackedVector2Array([Vector2(x, y + h), Vector2(x + dx, y + h - H), Vector2(x + w + dx, y + h - H), Vector2(x + w + dx, y - H)]), Color(0, 0, 0, 0.25), 0.04)
-	ci.draw_line(Vector2(x + w, y + h), Vector2(x + w + dx, y + h - H), Color(1, 1, 1, 0.12), 0.03)
-	if b.get("logo", false): text(ci, Vector2(x + w / 2 + dx * 0.9, y + h - H + 0.7), "MARLOWE", 0.45, Color(1, 1, 1, 0.92))
+	var outl := Color(0, 0, 0, 0.25)
+	ci.draw_line(Vector2(x, y + h), Vector2(x + dx, y + h - H), outl, 0.04)
+	ci.draw_line(Vector2(x + w, y + h), Vector2(x + w + dx, y + h - H), outl, 0.04)
+	ci.draw_polyline(PackedVector2Array([Vector2(ex, y + h), Vector2(ex, y), Vector2(ex + dx, y - H)]), outl, 0.04)
+	# a highlight down the lit corner
+	var lit_x := x if west else x + w
+	ci.draw_line(Vector2(lit_x, y + h), Vector2(lit_x + dx, y + h - H), Color(1, 1, 1, 0.14), 0.03)
+	if b.get("logo", false):
+		var lp := Vector2(x + w / 2 + dx * 0.9, y + h - H + 0.7)
+		var cut: float = b.get("see", 0.0) * (1.0 - smoothstep(1.4, 2.8, lp.distance_to(b.get("hole", Vector2(-99, -99)))))
+		text(ci, lp, "MARLOWE", 0.45, Color(1, 1, 1, 0.92 * (1.0 - cut)))
 	var rx := x + dx
 	var ry := y - H
 	ci.draw_rect(Rect2(rx, ry, w, h), shade(c, 0.14))
