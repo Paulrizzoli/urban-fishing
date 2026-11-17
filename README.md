@@ -7,6 +7,8 @@ A Florida fishing-and-sneaking game that runs in the browser. You start in Port 
 - **Browser** (`index.html`): the complete game. Open it in any browser.
 - **Desktop** (`godot/`): the Godot 4 port in progress, for a higher-quality Windows version. See `godot/README.md`.
 
+Every update, version by version, is in [`CHANGELOG.md`](CHANGELOG.md).
+
 ## Play the browser version
 
 Open `index.html` in a browser. Everything is in that one file. Your progress saves in the browser.
