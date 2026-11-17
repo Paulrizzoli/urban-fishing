@@ -244,7 +244,7 @@ func refresh(near: String) -> void:
 			"idle": m = { "fish": "Cooler's full. Sell at Lou's." if S.cooler.size() >= S.cooler_cap else "Press F or Space to cast. B switches bait.", "shop": "Lou's Bait & Tackle. Press E or F to go in.", "home": "Home. Press E or F to go inside.", "marina": "Mullet Bay Marina. Press E to go in.", "oldtimer": "Press E to talk.", "rosa": "Press E to talk.", "bus": "Route 1 bus stop. Press E to ride. M for the map, J for the journal.", "part": "Something shiny on the ground. Press E to pick it up.",
 				"manhole": ("Cooler's full. Sell at Lou's." if S.cooler.size() >= S.cooler_cap else "A manhole. Press F to drop a line down it.") if S.gear.has("prybar") else "A manhole. The cover's too heavy. Lou sells a pry bar." }.get(near, "")
 			"power": m = "Release in the green to land right on the fish. ◀ ▶ or click the water to aim." if fishing.tgt != null else "No fish in line. ◀ ▶ to aim at a shadow, or click the water."
-			"wait": m = "Tap to jig the line. Hold to pull it back up." if fishing.manhole >= 0 else "Something's coming over…" if fishing.target != null else "Tap to twitch the lure. Hold to reel it back in."
+			"wait": m = "Tap to jig the line. Hold to pull it back up." if fishing.manhole >= 0 else "Something's coming over…" if fishing.target != null else "Tap to twitch the lure toward you, ◀ ▶ to twitch it left or right. Hold to reel it back in."
 			"nibble": m = "It's nibbling… wait for the big dip."
 			"bite": m = "NOW!"
 			"reel": m = "Hold to reel. Keep the needle in the green. Pull ◀ ▶ against the fish."
