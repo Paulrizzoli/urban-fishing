@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.18 | Nov 17, 2026 | Screen polish: zoom in on a hooked fish, shake on big catches, a drawing of every fish on its catch card |
 | v0.9.17 | Nov 17, 2026 | Weather: wet streets and puddles, morning mist, storm clouds |
 | v0.9.16 | Nov 17, 2026 | Town life: people out walking, trees in the wind, flags and fountains |
 | v0.9.15 | Nov 17, 2026 | The bait or lure you have on shows on the water, a thin line, and twitching left and right |
@@ -42,6 +43,14 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.18 · Screen polish
+
+_Nov 17, 2026 · Builds: `UrbanFishing-v0.9.18-windows.zip`, `UrbanFishing-v0.9.18-godot-project.zip`, screenshots in `screenshots/v0.9.18/`_
+
+- When a fish bites and you're reeling it in, the camera eases in closer and leans toward the bobber. Once the fight is over, it eases back out.
+- Landing a big one (12 lb or more, a new record, or a legend) gives the screen a short shake. A legend shakes it harder.
+- Every catch card now shows a drawing of what you caught, all 70 kinds, each with its own shape, fins, colors and markings. Catfish have whiskers, gar have long snouts, the sailfish has its sail and the Three-Eyed Tilapia has three eyes. The crab, stingray, python, gator, rat and glowing shrimp have their own drawings, and junk shows its picture. Legends get a gold frame with sparkles.
 
 ## v0.9.17 · Weather you can see on the ground
 

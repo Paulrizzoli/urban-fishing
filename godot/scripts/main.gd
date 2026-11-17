@@ -42,6 +42,10 @@ var ground_mat: ShaderMaterial
 var water_fx: WaterFx
 var traffic: Traffic
 var town_life: TownLife
+var base_zoom := 1.0
+var zoom_k := 1.0        # extra zoom while a fish is on the line
+var shake := 0.0         # seconds of screen shake left
+var shake_px := 0.0
 ## Flagpoles outside City Hall, the marina, the golf club and Lou's, and the fountains in the plaza pool and Bayfront Park pond.
 const FLAGS := [[Vector2(9.4, 146.7), "town"], [Vector2(85.0, 145.7), "marina"], [Vector2(65.0, 30.8), "golf"], [Vector2(52.6, 32.6), "shop"]]
 const FOUNTAINS := [[Vector2(60.5, 130.7), 1.0], [Vector2(30.5, 127.6), 0.7]]
@@ -331,6 +335,19 @@ func _ready() -> void:
 		if a == "--open=gear": shop_tab = "gear"; open_shop()
 		if a == "--open=order": shop_tab = "order"; open_shop()
 		if a == "--open=marina": open_marina()
+		if a == "--gallery": # every fish drawing on one screen, for checking FishArt
+			var gl := CanvasLayer.new(); gl.layer = 20; add_child(gl)
+			var gc := Control.new(); gc.set_anchors_preset(Control.PRESET_FULL_RECT); gl.add_child(gc)
+			var fl := Story.all_fish().filter(func(f): return not f.get("junk", false))
+			gc.draw.connect(func():
+				gc.draw_rect(Rect2(Vector2.ZERO, gc.size), Color("#eef4f2"))
+				var cols := 8
+				var cw := gc.size.x / cols
+				var ch := gc.size.y / ceili(fl.size() / float(cols))
+				for i in fl.size():
+					var r := Rect2((i % cols) * cw, floorf(i / cols) * ch, cw, ch)
+					FishArt.draw(gc, fl[i].n, Rect2(r.position + Vector2(6, 4), r.size - Vector2(12, 22)), 0.5, fl[i].get("legend", false))
+					gc.draw_string(Game.font_bold, r.position + Vector2(6, r.size.y - 5), fl[i].n, HORIZONTAL_ALIGNMENT_LEFT, cw - 8, 11, Color("#22313a")))
 		if a.begins_with("--legends="): # land the first N legends, for checking the trophy wall
 			var lg := Story.all_fish().filter(func(f): return f.get("legend", false)).slice(0, int(a.substr(10)))
 			for f in lg: Game.S.journal[f.n] = { "w": float(f.w[1]) * 0.9, "spot": 1, "n": 1, "legend": true }
@@ -374,13 +391,30 @@ func _ready() -> void:
 			fishing.bob = player.position + Vector2(float(v[0]), float(v[1])); fishing.spot = fishing.region_at(fishing.bob)
 			fishing.state = v[2] if v.size() > 2 else "wait"; fishing.quiet = true
 			player.face = (fishing.bob - player.position).angle()
+		if a == "--hooked": # a fish on the line, being reeled in (use after --bob)
+			fishing.fish = Game.spots[fishing.spot].fish[0]; fishing.fw = 3.0; fishing.state = "bite"
+			fishing.action_down(); fishing.action_up(); fishing.progress = 0.5
 		if a.begins_with("--twitch="): fishing.twitch_side(int(a.substr(9)))
 		if a == "--land": fishing.fish = Game.spots[1].fish[5]; fishing.fw = 44.2; fishing.spot = 1; fishing._land()
 
 func _fit_zoom() -> void:
 	var vs := get_viewport_rect().size
-	var z := clampf(minf(vs.x, vs.y) / (15.0 * TS), 1.0, 2.2)
-	cam.zoom = Vector2(z, z)
+	base_zoom = clampf(minf(vs.x, vs.y) / (15.0 * TS), 1.0, 2.2)
+	cam.zoom = Vector2(base_zoom, base_zoom) * zoom_k
+
+## Follow the player. While a fish is on, ease in closer and lean toward the bobber;
+## a big catch gives the screen a short shake.
+func _camera(dt: float) -> void:
+	var hooked := fishing.state == "bite" or fishing.state == "reel"
+	zoom_k = lerpf(zoom_k, 1.3 if hooked else 1.0, 1.0 - exp(-dt * (3.0 if hooked else 2.0)))
+	cam.zoom = Vector2(base_zoom, base_zoom) * zoom_k
+	var focus := player.position
+	if hooked and fishing.bob != null and (fishing.bob as Vector2).distance_to(player.position) < 14.0:
+		var bp: Vector2 = fishing.bob
+		focus = player.position.lerp(bp, 0.3 * clampf((zoom_k - 1.0) / 0.3, 0.0, 1.0))
+	cam.position = focus * TS
+	shake = maxf(shake - dt, 0.0)
+	cam.offset = Vector2(randf_range(-1, 1), randf_range(-1, 1)) * shake_px * (shake / 0.5) if shake > 0 else Vector2.ZERO
 
 # ---------- loop ----------
 func _process(dt: float) -> void:
@@ -442,7 +476,7 @@ func _process(dt: float) -> void:
 			var ls = player.launch_spot()
 			if ls != null: hud.boat_text = "Launch the skiff (K)" if ls[1] == "skiff" else "Launch kayak (K)"
 	hud.chips = _chips()
-	cam.position = player.position * TS
+	_camera(dt)
 	_lighting()
 	Art.view_x = cam.get_screen_center_position().x / TS
 	# walk behind a tower and a window opens in it around you, so you can see where you are
@@ -721,6 +755,9 @@ func _intro() -> void:
 
 func _on_landed(c: Dictionary) -> void:
 	pending_catch = c
+	# a big one shakes the screen; a legend shakes it harder
+	if not c.junk and (c.legend or c.record or float(c.w) >= 12.0):
+		shake = 0.5; shake_px = 14.0 if c.legend else 8.0
 	Story.on_catch(c)
 	Unlocks.on_catch(c)
 	var worn := Crafting.wear(c)
@@ -728,7 +765,7 @@ func _on_landed(c: Dictionary) -> void:
 		Game.S.big_rod_hint = true; Game.hint.emit("That nearly pulled your arms off. The marina sells a big-game rod.")
 	var spot_name: String = Game.spots[c.spot].name
 	var full: bool = Game.S.cooler.size() >= Game.S.cooler_cap
-	var parts := [["h3", spot_name], ["h2", c.n + ("  ★ LEGEND" if c.legend else "") + ("  · new record" if c.record and not c.junk else "")],
+	var parts := [["h3", spot_name], ["h2", c.n + ("  ★ LEGEND" if c.legend else "") + ("  · new record" if c.record and not c.junk else "")], ["node", FishArt.card(c)],
 		["kv", [["Weight", "%s lb" % str(c.w)], ["Value" if c.release else "Lou pays", "Priceless" if c.release else Game.money(c.value)], ["Your best", "%s lb" % str(Game.S.journal[c.n].w)]]]]
 	if c.note != "": parts.append(["sub", c.note])
 	if worn != "": parts.append(["sub", worn])
