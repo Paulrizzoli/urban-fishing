@@ -1,11 +1,11 @@
 class_name Unlocks
 ## The town opens up in four steps, so a new player isn't dropped into the whole map at once.
-##   1. Home waters: home, Lou's, Maple Park Pond and Mullet Canal (everything north of the
-##      canal road), but not the golf course or the koi plaza.
+##   1. Home waters: home, Lou's, Maple Park Pond, Mullet Canal, the manholes in those streets
+##      and the Pelican Point golf course (everything north of the canal road), but not the koi plaza.
+##      The old-timer by the pond tells you about the gap in the golf course fence from day one.
 ##   2. Catch 5 kinds of fish and fill one of Lou's orders: the public water opens (Back Canal,
 ##      Low Street, downtown, the river, Bayfront Park, Mullet Bay and the marina).
-##   3. Catch 10 kinds of fish: Lou's sneaking lesson, and the golf course, the koi pond and
-##      Heron Lakes open.
+##   3. Catch 10 kinds of fish: Lou's sneaking lesson, and the koi pond and Heron Lakes open.
 ##   4. Land a fish from a guarded spot: everything else (power station, storm drain,
 ##      Sunsplash, the airport, Marlowe Tower and offshore).
 ## Game.S.unlock holds the step. Saves from before this existed load fully open.
@@ -15,7 +15,7 @@ const SPECIES_2 := 5
 const SPECIES_3 := 10
 const GUARDED := [3, 4, 11]              # Pelican Point, the koi pond, Heron Lakes
 ## spot (region id) -> the step that opens it
-const SPOT_STEP := { 1: 1, 2: 1, 3: 3, 4: 3, 5: 4, 6: 4, 7: 2, 8: 4, 9: 2, 10: 4, 11: 3, 12: 4, 13: 2, 14: 2, 15: 4, 16: 4, 17: 2 }
+const SPOT_STEP := { 1: 1, 2: 1, 3: 1, 4: 3, 5: 4, 6: 4, 7: 2, 8: 1, 9: 2, 10: 4, 11: 3, 12: 4, 13: 2, 14: 2, 15: 4, 16: 4, 17: 2 }
 const NEWS := ["", "", "Road Crews Reopen Canal Road; Downtown 'Technically Reachable Again'",
 	"Golf Course Groundskeeper Reports 'Shadowy Figure With Tackle Box'", "Last 'Road Closed' Sign Removed; Port Mullet Fully Open, Officials Confirm"]
 
@@ -31,7 +31,7 @@ static func _build() -> void:
 			var i := Town.idx(x, y)
 			var z: int = Town.zone[i]
 			var s := 1 if y < 58 else 2
-			if z in [1, 2, 6]: s = 3
+			if z in [2, 6]: s = 3
 			elif z in [3, 4, 5, 7, 8]: s = 4
 			if Town.tile[i] == Town.T.DEEP: s = 4
 			need[i] = s
@@ -58,6 +58,41 @@ static func goal() -> String:
 		3: return "To open the whole town: land a fish at the golf course, the koi pond or Heron Lakes"
 	return ""
 
+const BAIT_WORDS := { "worms": "worms", "shrimp": "live shrimp", "lure": "a spinner lure", "hotdog": "hot dogs", "bread": "bread", "squid": "squid" }
+const TIME_WORDS := { "day": "by day", "low": "at dawn and dusk", "night": "at night" }
+
+## How Lou would tell you to catch a fish: where, on what, and when.
+static func how_to_catch(f: Dictionary, sid: int) -> String:
+	var where: String = "down a manhole (with a pry bar)" if sid == 8 else "in " + str(Game.spots[sid].name)
+	var out := "%s: %s" % [f.n, where]
+	var pref: Variant = Game.baitpref.get(f.n)
+	if pref != null: out += ", on " + " or ".join(pref.map(func(b): return BAIT_WORDS.get(b, b)))
+	if f.has("t"): out += ", " + " or ".join(f.t.map(func(b): return TIME_WORDS.get(b, b)))
+	return out + "."
+
+## Lou's pointers to the fish you haven't caught yet in the part of town that's open, easiest first.
+static func lou_tips(n := 4) -> Array:
+	var seen := {}
+	var lst := []
+	for sid in Game.spots:
+		if not spot_open(sid): continue
+		for f in Game.spots[sid].fish:
+			if f.get("junk", false) or f.get("legend", false) or Game.S.journal.has(f.n) or seen.has(f.n): continue
+			seen[f.n] = true
+			lst.append([float(f.r) * (0.5 if f.has("t") else 1.0), how_to_catch(f, sid)])
+	lst.sort_custom(func(a, b): return a[0] > b[0])
+	return lst.slice(0, n).map(func(x): return x[1])
+
+## Where and how to catch something that fills Lou's order, or "".
+static func order_tip(o: Dictionary) -> String:
+	var best := []
+	for sid in Game.spots:
+		if not spot_open(sid): continue
+		for f in Game.spots[sid].fish:
+			if f.get("legend", false) or f.get("junk", false) or f.get("release", false): continue
+			if Game.order_match(o, { "n": f.n, "junk": false, "w": float(f.w[1]) * 0.8, "spot": sid }) and (best.is_empty() or float(f.r) > best[0]): best = [float(f.r), how_to_catch(f, sid)]
+	return "" if best.is_empty() else best[1]
+
 ## Short form for the top-left chip.
 static func chip() -> String:
 	match step():
@@ -70,8 +105,9 @@ static func chip() -> String:
 	return ""
 
 ## Records a guarded catch; the step itself moves on in ready().
+## A golf course fish caught before step 3 doesn't count yet, so the koi pond and Heron Lakes get a turn.
 static func on_catch(c: Dictionary) -> void:
-	if int(c.spot) in GUARDED: Game.S.guarded_catch = true
+	if int(c.spot) in GUARDED and step() >= 3: Game.S.guarded_catch = true
 
 ## True when the player has earned the next step.
 static func ready() -> bool:
@@ -95,9 +131,9 @@ static func advance(close: Callable) -> Array:
 			["sub", "Open now: Back Canal, Low Street at king tide, the Downtown River, Bayfront Park, Mullet Bay, the pier and the marina. Take the $2 bus out front if it's too far to walk."],
 			["row", ok]]
 		3: return [["h3", "Map unlocked · Lou's Bait & Tackle"], ["h2", "\"Time you learned to sneak.\""],
-			["p", "\"Ten kinds of fish. Now the good water is behind a fence. Start with Pelican Point, the golf course. The groundskeeper's got a cone where he's looking. Stay out of it.\""],
-			["quote", "\"See the yellow cone in front of a guard? That's where he's looking. Walls, buildings and trees block it, and bushes hide you. A golf polo gets you past him by day, and he goes home at 7 PM.\""],
-			["sub", "Open now: Pelican Point Lake, the Sunrise koi pond and Heron Lakes. Get caught and you pay a fine that goes up every time."],
+			["p", "\"Ten kinds of fish. Now the good water is behind a fence. You've seen the golf course. The koi pond at Sunrise Executive Park and Heron Lakes are next. Every guard's got a cone where he's looking. Stay out of it.\""],
+			["quote", "\"See the yellow cone in front of a guard? That's where he's looking. Walls, buildings and trees block it, and bushes hide you. A disguise from Lou's gets you past most of them by day, and plenty of them go home at night.\""],
+			["sub", "Open now: the Sunrise koi pond and Heron Lakes. Land a fish at either one, or at the golf course, to open the rest of town. Get caught and you pay a fine that goes up every time."],
 			["row", ok]]
 		4: return [["h3", "Map unlocked · the whole town"], ["h2", "\"Nobody saw a thing.\""],
 			["p", "\"You fished a guarded pond and walked out with the fish,\" Lou says. \"Then you're ready for the rest of it.\""],

@@ -47,6 +47,12 @@ var blind := false
 var holding := false
 var pull := 0              # -1 / 0 / 1 from the arrow keys
 var turn := 0
+# manholes: every cover drawn in the street can be pried up and fished with Lou's pry bar
+var manholes: Array = []   # tile centres, worked out once from the street tiles
+var manhole := -1          # the manhole being fished, or -1
+var bite_at := 0.0
+var hold_t := 0.0
+const MANHOLE_TRIES := 3
 
 func _ready() -> void:
 	for y in Town.MH:
@@ -59,6 +65,50 @@ func _ready() -> void:
 			if Town.floodable[i]:
 				if not regtiles.has(7): regtiles[7] = []
 				regtiles[7].append(Vector2i(x, y))
+			if is_manhole_tile(x, y): manholes.append(Vector2(x + 0.5, y + 0.5))
+
+## The same test the street art uses to draw a manhole cover, so every cover you can see is one you can fish.
+static func is_manhole_tile(x: int, y: int) -> bool:
+	if Town.tile[Town.idx(x, y)] != Town.T.ROAD or Town.in_bridge(x, y): return false
+	var h := Town.hash2(x, y)
+	return h > 0.4 and h < 0.406
+
+## The manhole the player is standing at, or -1.
+func manhole_near() -> int:
+	if player.in_boat(): return -1
+	for i in manholes.size():
+		var m: Vector2 = manholes[i]
+		if m.distance_to(player.position) < 1.25 and Unlocks.open_p(m): return i
+	return -1
+
+func start_manhole(i: int) -> void:
+	if not Game.S.gear.has("prybar"): emit_signal("message", "The cover's too heavy to lift by hand. Lou sells a pry bar for $15."); return
+	if Game.S.cooler.size() >= Game.S.cooler_cap: emit_signal("message", "Cooler's full. Sell at Lou's first."); return
+	var mh: Dictionary = Game.S.get("mh", {})
+	var r: Dictionary = mh.get(str(i), {})
+	if not r.is_empty() and int(r.day) == int(Game.S.day) and int(r.n) >= MANHOLE_TRIES:
+		emit_signal("message", "Nothing else down this one today. Try another manhole."); return
+	player.path.clear()
+	manhole = i; bob = manholes[i]; spot = 8; state = "wait"; t = 0.0; wait_t = 0.0; quiet = true; target = null; blind = false; twitch = 0.0; hold_t = 0.0
+	bite_at = randf_range(2.5, 7.0); splash = 0.35; splash_big = false
+	player.face = (bob - player.position).angle()
+	Game.S.visited["8"] = 1
+	Sound.play("cast"); Sound.play_later("plop", 0.3, -4.0)
+	emit_signal("message", "You pry up the cover and drop a line into the dark.")
+
+func _manhole_wait(dt: float) -> void:
+	t += dt; twitch -= dt
+	if holding:
+		hold_t += dt
+		if hold_t > 0.5: state = "idle"; holding = false; emit_signal("message", "You pull your line back up."); return
+	else: hold_t = 0.0
+	if t >= bite_at - (1.5 if twitch > 0 else 0.0):
+		var f = pick_fish(8, func(_x): return true)
+		if f == null: return
+		fish = f; fw = fish_weight(f); blind = true; state = "nibble"; t = 0.0; nib = randf_range(0.3, 1.0); Sound.play("nibble")
+		if not Game.S.has("mh") or not (Game.S.mh is Dictionary): Game.S.mh = {}
+		var r: Dictionary = Game.S.mh.get(str(manhole), {})
+		Game.S.mh[str(manhole)] = { "day": Game.S.day, "n": (int(r.n) if not r.is_empty() and int(r.day) == int(Game.S.day) else 0) + 1 }
 
 func flooded_at(x: int, y: int) -> bool: return Town.inb(x, y) and Town.floodable[Town.idx(x, y)] and Game.flooded()
 func is_water(p: Vector2) -> bool:
@@ -235,13 +285,14 @@ func drop_target(wary: float) -> void:
 	target = null
 
 func cancel() -> void:
-	drop_target(0); state = "idle"; holding = false; fish = null
+	drop_target(0); state = "idle"; holding = false; fish = null; manhole = -1
 
 func action_down() -> void:
 	match state:
 		"power": release_cast()
 		"wait":
 			twitch = 1.4; holding = true
+			if manhole >= 0: splash = 0.25; splash_big = false; return
 			var a: float = (player.position - bob).angle()
 			var n: Vector2 = bob + Vector2.from_angle(a) * 0.3
 			if is_water(n): bob = n
@@ -257,6 +308,7 @@ func action_down() -> void:
 			shore = player.position + Vector2.from_angle(a) * 0.9
 			perp = Vector2(-sin(a), cos(a))
 			if perp.x < -0.2 or (absf(perp.x) <= 0.2 and perp.y < 0): perp = -perp
+			if manhole >= 0: shore = bob0; perp = Vector2.ZERO
 			if target != null: target.hooked = true
 		"reel": holding = true
 
@@ -280,6 +332,7 @@ func update(dt: float) -> void:
 			if tgt != null and (tgt.get("gone", false) or tgt.get("leaving", false) or tgt.get("hooked", false)): tgt = null
 			green = clampf((tgt.pos.distance_to(player.position) - MINR) / (MAXR - MINR), 0, 1) if tgt != null else 0.55
 			player.face = aim
+		"wait" when manhole >= 0: _manhole_wait(dt)
 		"wait":
 			t += dt; wait_t += dt; twitch -= dt
 			if holding:
@@ -342,7 +395,7 @@ func update(dt: float) -> void:
 			elif progress <= 0:
 				state = "idle"; holding = false; drop_target(20); emit_signal("message", "It got away."); Sound.play("splash")
 			elif progress >= 1: _land()
-	if state == "idle": bob = null
+	if state == "idle": bob = null; manhole = -1
 	queue_redraw()
 
 func _land() -> void:
@@ -360,6 +413,18 @@ func _land() -> void:
 		"mutant": f.get("mutant", false), "pull": f.pull })
 
 # ---------- drawing ----------
+## The manhole you're fishing: a black hole in the street with the cover slid off to one side.
+func _draw_open_manhole(ci: CanvasItem, m: Vector2) -> void:
+	ci.draw_circle(m + Vector2(0.03, 0.04), 0.33, Color(0, 0, 0, 0.3))
+	ci.draw_circle(m, 0.3, Color("#0b0c0d"))
+	ci.draw_arc(m, 0.3, 0, TAU, 24, Color("#3a3d41"), 0.05)
+	var c := m + Vector2(0.55, 0.32)
+	ci.draw_circle(c + Vector2(0.03, 0.04), 0.3, Color(0, 0, 0, 0.25))
+	ci.draw_circle(c, 0.3, Color("#5a5c5e"))
+	ci.draw_circle(c, 0.25, Color("#3e4042"))
+	for k in range(-2, 3): ci.draw_rect(Rect2(c.x - 0.2, c.y + k * 0.08 - 0.015, 0.4, 0.03), Color(0.55, 0.55, 0.56, 0.5))
+	ci.draw_arc(c, 0.3, PI * 1.1, PI * 1.6, 8, Color(1, 1, 1, 0.15), 0.03)
+
 func _draw() -> void:
 	var dk := Game.darkness()
 	var cam_rect := get_viewport().get_canvas_transform().affine_inverse() * get_viewport_rect()
@@ -398,6 +463,7 @@ func draw_line_layer(ci: CanvasItem) -> void:
 		ci.draw_circle(l, 0.07, Color("#8fd19e") if ok else Color.WHITE)
 		return
 	if state == "idle" or bob == null: return
+	if manhole >= 0: _draw_open_manhole(ci, manholes[manhole])
 	var b: Vector2 = bob
 	var dip := 0.0
 	if state == "wait": dip = sin(now * 3) * 0.04

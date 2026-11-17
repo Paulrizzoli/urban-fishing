@@ -4,6 +4,8 @@ extends RefCounted
 ## the Mullet Bay Slam tournament, and the Port Mullet Gazette. All state lives in Game.S.
 
 const DEBT := 5000
+## The day Chad Brickell turns up at Lou's with the note and the story starts.
+const NOTE_DAY := 7
 
 const SAGA := [
 	{},
@@ -92,7 +94,7 @@ static func goal_text() -> String:
 		return "Story: " + c.goal
 	var a := act2_cur()
 	if not a.is_empty(): return "Story: head back to Lou's" if Game.S.act2.done else "Act II: " + a.goal
-	if Game.S.started and int(S.ch) == 0 and int(Game.S.day) >= 3: return "Lou called. Stop by the shop"
+	if Game.S.started and int(S.ch) == 0 and int(Game.S.day) >= NOTE_DAY: return "Lou called. Stop by the shop"
 	if Game.S.saga.finished and int(Game.S.act2.ch) == 0 and int(Game.S.day) > int(Game.S.saga.fin_day): return "Lou wants you to see something on TV"
 	return ""
 
@@ -156,7 +158,7 @@ static func _saga_scene() -> Array:
 	var S: Dictionary = Game.S.saga
 	if not Game.S.started or S.finished: return []
 	if int(S.ch) == 0:
-		if int(Game.S.day) < 3: return []
+		if int(Game.S.day) < NOTE_DAY: return []
 		S.ch = 1; S.done = false; S.paid_ch = 0; Game.save_game()
 		return _saga_card(0, 1)
 	if not S.done or saga_cur().is_empty(): return []
@@ -241,7 +243,7 @@ static func note_parts(pay_cb: Callable) -> Array:
 		else: out.append(["sub", "Lou keeps glancing at the TV over the counter. Come back tomorrow."])
 		return out
 	if c.is_empty():
-		return [["sub", "Lou seems worried about something. Come back in a bit." if int(Game.S.day) >= 3 else "Lou's counting the till and humming. Business as usual."]]
+		return [["sub", "Lou seems worried about something. Come back in a bit." if int(Game.S.day) >= NOTE_DAY else "Lou's counting the till and humming. Business as usual."]]
 	var can := mini(int(Game.S.cash), int(S.left))
 	var out := [["goal", "Chapter %d: %s" % [int(S.ch), c.t], "Done!" if S.done else "In progress", float(paid) / DEBT, goal_text().trim_prefix("Story: ")],
 		["kv", [["Owed to Chad", Game.money(S.left)], ["Paid back", Game.money(paid)], ["Your cash", Game.money(Game.S.cash)]]]]

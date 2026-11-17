@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.8 | Nov 17, 2026 | A starter area you can actually get out of: manholes, the golf course, easier first orders, Lou's note on day 7 |
 | v0.9.7 | Nov 17, 2026 | A round, natural-looking Maple Park Pond |
 | v0.9.6 | Nov 17, 2026 | Make your own lures from parts you find around town |
 | v0.9.5 | Nov 17, 2026 | Driveways from every house to the street |
@@ -32,6 +33,18 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.8 · Getting out of the starter area
+
+_Nov 17, 2026 · Builds: `UrbanFishing-v0.9.8-windows.zip`, `UrbanFishing-v0.9.8-godot-project.zip`, screenshots in `screenshots/v0.9.8/`_
+
+- **Manholes work.** With Lou's pry bar, walk up to any manhole cover in the street and press F to drop a line into the sewer. You jig the line instead of casting, and each manhole gives up three things a day before you have to try another one. Down there: American eels, sewer rats at night, and junk Lou pays for (car keys, a gold tooth, a wedding ring, and the Key to the City if you're lucky). The pry bar was on sale before, but manhole fishing had never been built into this version, so it did nothing
+- Manholes are open from the start, and there are seven of them in the home streets
+- **The golf course is open from the start.** The old-timer by the pond tells you about the gap in the golf course fence on day one, and now it's there to walk through instead of behind a road-closed barricade. Pelican Point Lake has bass, bowfin, peacock bass and golf balls Lou buys. The groundskeeper still patrols it until 7 PM. A golf course catch counts toward opening the whole town once the koi pond and Heron Lakes are open
+- **Lou's first orders are ones you can fill.** Until the first part of town opens, Lou only asks for mullet, bluegill, largemouth bass, or (once you own the pry bar) eels and manhole finds, never a snook that needs live shrimp at dusk. A game saved with an order you can't fill yet gets a new one when you load it
+- **Lou tells you how to catch things.** While you're still in the home waters, the Sell tab lists the fish you haven't caught yet, where they are, what they bite on and when. The order tab says where to find what Lou wants
+- Largemouth bass show up more often in Maple Park Pond, and they bite on worms
+- **Lou's note comes up on day 7** instead of day 3, so you have a week to find your feet before Chad Brickell shows up
 
 ## v0.9.7 · A natural Maple Park Pond
 

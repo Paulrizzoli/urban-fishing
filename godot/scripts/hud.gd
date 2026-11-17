@@ -221,10 +221,11 @@ func refresh(near: String) -> void:
 	var col := SUN
 	match st:
 		"idle":
-			label = { "fish": "Cast", "shop": "Enter Lou's", "home": "Go inside", "marina": "Enter the marina", "oldtimer": "Talk to the old-timer", "rosa": "Talk to Rosa", "bus": "Ride the bus", "part": "Pick it up" }.get(near, "")
+			label = { "fish": "Cast", "shop": "Enter Lou's", "home": "Go inside", "marina": "Enter the marina", "oldtimer": "Talk to the old-timer", "rosa": "Talk to Rosa", "bus": "Ride the bus", "part": "Pick it up",
+				"manhole": "Fish the manhole" if S.gear.has("prybar") else "Lift the cover" }.get(near, "")
 			if near in ["oldtimer", "rosa", "marina", "bus", "part"]: col = TEAL
 		"power": label = "Release!"
-		"wait": label = "Retrieving…" if fishing.holding else "Twitch the lure"; col = PAPER
+		"wait": label = ("Pulling up…" if fishing.holding else "Jig the line") if fishing.manhole >= 0 else "Retrieving…" if fishing.holding else "Twitch the lure"; col = PAPER
 		"nibble": label = "Wait for it…"; col = PAPER
 		"bite": label = "HOOK IT!"; col = CORAL
 		"reel": label = "Reeling…" if fishing.holding else "Hold to reel"; col = CORAL if fishing.holding else SUN
@@ -240,9 +241,10 @@ func refresh(near: String) -> void:
 	else:
 		var m := ""
 		match st:
-			"idle": m = { "fish": "Cooler's full. Sell at Lou's." if S.cooler.size() >= S.cooler_cap else "Press F or Space to cast. B switches bait.", "shop": "Lou's Bait & Tackle. Press E or F to go in.", "home": "Home. Press E or F to go inside.", "marina": "Mullet Bay Marina. Press E to go in.", "oldtimer": "Press E to talk.", "rosa": "Press E to talk.", "bus": "Route 1 bus stop. Press E to ride. M for the map, J for the journal.", "part": "Something shiny on the ground. Press E to pick it up." }.get(near, "")
+			"idle": m = { "fish": "Cooler's full. Sell at Lou's." if S.cooler.size() >= S.cooler_cap else "Press F or Space to cast. B switches bait.", "shop": "Lou's Bait & Tackle. Press E or F to go in.", "home": "Home. Press E or F to go inside.", "marina": "Mullet Bay Marina. Press E to go in.", "oldtimer": "Press E to talk.", "rosa": "Press E to talk.", "bus": "Route 1 bus stop. Press E to ride. M for the map, J for the journal.", "part": "Something shiny on the ground. Press E to pick it up.",
+				"manhole": ("Cooler's full. Sell at Lou's." if S.cooler.size() >= S.cooler_cap else "A manhole. Press F to drop a line down it.") if S.gear.has("prybar") else "A manhole. The cover's too heavy. Lou sells a pry bar." }.get(near, "")
 			"power": m = "Release in the green to land right on the fish. ◀ ▶ or click the water to aim." if fishing.tgt != null else "No fish in line. ◀ ▶ to aim at a shadow, or click the water."
-			"wait": m = "Something's coming over…" if fishing.target != null else "Tap to twitch the lure. Hold to reel it back in."
+			"wait": m = "Tap to jig the line. Hold to pull it back up." if fishing.manhole >= 0 else "Something's coming over…" if fishing.target != null else "Tap to twitch the lure. Hold to reel it back in."
 			"nibble": m = "It's nibbling… wait for the big dip."
 			"bite": m = "NOW!"
 			"reel": m = "Hold to reel. Keep the needle in the green. Pull ◀ ▶ against the fish."
