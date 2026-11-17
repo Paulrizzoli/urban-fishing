@@ -59,7 +59,7 @@ func fresh() -> Dictionary:
 	return { "day": 1, "min": 6 * 60 + 30.0, "cash": 30, "rep": 0, "x": 48.5, "y": 33.2, "face": PI / 2, "gear": {}, "cooler_cap": 5,
 		"cooler": [], "journal": {}, "bait": "worms", "started": false, "news": [],
 		"boat": false, "boat_kind": "kayak", "parked": {}, "offenses": {}, "order": {}, "park_day": 0, "swept_day": 0, "story": {}, "story_day": 0, "story_told": false,
-		"tips_heard": 0, "rosa": 0, "visited": {}, "busts": 0, "unlock": 1, "parts": {}, "lures": {}, "picked": {}, "mh": {} }.merged(Story.fresh_state())
+		"tips_heard": 0, "rosa": 0, "visited": {}, "busts": 0, "unlock": 1, "parts": {}, "lures": {}, "picked": {}, "mh": {}, "homerod": {}, "use_home": false }.merged(Story.fresh_state())
 
 func save_path(n := slot) -> String: return SLOT_PATHS[clampi(n, 1, SLOTS) - 1]
 
@@ -232,7 +232,22 @@ func money(n: float) -> String:
 		s = s.substr(0, s.length() - 3)
 	return "$" + s + out
 
+## The rod in your hands: the home-built one if you're using it, otherwise the best one you bought.
+## { t, r, hook, name, lvl }
+func rod() -> Dictionary:
+	if using_home_rod():
+		var h: Dictionary = S.homerod
+		return { "t": float(h.t), "r": float(h.r), "hook": float(h.hook) + int(h.lvl) * 0.1, "name": h.name, "lvl": int(h.lvl), "home": true }
+	var lv := shop_rod_level()
+	var d: Dictionary = rods[lv]
+	return { "t": float(d.t), "r": float(d.r), "hook": lv * 0.1, "name": d.name, "lvl": lv, "home": false }
+
+func using_home_rod() -> bool: return S.get("use_home", false) and not S.get("homerod", {}).is_empty()
+
 func rod_level() -> int:
+	return int(S.homerod.lvl) if using_home_rod() else shop_rod_level()
+
+func shop_rod_level() -> int:
 	for i in [4, 3, 2, 1]:
 		if S.gear.has("rod%d" % i): return i
 	return 0

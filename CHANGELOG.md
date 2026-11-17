@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.9 | Nov 17, 2026 | Build your own rod from a blank, a reel and a grip you find around town |
 | v0.9.8 | Nov 17, 2026 | A starter area you can actually get out of: manholes, the golf course, easier first orders, Lou's note on day 7 |
 | v0.9.7 | Nov 17, 2026 | A round, natural-looking Maple Park Pond |
 | v0.9.6 | Nov 17, 2026 | Make your own lures from parts you find around town |
@@ -33,6 +34,28 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.9 · Build your own rod
+
+_Nov 17, 2026 · Builds: `UrbanFishing-v0.9.9-windows.zip`, `UrbanFishing-v0.9.9-godot-project.zip`, screenshots in `screenshots/v0.9.9/`_
+
+- Six new parts glint around town, two places each, and come back two days after you take them:
+  - fiberglass blanks (Mullet Canal, Back Canal)
+  - graphite shafts (the golf course lake, the downtown river)
+  - rusty spinning reels (Mullet Bay, the airport canal)
+  - old baitcaster reels (Marlowe Tower's pool, the power station outflow)
+  - wine corks (Bayfront Park, the downtown river)
+  - pool noodles (Sunsplash, Heron Lakes)
+- Junk gives rod parts too: a lost kayak paddle strips down to a fiberglass blank, and a message in a bottle gives a cork
+- The workbench at home has three tabs now: Rest, Make lures and Build a rod
+- Build a rod by picking a blank, a reel and a grip, then pressing Build it:
+  - **Blank:** fiberglass (tension builds 18% slower) or graphite (32% slower)
+  - **Reel:** spinning (reels 22% faster) or baitcaster (42% faster, and you get longer to set the hook)
+  - **Grip:** duct tape (free), cork (three corks, reels a little faster) or foam (from a pool noodle, a little less tension)
+- Before you build, the card shows what the rod will do and a picture of it. The best home-built rod (graphite, baitcaster, cork or foam) fishes about as well as Lou's Surf rod of legend
+- A home-built rod goes straight into your hands. Switch between it and your best shop rod at the workbench. Building a new one replaces the old one
+- A home-built rod is never the garage-sale rod, so legends bite on it as well as on a bought rod
+- The rod in "Your kit" at Lou's and the marina shows whichever rod you're using. A home-built rod has its own picture, with the blank, reel and grip you picked and coral thread wraps
 
 ## v0.9.8 · Getting out of the starter area
 

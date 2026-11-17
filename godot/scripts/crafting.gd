@@ -7,7 +7,25 @@ extends RefCounted
 
 const PARTS := {
 	"p_spoon": "Bent spoon", "p_caps": "Bottle caps", "p_beads": "Beads", "p_feather": "Gull feather",
-	"p_wire": "Copper wire", "p_glow": "Glow stick" }
+	"p_wire": "Copper wire", "p_glow": "Glow stick",
+	"p_glass": "Fiberglass blank", "p_graphite": "Graphite shaft", "p_reel": "Rusty spinning reel", "p_bigreel": "Old baitcaster reel",
+	"p_cork": "Wine corks", "p_foam": "Pool noodle" }
+
+## A home-built rod is one blank, one reel and one grip. t: how fast tension builds (lower is
+## better), r: how fast you reel, hook: extra time to set the hook, lvl: which shop rod it counts as
+## (a home rod is never the garage-sale rod, so legends bite as well as on a bought one).
+const ROD_SLOTS := [
+	["blank", "Blank", [
+		{ "id": "p_glass", "n": "Fiberglass", "t": 0.82, "lvl": 1, "ds": "Bendy and forgiving." },
+		{ "id": "p_graphite", "n": "Graphite", "t": 0.68, "lvl": 2, "ds": "Light and stiff. Tension builds much slower." }]],
+	["reel", "Reel", [
+		{ "id": "p_reel", "n": "Spinning reel", "r": 1.22, "hook": 0.1, "ds": "Cleaned up, it spins fine." },
+		{ "id": "p_bigreel", "n": "Baitcaster", "r": 1.42, "hook": 0.25, "ds": "Winds in fast, and you get longer to set the hook." }]],
+	["grip", "Grip", [
+		{ "id": "", "n": "Duct tape", "ds": "Free. It's a grip." },
+		{ "id": "p_cork", "n": "Cork", "r": 0.06, "needs": 3, "ds": "Three wine corks. A little faster reeling." },
+		{ "id": "p_foam", "n": "Foam", "t": -0.04, "ds": "Cut from a pool noodle. A little less tension." }]],
+]
 
 const LURES := [
 	{ "id": "spoon", "n": "Spoon lure", "needs": { "p_spoon": 1, "p_wire": 1 }, "uses": 6,
@@ -26,7 +44,10 @@ const LURES := [
 
 ## Where parts turn up: [fishing spot (region) whose bank it's on, part]. Lou's is a fixed spot.
 const SPOTS := [[1, "p_caps"], [2, "p_wire"], [9, "p_spoon"], [13, "p_spoon"], [17, "p_beads"],
-	[14, "p_feather"], [3, "p_feather"], [10, "p_beads"], [6, "p_glow"], [12, "p_wire"], [11, "p_beads"], [16, "p_spoon"]]
+	[14, "p_feather"], [3, "p_feather"], [10, "p_beads"], [6, "p_glow"], [12, "p_wire"], [11, "p_beads"], [16, "p_spoon"],
+	# rod parts (v0.9.9)
+	[2, "p_glass"], [9, "p_glass"], [3, "p_graphite"], [13, "p_graphite"], [14, "p_reel"], [12, "p_reel"],
+	[16, "p_bigreel"], [6, "p_bigreel"], [17, "p_cork"], [13, "p_cork"], [10, "p_foam"], [11, "p_foam"]]
 const LOU_SPOT := Vector2(52.4, 33.4)
 const RESPAWN_DAYS := 2
 
@@ -85,8 +106,10 @@ static func build_spots() -> void:
 			if r > 0 and Town.is_water_t(Town.tile[Town.idx(x, y)]):
 				if not cands.has(r): cands[r] = []
 				cands[r].append(Vector2i(x, y))
+	var seen := {}
 	for s in SPOTS:
 		var r: int = s[0]
+		var k: int = seen.get(r, 0); seen[r] = k + 1   # a second spot on the same water goes elsewhere on the bank
 		if not cands.has(r): continue
 		var c := Vector2.ZERO
 		for t in cands[r]: c += Vector2(t)
@@ -97,7 +120,8 @@ static func build_spots() -> void:
 			for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
 				var q: Vector2i = t + d
 				if not Town.inb(q.x, q.y) or _solid(q.x, q.y): continue
-				var dd := Vector2(q).distance_to(c) + Town.hash2(q.x * 7, q.y * 13) * 3.0
+				if k > 0 and spots.any(func(sp): return Vector2(q).distance_to(sp[0]) < 3.0): continue
+				var dd := Vector2(q).distance_to(c) + Town.hash2(q.x * 7 + k * 31, q.y * 13 + k * 17) * (3.0 + k * 40.0)
 				if dd < bd: bd = dd; best = Vector2(q) + Vector2(0.5, 0.5)
 		if best.x >= 0: spots.append([best, s[1]])
 	spots.append([LOU_SPOT, "p_caps"])
@@ -123,13 +147,13 @@ static func pick(i: int) -> String:
 	if not Game.S.has("picked"): Game.S.picked = {}
 	if not Game.S.has("parts"): Game.S.parts = {}
 	Game.S.picked[str(i)] = int(Game.S.day)
-	var n := 2 if p == "p_caps" else 1
+	var n := 2 if p in ["p_caps", "p_cork"] else 1
 	Game.S.parts[p] = count(p) + n
 	var first: bool = not Game.S.get("found_part", false)
 	Game.S.found_part = true
 	Game.save_game()
 	return "You found %s%s. (%s: %d)%s" % ["two " if n == 2 else "", PARTS[p].to_lower() if n == 2 else _a(PARTS[p]), PARTS[p], count(p),
-		" Make lures from parts at the workbench at home." if first else ""]
+		" Make lures and rods from parts at the workbench at home." if first else ""]
 
 static func _a(s: String) -> String:
 	return ("an " if s[0].to_lower() in "aeiou" else "a ") + s.to_lower()
@@ -154,7 +178,8 @@ static func draw_spots(ci: CanvasItem) -> void:
 
 const SALVAGE := [[["Bicycle", "Shopping Cart", "Scooter", "Deck Chair", "Animatronic", "Car Keys", "Retainer", "Selfie Stick", "Luggage Tag"], "p_wire"],
 	[["Golf Balls", "Sunglasses", "Coins", "Penny", "Doubloon", "Gold Tooth", "Ring", "Rolex", "Peanuts"], "p_beads"],
-	[["Phone", "Hard Hat", "VHS", "Weather Balloon", "Message in a Bottle"], "p_glow"],
+	[["Phone", "Hard Hat", "VHS", "Weather Balloon"], "p_glow"],
+	[["Message in a Bottle"], "p_cork"], [["Paddle"], "p_glass"],
 	[["Paddle", "Valet Ticket", "Stock Certificate", "Violation Notice"], "p_spoon"]]
 
 static func salvage_part(junk_name: String) -> String:
@@ -170,3 +195,42 @@ static func salvage(c: Dictionary) -> String:
 	Game.S.cooler.erase(c)
 	Game.save_game()
 	return "You strip the %s and keep %s." % [str(c.n).to_lower(), _a(PARTS[p])]
+
+# ---------- home-built rods ----------
+
+static func slot_opt(slot: int, id: String) -> Dictionary:
+	for o in ROD_SLOTS[slot][2]:
+		if o.id == id: return o
+	return {}
+
+static func opt_need(o: Dictionary) -> int: return 0 if o.id == "" else int(o.get("needs", 1))
+static func has_opt(o: Dictionary) -> bool: return count(o.id) >= opt_need(o) if o.id != "" else true
+
+## The rod a pick of [blank id, reel id, grip id] makes.
+static func rod_stats(pick: Array) -> Dictionary:
+	var b := slot_opt(0, pick[0]); var rl := slot_opt(1, pick[1]); var g := slot_opt(2, pick[2])
+	return { "t": float(b.get("t", 1.0)) + float(g.get("t", 0.0)), "r": float(rl.get("r", 1.0)) + float(g.get("r", 0.0)),
+		"hook": float(rl.get("hook", 0.0)), "lvl": int(b.get("lvl", 1)),
+		"blank": pick[0], "reel": pick[1], "grip": pick[2],
+		"name": "Home-built %s rod" % str(b.get("n", "")).to_lower() }
+
+static func can_build(pick: Array) -> bool:
+	for i in 3:
+		var o := slot_opt(i, pick[i])
+		if o.is_empty() or not has_opt(o): return false
+	return true
+
+static func build_rod(pick: Array) -> void:
+	if not can_build(pick): return
+	for i in 3:
+		var o := slot_opt(i, pick[i])
+		if o.id != "": Game.S.parts[o.id] = count(o.id) - opt_need(o)
+	Game.S.homerod = rod_stats(pick)
+	Game.S.use_home = true
+	Game.save_game()
+
+## "Tension builds 32% slower · reels 42% faster", compared with the garage-sale rod.
+static func stat_text(st: Dictionary) -> String:
+	var out := ["Tension builds %d%% slower" % roundi((1.0 - float(st.t)) * 100), "reels %d%% faster" % roundi((float(st.r) - 1.0) * 100)]
+	if float(st.get("hook", 0)) >= 0.2: out.append("more time to hook")
+	return " · ".join(out)
