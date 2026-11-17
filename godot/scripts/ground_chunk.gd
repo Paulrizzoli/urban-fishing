@@ -180,7 +180,7 @@ func _run(x: int, y: int, dx: int, dy: int, lim: int) -> int:
 
 ## Darker, smoother tracks where tires wear the asphalt, two per lane, on straight stretches of road.
 func _wheel_wear(x: int, y: int) -> void:
-	var col := Color(0.02, 0.02, 0.03, 0.12)
+	var col := Color(0.02, 0.02, 0.03, 0.075)
 	var up := _run(x, y, 0, -1, 5)
 	var dn := _run(x, y, 0, 1, 5)
 	var lf := _run(x, y, -1, 0, 5)

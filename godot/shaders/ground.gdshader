@@ -79,7 +79,7 @@ void fragment() {
 		vec3 n = normalize(vec3((h - hx) * 2.2, (h - hy) * 2.2, 1.0));
 		vec3 L = normalize(vec3(-0.45, -0.65, 0.62));
 		float diff = dot(n, L) - L.z;
-		c.rgb *= 1.0 + diff * 0.35;
+		c.rgb *= 1.04 + diff * 0.35;
 		// caustics: a net of light on the bottom of the shallows, bent by the surface
 		vec2 q = p * 1.25 + n.xy * 1.4;
 		float c1 = 1.0 - smoothstep(0.0, 0.16, cell_edge(q, t * 0.8));
