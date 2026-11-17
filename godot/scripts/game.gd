@@ -59,7 +59,7 @@ func fresh() -> Dictionary:
 	return { "day": 1, "min": 6 * 60 + 30.0, "cash": 30, "rep": 0, "x": 48.5, "y": 33.2, "face": PI / 2, "gear": {}, "cooler_cap": 5,
 		"cooler": [], "journal": {}, "bait": "worms", "started": false, "news": [],
 		"boat": false, "boat_kind": "kayak", "parked": {}, "offenses": {}, "order": {}, "park_day": 0, "swept_day": 0, "story": {}, "story_day": 0, "story_told": false,
-		"tips_heard": 0, "rosa": 0, "visited": {}, "busts": 0, "unlock": 1 }.merged(Story.fresh_state())
+		"tips_heard": 0, "rosa": 0, "visited": {}, "busts": 0, "unlock": 1, "parts": {}, "lures": {}, "picked": {} }.merged(Story.fresh_state())
 
 func save_path(n := slot) -> String: return SLOT_PATHS[clampi(n, 1, SLOTS) - 1]
 
@@ -230,14 +230,15 @@ func rep_title() -> String:
 
 func bait_name() -> String:
 	for b in baits:
-		if b.id == S.bait: return b.n
+		if b.id == S.bait: return b.n + (" (%d)" % Crafting.left(b.id) if b.get("craft", false) else "")
 	return "Worms"
 
 func owned_baits() -> Array:
-	return baits.filter(func(b): return not b.has("gear") or S.gear.has(b.gear))
+	return baits.filter(func(b): return Crafting.left(b.id) > 0 if b.get("craft", false) else not b.has("gear") or S.gear.has(b.gear))
 
 func bait_mul(f: Dictionary) -> float:
 	if f.get("junk", false): return 1.0
+	if Crafting.is_lure(S.bait): return Crafting.mul(f)
 	var l: Variant = baitpref.get(f.n)
 	if l == null: return 1.0
 	return 2.3 if S.bait in l else 0.55

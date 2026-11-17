@@ -32,6 +32,7 @@ var prev_pos := Vector2.ZERO
 var last_sale := 0
 var pending_catch = null
 var shop_tab := "sell"
+var home_tab := "rest"
 var marina_tab := "boats"
 var journal_tab := "spots"
 var weather: Weather
@@ -62,6 +63,18 @@ func _ready() -> void:
 		if a.begins_with("--boat="): Game.S.boat = true; Game.S.boat_kind = a.substr(7); Game.S.gear.kayak = 1; Game.S.gear.skiff = 1
 		if a.begins_with("--day="): Game.S.day = int(a.substr(6)); Game.S.min += (Game.S.day - 1) * 1440.0
 		if a.begins_with("--story="): Game.S.saga.ch = int(a.substr(8)) - 1; Game.S.saga.done = int(a.substr(8)) > 1; Game.S.day = maxi(int(Game.S.day), 3)
+		if a == "--gear=all":
+			for g in Game.gear: Game.S.gear[g.id] = 1
+			Game.S.cooler_cap = 30; Game.S.cash = 2000
+		if a.begins_with("--gear=") and a != "--gear=all":
+			for gid in a.substr(7).split("+"): Game.S.gear[gid] = 1
+		if a == "--parts=all":
+			for p in Crafting.PARTS: Game.S.parts[p] = 3
+		if a.begins_with("--lure="): Game.S.lures[a.substr(7)] = 3; Game.S.bait = a.substr(7)
+		if a == "--cooler=sample":
+			for f in [[1, 2], [1, 4], [1, 5], [4, 1], [14, 4], [15, 0], [2, 7], [16, 7]]:
+				var fd: Dictionary = Game.spots[f[0]].fish[f[1]]
+				Game.S.cooler.append({ "n": fd.n, "w": fd.w[0], "value": 20 + f[1] * 7, "spot": f[0], "legend": fd.get("legend", false), "junk": fd.get("junk", false), "day": 1, "tm": 0 })
 		if a.begins_with("--unlock="): Game.S.unlock = int(a.substr(9)); Game.S.started = true
 		if a.begins_with("--act2="): Game.S.saga.finished = true; Game.S.saga.ch = 7; Game.S.act2.ch = int(a.substr(7)) - 1; Game.S.act2.done = int(a.substr(7)) > 1; Game.S.day = maxi(int(Game.S.day), 9)
 	Game.wx = Weather.compute(int(Game.S.day), Game.hour())
@@ -95,6 +108,9 @@ func _ready() -> void:
 	var statics := Drawer.make(_draw_statics)
 	statics.z_index = -8
 	world.add_child(statics)
+	var part_glints := Drawer.make(func(ci): Crafting.draw_spots(ci), 0.0, true)
+	part_glints.z_index = -6
+	world.add_child(part_glints)
 	fishing = Fishing.new()
 	fishing.z_index = -5
 	world.add_child(fishing)
@@ -280,6 +296,7 @@ func _ready() -> void:
 		if a == "--open=gear": shop_tab = "gear"; open_shop()
 		if a == "--open=order": shop_tab = "order"; open_shop()
 		if a == "--open=marina": open_marina()
+		if a == "--open=bench": home_tab = "bench"; open_home()
 		if a == "--busted": _busted(guards.watchers[0])
 		if a == "--rosa": talk_rosa()
 		if a == "--open=marina-slam": marina_tab = "slam"; open_marina()
@@ -289,6 +306,16 @@ func _ready() -> void:
 		if a == "--open=news": journal_tab = "news"; open_journal()
 		if a == "--beach": _toggle_boat()
 		if a == "--open=map": open_map()
+		if a == "--open=icons": # every item picture, big, for checking the art
+			var ids := ["p_spoon", "p_caps", "p_beads", "p_feather", "p_wire", "p_glow", "spoon", "popper", "jig", "glowlure", "rod0", "rod1", "rod2", "rod3", "rod4", "worms", "bait", "lure", "hotdog", "bread", "squid", "cooler", "mcooler", "camera", "polo", "lanyard", "flashlight", "waders", "geiger", "prybar", "kayak", "bigtank", "suit", "skiff", "shades", "junk"]
+			var sheet := Control.new(); sheet.custom_minimum_size = Vector2(1180, 600)
+			sheet.draw.connect(func():
+				for i in ids.size():
+					var r := Rect2(Vector2((i % 12) * 98 + 4, (i / 12) * 104 + 4), Vector2(88, 88))
+					sheet.draw_rect(r, Color("#fff8ea"))
+					ItemIcons.draw(sheet, ids[i], r.grow(-8))
+					sheet.draw_string(Game.font_bold, r.position + Vector2(2, 100), ids[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("#22313a")))
+			hud.open([["node", sheet]], true)
 		if a == "--open=bus": open_bus(0)
 		if a == "--weigh":
 			Story.sign_up()
@@ -352,6 +379,7 @@ func _process(dt: float) -> void:
 		elif player.position.distance_to(MARINA_DOOR) < 1.3: near = "marina"
 		elif player.position.distance_to(OLDTIMER) < 1.8: near = "oldtimer"
 		elif player.position.distance_to(ROSA) < 1.6: near = "rosa"
+		elif Crafting.near(player.position) >= 0: near = "part"
 		elif Story.bus_near(player.position) >= 0: near = "bus"
 		elif fishing.near_water(): near = "fish"
 	hud.boat_text = ""
@@ -579,6 +607,9 @@ func _action_down() -> void:
 		elif near == "marina": Sound.play("door"); open_marina()
 		elif near == "oldtimer": talk_oldtimer()
 		elif near == "rosa": talk_rosa()
+		elif near == "part":
+			var pi := Crafting.near(player.position)
+			if pi >= 0: Sound.play("ui_click"); hud.flash(Crafting.pick(pi))
 		elif near == "bus": open_bus(Story.bus_near(player.position))
 		elif near == "fish": fishing.start_cast()
 		return
@@ -619,6 +650,7 @@ func _on_landed(c: Dictionary) -> void:
 	pending_catch = c
 	Story.on_catch(c)
 	Unlocks.on_catch(c)
+	var worn := Crafting.wear(c)
 	if int(c.spot) == 15 and Game.rod_level() < 4 and c.pull > 0.75 and not Game.S.get("big_rod_hint", false):
 		Game.S.big_rod_hint = true; Game.hint.emit("That nearly pulled your arms off. The marina sells a big-game rod.")
 	var spot_name: String = Game.spots[c.spot].name
@@ -626,6 +658,7 @@ func _on_landed(c: Dictionary) -> void:
 	var parts := [["h3", spot_name], ["h2", c.n + ("  ★ LEGEND" if c.legend else "") + ("  · new record" if c.record and not c.junk else "")],
 		["kv", [["Weight", "%s lb" % str(c.w)], ["Value" if c.release else "Lou pays", "Priceless" if c.release else Game.money(c.value)], ["Your best", "%s lb" % str(Game.S.journal[c.n].w)]]]]
 	if c.note != "": parts.append(["sub", c.note])
+	if worn != "": parts.append(["sub", worn])
 	if c.release:
 		parts.append(["p", "You can't sell this. Let it go and the story is worth +%d rep." % c.rep])
 		parts.append(["row", [["Let it go", _release, true, "hot"]]])
@@ -674,7 +707,13 @@ func open_shop() -> void:
 				var total := 0
 				for c in S.cooler:
 					total += int(c.value)
-					parts.append(["item", c.n + (" ★" if c.legend else ""), "%s lb · %s" % [str(c.w), Game.spots[int(c.spot)].name], Game.money(c.value), func(): pass, false])
+					var cc: Dictionary = c
+					if c.junk:
+						parts.append(["item", c.n, "%s lb · %s · Lou pays %s, or strip it for %s" % [str(c.w), Game.spots[int(c.spot)].name, Game.money(c.value), Crafting.PARTS[Crafting.salvage_part(c.n)].to_lower()],
+							"Strip for parts", func(): hud.flash(Crafting.salvage(cc)); open_shop(), true, func(ci, r): ItemIcons.draw_catch(ci, cc, r)])
+					else:
+						parts.append(["item", c.n + (" ★" if c.legend else ""), "%s lb · %s" % [str(c.w), Game.spots[int(c.spot)].name], Game.money(c.value), func(): pass, false,
+							func(ci, r): ItemIcons.draw_catch(ci, cc, r)])
 				parts.append(["row", [["Sell everything for " + Game.money(total), _sell_all, true, "go"]]])
 			last_sale = 0
 		"order":
@@ -687,6 +726,7 @@ func open_shop() -> void:
 				parts.append(["p", "Pays %s and +3 rep, today only. You have %d of %d in your cooler." % [Game.money(o.pay), mini(have, int(o.count)), int(o.count)]])
 				parts.append(["row", [["Hand it over" if have >= o.count else "Not enough yet", _fill_order, have >= o.count, "go"]]])
 		"gear":
+			parts.append(_kit_part())
 			_gear_list(parts, Game.gear.filter(func(g): return not g.has("where")))
 			parts.append(["sub", "Your rod: %s." % Game.rods[Game.rod_level()].name + (" Boats, squid and big-game tackle are at the marina downtown." if S.visited.has("dt") else "")])
 		"note":
@@ -715,7 +755,24 @@ func _gear_list(parts: Array, list: Array) -> void:
 		var locked: bool = g.get("req") != null and not S.gear.has(g.get("req"))
 		var price: int = g.price
 		var btn := "Owned" if owned else "Needs a better rod" if locked else Game.money(price)
-		parts.append(["item", g.n + (" (%d now)" % S.cooler_cap if gid == "cooler" else ""), g.ds, btn, func(): _buy(gid, price, g.has("where")), not owned and not locked and S.cash >= price])
+		parts.append(["item", g.n + (" (%d now)" % S.cooler_cap if gid == "cooler" else ""), g.ds, btn, func(): _buy(gid, price, g.has("where")), not owned and not locked and S.cash >= price,
+			func(ci, r): ItemIcons.draw(ci, gid, r), locked])
+
+## The strip of pictures at the top of the gear lists: your rod, your bait and everything you own.
+func _kit_part() -> Array:
+	var S := Game.S
+	var rl := Game.rod_level()
+	var kit := [[func(ci, r): ItemIcons.draw(ci, "rod%d" % rl, r, Time.get_ticks_msec() / 1000.0), Game.rods[rl].name]]
+	for b in Game.owned_baits():
+		var bid: String = b.id
+		kit.append([func(ci, r): ItemIcons.draw(ci, bid, r), b.n])
+	for g in Game.gear:
+		var gid: String = g.id
+		if gid.begins_with("rod") or Game.baits.any(func(b): return b.get("gear", "") == gid): continue
+		if gid == "cooler" or not S.gear.has(gid): continue
+		kit.append([func(ci, r): ItemIcons.draw(ci, gid, r), g.n])
+	if S.cooler_cap > 5 and not S.gear.has("mcooler"): kit.append([func(ci, r): ItemIcons.draw(ci, "cooler", r), "Cooler (%d)" % S.cooler_cap])
+	return ["kit", "Your kit", kit]
 
 func _sell_all() -> void:
 	var total := 0
@@ -785,6 +842,7 @@ func open_marina() -> void:
 		tabs.append([td[1], func(): marina_tab = key; open_marina(), marina_tab == key])
 	parts.append(["tabs", tabs])
 	if marina_tab == "boats":
+		parts.append(_kit_part())
 		_gear_list(parts, Game.gear.filter(func(g): return g.get("where", "") == "marina"))
 		parts.append(["sub", "The COFFEE CAN is tied up at the docks. Launch it from the bay or the river with K." if S.gear.has("skiff") else "Lou still buys the fish. We just sell the stuff to catch them."])
 	else:
@@ -887,13 +945,35 @@ func open_home() -> void:
 	var rest := func(h: float):
 		hud.close()
 		menu.fade(func(): Game.skip_to(h); hud.flash("You rest until %s." % Game.clock_text()); Game.save_game(), 0.4, 0.7)
-	hud.open([["h3", "Home sweet home"], ["h2", ["The AC is on.", "Somebody left the TV on.", "It smells like bait in here.", "Home. Feet up."].pick_random()],
-		["p", "Kick back until…"],
-		["item", "Dawn", "The Lunker of the 7th bites at dawn.", "Rest until 6:00 AM", func(): rest.call(6.0), true],
-		["item", "Noon", "Business hours. Lanyard time at the koi pond.", "Rest until 12:00 PM", func(): rest.call(12.0), true],
-		["item", "Dusk", "The golf groundskeeper knocks off at 7.", "Rest until 5:30 PM", func(): rest.call(17.5), true],
-		["item", "Night", "Old Whiskers and the Bridge Troll come out.", "Rest until 9:00 PM", func(): rest.call(21.0), true],
-		["row", [["Back outside", func(): hud.close(), true, "hot"]]]])
+	var tabs := []
+	for td in [["rest", "Rest"], ["bench", "Workbench"]]:
+		var key: String = td[0]
+		tabs.append([td[1], func(): home_tab = key; open_home(), home_tab == key])
+	var parts := [["h3", "Home sweet home"], ["h2", ["The AC is on.", "Somebody left the TV on.", "It smells like bait in here.", "Home. Feet up."].pick_random() if home_tab == "rest" else "The workbench."], ["tabs", tabs]]
+	if home_tab == "rest":
+		parts += [["p", "Kick back until…"],
+			["item", "Dawn", "The Lunker of the 7th bites at dawn.", "Rest until 6:00 AM", func(): rest.call(6.0), true],
+			["item", "Noon", "Business hours. Lanyard time at the koi pond.", "Rest until 12:00 PM", func(): rest.call(12.0), true],
+			["item", "Dusk", "The golf groundskeeper knocks off at 7.", "Rest until 5:30 PM", func(): rest.call(17.5), true],
+			["item", "Night", "Old Whiskers and the Bridge Troll come out.", "Rest until 9:00 PM", func(): rest.call(21.0), true]]
+	else:
+		var have := []
+		for p in Crafting.PARTS:
+			var pid: String = p
+			if Crafting.count(pid) > 0: have.append([func(ci, r): ItemIcons.draw(ci, pid, r), Crafting.PARTS[pid], str(Crafting.count(pid))])
+		if have.is_empty(): parts.append(["sub", "No parts yet. Look for something shiny on the ground by the water around town, or strip the junk you catch at Lou's."])
+		else: parts.append(["kit", "Your parts", have])
+		for l in Crafting.LURES:
+			var lid: String = l.id
+			var need := []
+			for p in l.needs: need.append("%s %d/%d" % [Crafting.PARTS[p].to_lower(), mini(Crafting.count(p), int(l.needs[p])), int(l.needs[p])])
+			var lft := Crafting.left(lid)
+			var ln: String = l.n
+			parts.append(["item", l.n + (" · %d catches left" % lft if lft > 0 else ""), l.ds + " Lasts %d catches. Needs %s." % [int(l.uses), ", ".join(need)], "Make it",
+				func(): Crafting.make(lid); Sound.play("ui_click"); hud.flash("You made a %s. It's on your line now." % ln.to_lower()); open_home(),
+				Crafting.can_make(l), func(ci, r): ItemIcons.draw(ci, lid, r), not Crafting.can_make(l)])
+	parts.append(["row", [["Back outside", func(): hud.close(), true, "hot"]]])
+	hud.open(parts)
 
 # ---------- static drawings ----------
 func _draw_statics(ci: CanvasItem) -> void:
@@ -914,6 +994,40 @@ func _draw_statics(ci: CanvasItem) -> void:
 		ci.draw_rect(Rect2(b.x0, b.y0, 1, hh), Color("#d8d2c4")); ci.draw_rect(Rect2(b.x1, b.y0, 1, hh), Color("#d8d2c4"))
 		ci.draw_rect(Rect2(b.x0, b.y0, 0.14, hh), Color("#8b8f96")); ci.draw_rect(Rect2(b.x1 + 0.86, b.y0, 0.14, hh), Color("#8b8f96"))
 		ci.draw_rect(Rect2(b.x1 + 1, b.y0, 0.35, hh), Color(0, 0, 0, 0.25))
+	# driveways from the houses to the street, some with a car in them
+	for dw in Town.driveways:
+		var r: Rect2 = dw.r
+		var d: Vector2i = dw.d
+		var vert := d.y != 0
+		# a flared apron where it meets the street
+		var ap := Rect2(r.position.x - 0.25, r.end.y - 0.6, r.size.x + 0.5, 0.6) if d.y == 1 else \
+			Rect2(r.position.x - 0.25, r.position.y, r.size.x + 0.5, 0.6) if d.y == -1 else \
+			Rect2(r.position.x, r.position.y - 0.25, 0.6, r.size.y + 0.5) if d.x == -1 else Rect2(r.end.x - 0.6, r.position.y - 0.25, 0.6, r.size.y + 0.5)
+		ci.draw_rect(r.grow(0.05), Color(0.2, 0.25, 0.15, 0.25))
+		ci.draw_rect(ap, Color("#c9c3b5"))
+		ci.draw_rect(r, Color("#d3cdbf"))
+		# expansion joints, a darker middle where the tires go, and an oil spot
+		var L := r.size.y if vert else r.size.x
+		var k := 1.0
+		while k < L:
+			if vert: ci.draw_line(Vector2(r.position.x, r.position.y + k), Vector2(r.end.x, r.position.y + k), Color(0, 0, 0, 0.12), 0.03)
+			else: ci.draw_line(Vector2(r.position.x + k, r.position.y), Vector2(r.position.x + k, r.end.y), Color(0, 0, 0, 0.12), 0.03)
+			k += 1.0
+		for o in [0.28, 0.72]:
+			if vert: ci.draw_rect(Rect2(r.position.x + r.size.x * o - 0.09, r.position.y, 0.18, r.size.y), Color(0, 0, 0, 0.05))
+			else: ci.draw_rect(Rect2(r.position.x, r.position.y + r.size.y * o - 0.09, r.size.x, 0.18), Color(0, 0, 0, 0.05))
+		var oc := r.get_center() + Vector2(0.1, 0.15)
+		Art.ellipse(ci, oc, 0.22, 0.14, Color(0.1, 0.1, 0.12, 0.14))
+		if vert:
+			ci.draw_line(r.position, Vector2(r.position.x, r.end.y), Color(1, 1, 1, 0.25), 0.04)
+			ci.draw_line(Vector2(r.end.x, r.position.y), r.end, Color(0, 0, 0, 0.12), 0.04)
+		else:
+			ci.draw_line(r.position, Vector2(r.end.x, r.position.y), Color(1, 1, 1, 0.25), 0.04)
+			ci.draw_line(Vector2(r.position.x, r.end.y), r.end, Color(0, 0, 0, 0.12), 0.04)
+		if dw.car:
+			var col := Color(Art.CAR_COLORS[int(Town.hash2(int(r.position.x), int(r.position.y) * 3) * Art.CAR_COLORS.size())])
+			var near_house := r.position + (Vector2(r.size.x / 2, 1.0) if d.y == 1 else Vector2(r.size.x / 2, r.size.y - 1.0) if d.y == -1 else Vector2(r.size.x - 1.0, r.size.y / 2) if d.x == -1 else Vector2(1.0, r.size.y / 2))
+			Art.car(ci, near_house, (Vector2(d) * -1.0).angle() if Town.hash2(int(r.position.y), 5) > 0.5 else Vector2(d).angle(), col, 1.6, 0.78)
 	# parked cars in the lots
 	for d in Town.decor:
 		if d.k != "parking": continue

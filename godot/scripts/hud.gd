@@ -36,6 +36,7 @@ var toast_q: Array = []
 var toast_t := 0.0
 var saved_label: Label
 var bar: PanelContainer
+var bait_icon: Control
 
 func _ready() -> void:
 	layer = 10
@@ -61,6 +62,13 @@ func _ready() -> void:
 	brand.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hb.add_child(brand)
 	for k in ["day", "cash", "rep", "cooler", "bait"]:
+		if k == "bait":
+			bait_icon = Control.new()
+			bait_icon.custom_minimum_size = Vector2(34, 34)
+			bait_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			bait_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			bait_icon.draw.connect(func(): ItemIcons.draw(bait_icon, Game.S.bait, Rect2(Vector2.ZERO, bait_icon.size)))
+			hb.add_child(bait_icon)
 		var v := VBoxContainer.new()
 		v.add_theme_constant_override("separation", -2)
 		var a := Label.new(); a.add_theme_font_size_override("font_size", 11); a.add_theme_color_override("font_color", MUTED)
@@ -206,14 +214,15 @@ func refresh(near: String) -> void:
 	top_labels.rep[0].text = Game.rep_title().to_upper(); top_labels.rep[1].text = "%d rep" % S.rep
 	top_labels.cooler[0].text = "COOLER"; top_labels.cooler[1].text = "%d / %d" % [S.cooler.size(), S.cooler_cap]
 	top_labels.bait[0].text = "BAIT (B)"; top_labels.bait[1].text = Game.bait_name()
+	if bait_icon.get_meta("id", "") != Game.S.bait: bait_icon.set_meta("id", Game.S.bait); bait_icon.queue_redraw()
 	var st := fishing.state
 	action.visible = st != "idle" or near != ""
 	var label := ""
 	var col := SUN
 	match st:
 		"idle":
-			label = { "fish": "Cast", "shop": "Enter Lou's", "home": "Go inside", "marina": "Enter the marina", "oldtimer": "Talk to the old-timer", "rosa": "Talk to Rosa", "bus": "Ride the bus" }.get(near, "")
-			if near in ["oldtimer", "rosa", "marina", "bus"]: col = TEAL
+			label = { "fish": "Cast", "shop": "Enter Lou's", "home": "Go inside", "marina": "Enter the marina", "oldtimer": "Talk to the old-timer", "rosa": "Talk to Rosa", "bus": "Ride the bus", "part": "Pick it up" }.get(near, "")
+			if near in ["oldtimer", "rosa", "marina", "bus", "part"]: col = TEAL
 		"power": label = "Release!"
 		"wait": label = "Retrieving…" if fishing.holding else "Twitch the lure"; col = PAPER
 		"nibble": label = "Wait for it…"; col = PAPER
@@ -231,7 +240,7 @@ func refresh(near: String) -> void:
 	else:
 		var m := ""
 		match st:
-			"idle": m = { "fish": "Cooler's full. Sell at Lou's." if S.cooler.size() >= S.cooler_cap else "Press F or Space to cast. B switches bait.", "shop": "Lou's Bait & Tackle. Press E or F to go in.", "home": "Home. Press E or F to go inside.", "marina": "Mullet Bay Marina. Press E to go in.", "oldtimer": "Press E to talk.", "rosa": "Press E to talk.", "bus": "Route 1 bus stop. Press E to ride. M for the map, J for the journal." }.get(near, "")
+			"idle": m = { "fish": "Cooler's full. Sell at Lou's." if S.cooler.size() >= S.cooler_cap else "Press F or Space to cast. B switches bait.", "shop": "Lou's Bait & Tackle. Press E or F to go in.", "home": "Home. Press E or F to go inside.", "marina": "Mullet Bay Marina. Press E to go in.", "oldtimer": "Press E to talk.", "rosa": "Press E to talk.", "bus": "Route 1 bus stop. Press E to ride. M for the map, J for the journal.", "part": "Something shiny on the ground. Press E to pick it up." }.get(near, "")
 			"power": m = "Release in the green to land right on the fish. ◀ ▶ or click the water to aim." if fishing.tgt != null else "No fish in line. ◀ ▶ to aim at a shadow, or click the water."
 			"wait": m = "Something's coming over…" if fishing.target != null else "Tap to twitch the lure. Hold to reel it back in."
 			"nibble": m = "It's nibbling… wait for the big dip."
@@ -374,9 +383,13 @@ func open(parts: Array, wide := false) -> void:
 					if first_btn == null and not b.disabled: first_btn = b
 				card_box.add_child(hb)
 			"item":
-				var hb := HBoxContainer.new()
+				# [title, desc, button text, callback, enabled, optional icon Callable(ci, rect), optional dim]
+				var hb := HBoxContainer.new(); hb.add_theme_constant_override("separation", 14)
+				if p.size() > 6 and p[6] is Callable:
+					hb.add_child(_icon_tile(p[6], 64, p.size() > 7 and p[7]))
 				var v := VBoxContainer.new(); v.size_flags_horizontal = Control.SIZE_EXPAND_FILL; v.add_theme_constant_override("separation", 2)
 				v.add_child(_label(p[1], 16, INK)); v.add_child(_label(p[2], 13, MUTED))
+				v.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 				hb.add_child(v)
 				var b := _button(p[3], p[4], p[5])
 				b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -384,6 +397,27 @@ func open(parts: Array, wide := false) -> void:
 				card_box.add_child(hb)
 				var sep := HSeparator.new(); sep.add_theme_color_override("separator", LINE); card_box.add_child(sep)
 			"node": card_box.add_child(p[1])
+			"kit":
+				# a strip of small pictures: [label, [[icon Callable(ci, rect), tooltip], ...]]
+				var kh := HBoxContainer.new(); kh.add_theme_constant_override("separation", 10)
+				var kl := _label(p[1].to_upper(), 11, MUTED); kl.add_theme_font_override("font", Game.font_bold)
+				kl.custom_minimum_size.x = 0; kl.autowrap_mode = TextServer.AUTOWRAP_OFF; kl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+				kh.add_child(kl)
+				var kf := HFlowContainer.new(); kf.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				kf.add_theme_constant_override("h_separation", 6); kf.add_theme_constant_override("v_separation", 6)
+				for k in p[2]:
+					var tile := _icon_tile(k[0], 42, false)
+					tile.tooltip_text = k[1]
+					if k.size() > 2: # a count badge
+						var badge := Label.new(); badge.text = k[2]
+						badge.add_theme_font_override("font", Game.font_bold); badge.add_theme_font_size_override("font_size", 11)
+						badge.add_theme_color_override("font_color", Color.WHITE)
+						badge.add_theme_stylebox_override("normal", _box(INK, Color.TRANSPARENT, 999, 0, Vector4.ZERO, Color.TRANSPARENT, 5, 0))
+						badge.position = Vector2(28, 28)
+						tile.add_child(badge)
+					kf.add_child(tile)
+				kh.add_child(kf)
+				card_box.add_child(kh)
 			"pic":
 				var pc := Control.new()
 				pc.custom_minimum_size = Vector2(0, p[2])
@@ -512,6 +546,20 @@ func open(parts: Array, wide := false) -> void:
 		tw.tween_property(modal, "modulate:a", 1.0, 0.12)
 		tw.tween_property(card, "scale", Vector2.ONE, 0.16).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	if first_btn: first_btn.grab_focus.call_deferred()
+
+## A rounded paper tile with a picture drawn in it. Locked items are drawn faded.
+func _icon_tile(fn: Callable, sz: int, dim: bool) -> Control:
+	var tile := Control.new()
+	tile.custom_minimum_size = Vector2(sz, sz)
+	tile.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	tile.mouse_filter = Control.MOUSE_FILTER_PASS
+	var bg := _box(Color("#fff8ea"), LINE, 10, 2, Vector4.ZERO, Color.TRANSPARENT, 0, 0)
+	tile.draw.connect(func():
+		tile.draw_style_box(bg, Rect2(Vector2.ZERO, tile.size))
+		var pad := tile.size.x * 0.1
+		fn.call(tile, Rect2(Vector2(pad, pad), tile.size - Vector2(pad, pad) * 2)))
+	if dim: tile.modulate = Color(1, 1, 1, 0.4)
+	return tile
 
 func _redrawer(c: Control) -> Node:
 	var tm := Timer.new(); tm.wait_time = 0.05; tm.autostart = true

@@ -22,6 +22,7 @@ static var signs: Array = []
 static var lamps: Array = []
 static var decor: Array = []
 static var bridges: Array = []
+static var driveways: Array = []   # { r: Rect2, d: Vector2i toward the street, car: bool }
 static var built := false
 
 static func idx(x: int, y: int) -> int: return y * MW + x
@@ -239,6 +240,7 @@ static func build() -> void:
 		lamps.append(Vector2(x, 96.6)); lamps.append(Vector2(x, 101.4))
 	for x in [8, 30, 48, 70, 90, 104]: lamps.append(Vector2(x + 0.5, 82.5))
 	_build_downtown()
+	_build_driveways()
 	_build_depth()
 
 static func _build_downtown() -> void:
@@ -306,6 +308,50 @@ static func _build_downtown() -> void:
 	for b in buildings:
 		if b.x == 8 and b.y == 7:
 			b.home = true; b.color = "#f6c86d"; b.label = "HOME"
+
+## Every house gets a driveway to the nearest street, if one is close and nothing is in the way.
+static func _build_driveways() -> void:
+	var ok := [T.GRASS, T.WALK, T.CONC]
+	for b in buildings:
+		if b.kind != "house": continue
+		var x: int = b.x
+		var y: int = b.y
+		var w: int = b.w
+		var h: int = b.h
+		var best = null
+		# south and north run from the garage end (east side), west and east from the back half of the side wall
+		var cands := [[Vector2i(0, 1), x + w - 2, y + h], [Vector2i(0, -1), x + w - 2, y - 1], [Vector2i(-1, 0), x - 1, y + h - 2], [Vector2i(1, 0), x + w, y + h - 2]]
+		for c in cands:
+			var d: Vector2i = c[0]
+			var fx: int = c[1]
+			var fy: int = c[2]
+			var n := 0
+			var found := false
+			while n < 9:
+				var cx: int = fx + d.x * n
+				var cy: int = fy + d.y * n
+				var tiles := [Vector2i(cx, cy), Vector2i(cx + (1 if d.y != 0 else 0), cy + (1 if d.x != 0 else 0))]
+				var road := false
+				var blocked := false
+				for tl in tiles:
+					var tt := t_at(tl.x, tl.y)
+					if tt == T.ROAD: road = true
+					elif not (tt in ok) or zone[idx(tl.x, tl.y)] != zone[idx(x, y)] and tt != T.WALK: blocked = true
+				if road: found = true; break
+				if blocked: break
+				n += 1
+			if found and n > 0 and (best == null or n < best[1]): best = [c, n]
+		if best == null: continue
+		var c: Array = best[0]
+		var d: Vector2i = c[0]
+		var n: int = best[1]
+		var r: Rect2
+		match d:
+			Vector2i(0, 1): r = Rect2(x + w - 1.6, y + h, 1.2, n)
+			Vector2i(0, -1): r = Rect2(x + w - 1.6, y - n, 1.2, n)
+			Vector2i(-1, 0): r = Rect2(x - n, y + h - 1.45, n, 1.15)
+			_: r = Rect2(x + w, y + h - 1.45, n, 1.15)
+		driveways.append({ "r": r, "d": d, "car": hash2(x * 7, y * 3) < 0.55 and n >= 2 })
 
 ## Distance from shore for every water tile, for the shallow-to-deep color.
 static func _build_depth() -> void:

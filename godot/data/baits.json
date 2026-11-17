@@ -27,5 +27,25 @@
   "id": "squid",
   "n": "Frozen squid",
   "gear": "squid"
+ },
+ {
+  "id": "spoon",
+  "n": "Spoon lure",
+  "craft": true
+ },
+ {
+  "id": "popper",
+  "n": "Bottle-cap popper",
+  "craft": true
+ },
+ {
+  "id": "jig",
+  "n": "Feather jig",
+  "craft": true
+ },
+ {
+  "id": "glowlure",
+  "n": "Glow lure",
+  "craft": true
  }
 ]
