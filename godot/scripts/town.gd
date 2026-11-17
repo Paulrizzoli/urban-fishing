@@ -113,7 +113,7 @@ static func build() -> void:
 	for x in [24, 30]:
 		bld(x, 16, 4, 3, ROOFS[(x + 2) % 8]); bld(x, 22, 4, 3, ROOFS[(x + 5) % 8])
 	for x in [2, 8, 14, 24, 30]: bld(x, 28, 4, 3, ROOFS[(x * 7 + 3) % 8])
-	ell(10, 20.5, 6.2, 3.8, T.WATER, 1)
+	blob(10, 20.5, 6.2, 3.8, T.WATER, 0.5, 1)   # a natural pond, so a soft, uneven shape
 	trees([[2, 16], [17, 16], [2, 25], [18, 24], [9, 26]]); bushes([[4, 16], [15, 25], [16, 17]])
 	decor.append({ "k": "bench", "x": 12.0, "y": 25.3 }); decor.append({ "k": "bench", "x": 7.0, "y": 15.6 })
 	labels.append({ "t": "MAPLE PARK POND", "x": 10.0, "y": 15.2 })

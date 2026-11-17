@@ -104,6 +104,20 @@ vec3 shade_water(vec3 col, vec2 p, vec4 wm, float t) {
 	return c.rgb;
 }
 
+// lawn: clumps, mottled color, damp near the water
+vec3 shade_lawn(vec3 col, vec2 p, vec4 wm) {
+	vec3 c = col;
+	float big = fbm(p * 0.35);
+	float fine = hash(floor(p * 32.0));
+	float wet = smoothstep(0.08, 0.5, wm.r);
+	float clump = fbm(p * 1.3 + 4.0);
+	c *= 1.0 + (big - 0.5) * 0.1 + (fine - 0.5) * 0.04;
+	c = mix(c, c * vec3(1.08, 1.05, 0.82), smoothstep(0.45, 0.75, clump) * 0.5);
+	c = mix(c, c * vec3(0.86, 0.95, 0.88), smoothstep(0.5, 0.2, clump) * 0.5);
+	c *= 1.0 - wet * 0.1;
+	return c;
+}
+
 // sand: wind ripples, grain, darker where it's wet
 vec3 shade_sand(vec3 col, vec2 p, vec4 wm) {
 	vec4 c = vec4(col, 1.0);
@@ -123,7 +137,19 @@ void fragment() {
 	vec4 wm = texture(water_mask, UV);
 	float mat = floor(texture(materials, UV).r * 255.0 + 0.5);
 	float t = TIME;
-	if (mat > 9.5) {
+	if (mat > 11.5) {
+		// a natural pond: the grass runs down to a muddy bank along a smooth curve
+		float land = texture(coast, UV).r;
+		float fw = max(fwidth(land) * 0.7, 0.004);
+		float k = smoothstep(0.5 - fw, 0.5 + fw, land);
+		vec3 wcol = texture(water_col, (p + 1.0) / (map_size + 2.0)).rgb;
+		// the ground texture holds the grass on the land side; right at the edge use a typical lawn green
+		vec3 gcol = land >= 0.5 ? c.rgb : vec3(0.47, 0.69, 0.36);
+		vec3 sea = k < 0.999 ? shade_water(wcol, p, wm, t) : vec3(0.0);
+		sea *= 1.0 - smoothstep(0.3, 0.5, land) * 0.12;   // shade under the bank
+		vec3 bank = k > 0.001 ? shade_lawn(gcol, p, wm) * (1.0 - rain * 0.12) : vec3(0.0);
+		c.rgb = mix(sea, bank, k);
+	} else if (mat > 9.5) {
 		// a curved coast: sand and water meet along a smooth line that ignores the tile grid
 		float land = texture(coast, UV).r;
 		float fw = max(fwidth(land) * 0.7, 0.004);
@@ -143,12 +169,8 @@ void fragment() {
 		float mid = noise(p * 2.2);
 		float fine = hash(floor(p * 32.0));
 		float wet = smoothstep(0.08, 0.5, wm.r);   // land right next to the water
-		if (mat < 1.5) {          // lawn: clumps, mottled color, damp near the water
-			float clump = fbm(p * 1.3 + 4.0);
-			c.rgb *= 1.0 + (big - 0.5) * 0.1 + (fine - 0.5) * 0.04;
-			c.rgb = mix(c.rgb, c.rgb * vec3(1.08, 1.05, 0.82), smoothstep(0.45, 0.75, clump) * 0.5);
-			c.rgb = mix(c.rgb, c.rgb * vec3(0.86, 0.95, 0.88), smoothstep(0.5, 0.2, clump) * 0.5);
-			c.rgb *= 1.0 - wet * 0.1;
+		if (mat < 1.5) {          // lawn
+			c.rgb = shade_lawn(c.rgb, p, wm);
 		} else if (mat < 2.5) {   // asphalt: grain, patched and worn areas
 			c.rgb *= 0.94 + big * 0.1 + (fine - 0.5) * 0.08;
 			float patch = smoothstep(0.62, 0.66, fbm(p * 0.22 + 7.0));
