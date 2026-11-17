@@ -221,8 +221,8 @@ func refresh(near: String) -> void:
 	var col := SUN
 	match st:
 		"idle":
-			label = { "fish": "Cast", "shop": "Enter Lou's", "home": "Go inside", "marina": "Enter the marina", "oldtimer": "Talk to the old-timer", "rosa": "Talk to Rosa", "bus": "Ride the bus" }.get(near, "")
-			if near in ["oldtimer", "rosa", "marina", "bus"]: col = TEAL
+			label = { "fish": "Cast", "shop": "Enter Lou's", "home": "Go inside", "marina": "Enter the marina", "oldtimer": "Talk to the old-timer", "rosa": "Talk to Rosa", "bus": "Ride the bus", "part": "Pick it up" }.get(near, "")
+			if near in ["oldtimer", "rosa", "marina", "bus", "part"]: col = TEAL
 		"power": label = "Release!"
 		"wait": label = "Retrieving…" if fishing.holding else "Twitch the lure"; col = PAPER
 		"nibble": label = "Wait for it…"; col = PAPER
@@ -240,7 +240,7 @@ func refresh(near: String) -> void:
 	else:
 		var m := ""
 		match st:
-			"idle": m = { "fish": "Cooler's full. Sell at Lou's." if S.cooler.size() >= S.cooler_cap else "Press F or Space to cast. B switches bait.", "shop": "Lou's Bait & Tackle. Press E or F to go in.", "home": "Home. Press E or F to go inside.", "marina": "Mullet Bay Marina. Press E to go in.", "oldtimer": "Press E to talk.", "rosa": "Press E to talk.", "bus": "Route 1 bus stop. Press E to ride. M for the map, J for the journal." }.get(near, "")
+			"idle": m = { "fish": "Cooler's full. Sell at Lou's." if S.cooler.size() >= S.cooler_cap else "Press F or Space to cast. B switches bait.", "shop": "Lou's Bait & Tackle. Press E or F to go in.", "home": "Home. Press E or F to go inside.", "marina": "Mullet Bay Marina. Press E to go in.", "oldtimer": "Press E to talk.", "rosa": "Press E to talk.", "bus": "Route 1 bus stop. Press E to ride. M for the map, J for the journal.", "part": "Something shiny on the ground. Press E to pick it up." }.get(near, "")
 			"power": m = "Release in the green to land right on the fish. ◀ ▶ or click the water to aim." if fishing.tgt != null else "No fish in line. ◀ ▶ to aim at a shadow, or click the water."
 			"wait": m = "Something's coming over…" if fishing.target != null else "Tap to twitch the lure. Hold to reel it back in."
 			"nibble": m = "It's nibbling… wait for the big dip."
@@ -408,6 +408,13 @@ func open(parts: Array, wide := false) -> void:
 				for k in p[2]:
 					var tile := _icon_tile(k[0], 42, false)
 					tile.tooltip_text = k[1]
+					if k.size() > 2: # a count badge
+						var badge := Label.new(); badge.text = k[2]
+						badge.add_theme_font_override("font", Game.font_bold); badge.add_theme_font_size_override("font_size", 11)
+						badge.add_theme_color_override("font_color", Color.WHITE)
+						badge.add_theme_stylebox_override("normal", _box(INK, Color.TRANSPARENT, 999, 0, Vector4.ZERO, Color.TRANSPARENT, 5, 0))
+						badge.position = Vector2(28, 28)
+						tile.add_child(badge)
 					kf.add_child(tile)
 				kh.add_child(kf)
 				card_box.add_child(kh)
