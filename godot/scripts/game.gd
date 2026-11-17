@@ -59,7 +59,7 @@ func fresh() -> Dictionary:
 	return { "day": 1, "min": 6 * 60 + 30.0, "cash": 30, "rep": 0, "x": 48.5, "y": 33.2, "face": PI / 2, "gear": {}, "cooler_cap": 5,
 		"cooler": [], "journal": {}, "bait": "worms", "started": false, "news": [],
 		"boat": false, "boat_kind": "kayak", "parked": {}, "offenses": {}, "order": {}, "park_day": 0, "swept_day": 0, "story": {}, "story_day": 0, "story_told": false,
-		"tips_heard": 0, "rosa": 0, "visited": {}, "busts": 0, "unlock": 1, "parts": {}, "lures": {}, "picked": {} }.merged(Story.fresh_state())
+		"tips_heard": 0, "rosa": 0, "visited": {}, "busts": 0, "unlock": 1, "parts": {}, "lures": {}, "picked": {}, "mh": {} }.merged(Story.fresh_state())
 
 func save_path(n := slot) -> String: return SLOT_PATHS[clampi(n, 1, SLOTS) - 1]
 
@@ -186,7 +186,22 @@ func new_order() -> void:
 		var need: String = o.get("need", "")
 		if (need == "" or (need == "downtown" and S.visited.has("dt")) or S.gear.has(need)) and order_possible(o): pool.append(i)
 	if pool.is_empty(): pool = [0]
+	# until the first part of town opens, Lou only asks for things you can catch with what you start with
+	if Unlocks.step() == 1:
+		var easy := pool.filter(func(i): return order_easy(orders[i]))
+		if not easy.is_empty(): pool = easy
 	S.order = { "day": S.day, "i": pool.pick_random(), "done": false }
+## True if a common fish in the open part of town fills the order in daylight, on worms or bread.
+func order_easy(o: Dictionary) -> bool:
+	for sid in spots:
+		if not Unlocks.spot_open(sid) or (sid == 8 and not S.gear.has("prybar")) or sid in Unlocks.GUARDED: continue
+		for f in spots[sid].fish:
+			if f.get("legend", false) or f.get("release", false) or float(f.r) < 10: continue
+			if f.has("t") and not ("day" in f.t): continue
+			var pref: Variant = baitpref.get(f.n)
+			if pref != null and not ("worms" in pref or "bread" in pref): continue
+			if order_match(o, { "n": f.n, "junk": f.get("junk", false), "w": float(f.w[1]) * 0.8, "spot": sid }): return true
+	return false
 ## True if some fish in the open part of town could fill the order.
 func order_possible(o: Dictionary) -> bool:
 	for sid in spots:

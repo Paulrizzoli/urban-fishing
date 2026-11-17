@@ -62,7 +62,7 @@ func _ready() -> void:
 		if a.begins_with("--shot="): test_shot = a.substr(7)
 		if a.begins_with("--boat="): Game.S.boat = true; Game.S.boat_kind = a.substr(7); Game.S.gear.kayak = 1; Game.S.gear.skiff = 1
 		if a.begins_with("--day="): Game.S.day = int(a.substr(6)); Game.S.min += (Game.S.day - 1) * 1440.0
-		if a.begins_with("--story="): Game.S.saga.ch = int(a.substr(8)) - 1; Game.S.saga.done = int(a.substr(8)) > 1; Game.S.day = maxi(int(Game.S.day), 3)
+		if a.begins_with("--story="): Game.S.saga.ch = int(a.substr(8)) - 1; Game.S.saga.done = int(a.substr(8)) > 1; Game.S.day = maxi(int(Game.S.day), Story.NOTE_DAY)
 		if a == "--gear=all":
 			for g in Game.gear: Game.S.gear[g.id] = 1
 			Game.S.cooler_cap = 30; Game.S.cash = 2000
@@ -193,6 +193,7 @@ func _ready() -> void:
 	guards.busted.connect(_busted)
 	Game.new_day.connect(_on_new_day)
 	if Game.cur_order() == null: Game.new_order()
+	elif Unlocks.step() == 1 and not Game.S.order.done and not Game.order_easy(Game.cur_order()): Game.new_order()
 	var line := Drawer.make(fishing.draw_line_layer, 0, true)
 	line.z_index = 5
 	world.add_child(line)
@@ -381,6 +382,7 @@ func _process(dt: float) -> void:
 		elif player.position.distance_to(ROSA) < 1.6: near = "rosa"
 		elif Crafting.near(player.position) >= 0: near = "part"
 		elif Story.bus_near(player.position) >= 0: near = "bus"
+		elif fishing.manhole_near() >= 0: near = "manhole"
 		elif fishing.near_water(): near = "fish"
 	hud.boat_text = ""
 	if fishing.state == "idle":
@@ -611,6 +613,7 @@ func _action_down() -> void:
 			var pi := Crafting.near(player.position)
 			if pi >= 0: Sound.play("ui_click"); hud.flash(Crafting.pick(pi))
 		elif near == "bus": open_bus(Story.bus_near(player.position))
+		elif near == "manhole": fishing.start_manhole(fishing.manhole_near())
 		elif near == "fish": fishing.start_cast()
 		return
 	fishing.action_down()
@@ -716,6 +719,11 @@ func open_shop() -> void:
 							func(ci, r): ItemIcons.draw_catch(ci, cc, r)])
 				parts.append(["row", [["Sell everything for " + Game.money(total), _sell_all, true, "go"]]])
 			last_sale = 0
+			if Unlocks.step() == 1 and Story.species_got() < Unlocks.SPECIES_2:
+				var tips := Unlocks.lou_tips(3)
+				if not tips.is_empty():
+					parts.append(["p", "Lou: \"You need more kinds of fish to get out of this neighborhood. Here's what's biting around here.\""])
+					for tp in tips: parts.append(["sub", tp])
 		"order":
 			var o = Game.cur_order()
 			if o == null: parts.append(["sub", "No order today."])
@@ -724,6 +732,8 @@ func open_shop() -> void:
 				var have := Game.order_matches().size()
 				parts.append(["quote", "\"%s\"" % o.t])
 				parts.append(["p", "Pays %s and +3 rep, today only. You have %d of %d in your cooler." % [Game.money(o.pay), mini(have, int(o.count)), int(o.count)]])
+				var tip := Unlocks.order_tip(o)
+				if tip != "" and o.match.get("spot", 0) != 8: parts.append(["sub", "Lou's tip: " + tip])
 				parts.append(["row", [["Hand it over" if have >= o.count else "Not enough yet", _fill_order, have >= o.count, "go"]]])
 		"gear":
 			parts.append(_kit_part())
