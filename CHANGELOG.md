@@ -4,7 +4,7 @@ Every update to Urban Fishing, newest first. This is the one file to check for w
 
 **How this file is kept up to date:** every change that ships gets an entry here in the same pull request, before it's merged into `main`. A new version gets its own section with the date and the build files it produced. Work that has started but isn't released yet goes under "In progress" at the top, and moves into a version section when it ships. A copy of this file is kept in the project files as `UPDATES.md`.
 
-To make a new version, bump `config/version` in `godot/project.godot` (and the file and product version in `godot/export_presets.cfg`), add a section here, and run `tools/build_windows.sh`. It zips the game as `UrbanFishing-v<version>-windows.zip` and the Godot project as `UrbanFishing-v<version>-godot-project.zip`. The version shows on the title screen and in the pause menu.
+To make a new version, bump `config/version` in `godot/project.godot` (and the file and product version in `godot/export_presets.cfg`), add a section here, and run `tools/build_windows.sh`. It zips the game as `UrbanFishing-v<version>-windows.zip` and the Godot project as `UrbanFishing-v<version>-godot-project.zip`. The version shows on the title screen and in the pause menu. From v0.9.1 on, each update goes up by one step in the last number (v0.9.1, v0.9.2, v0.9.3 and so on).
 
 ## In progress
 
@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.2 | Nov 17, 2026 | Round islands and beaches, and boats that stay where you leave them |
 | v0.9.1 | Nov 17, 2026 | Real-looking people with walk cycles, fish that splash, and light that changes through the day |
 | v0.9.0 | Nov 17, 2026 | Three save slots |
 | v0.8.0 | Nov 17, 2026 | Tower sides you can see, and towers you can see through when you walk behind them |
@@ -27,6 +28,17 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.2 · Round islands, and boats that stay put
+
+_Nov 17, 2026 · Builds: `UrbanFishing-v0.9.2-windows.zip`, `UrbanFishing-v0.9.2-godot-project.zip`, screenshots in `screenshots/v0.9.2/`_
+
+- Bird Key is a rounded, lumpy island instead of a stepped rectangle, and a little bigger. Its bushes grow inland, not on the water's edge, and the stray square of grass on it is gone
+- Every sandy shore (Bird Key and Mullet Beach) meets the water along a smooth, gently wavy curve instead of the tile grid, with damp sand at the water line and a thin line of surf washing up and back. The big map shows the new shapes too. Walking and boating still work on the same tiles as before
+- The kayak stays where you land it. It's pulled half up the bank, nose first, with the paddle across the deck, and you step off beside it. Walk back to it and press K to paddle off again
+- The skiff stays tied up where you hop off, bobbing on its line
+- The map (M) marks where you left each boat ("Your kayak", "Your skiff"). If you press K away from the water while your boats are parked, it tells you they're where you left them
+- A boat you've never landed still comes with you to any edge, like before. If you get walked out by a guard or the park staff while you're out on the water, your boat comes with you too, so it can never be stranded out on open water
 
 ## v0.9.1 · People, splashes and light
 

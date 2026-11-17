@@ -106,6 +106,18 @@ func _draw() -> void:
 	var fs := int(clampf(7 + kk * 0.9, 10, 20))
 	for l in Town.labels:
 		_text(o + Vector2(l.x, l.y) * kk, l.t, fs, Color("#22313a"), true)
+	# the boats you left somewhere
+	var pk := Player.parked()
+	for kind in pk:
+		if not Game.S.gear.has(kind): continue
+		var v: Array = pk[kind]
+		var bp := to_screen(Vector2(v[0], v[1]))
+		var sk := clampf(kk * 0.9, 5, 16)
+		draw_set_transform(bp, v[2], Vector2(sk, sk))
+		if kind == "skiff": Player.draw_skiff(self)
+		else: Player.draw_kayak(self, null)
+		draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
+		_text(bp + Vector2(sk * 1.2 + 4, 4), "Your " + kind, 12, Color("#c4572f"), false)
 	var pp := to_screen(main.player.position)
 	var pulse := 5.0 + 2.0 * sin(Time.get_ticks_msec() / 200.0) + minf(zoom, 3)
 	draw_circle(pp, pulse + 2, Color("#22313a"))

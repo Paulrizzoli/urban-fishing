@@ -95,8 +95,12 @@ func _detail(x: int, y: int) -> void:
 			for j in 2:
 				for i in 2: R(x + i * 0.5 + 0.02, y + j * 0.5 + 0.02, 0.46, 0.46, Color("#e0cfb0") if (i + j + x + y) % 2 else Color("#efe5d0"))
 		T.SAND:
-			for k in 7: R(x + Town.hash2(k, x * 3 + y) * 0.92, y + Town.hash2(y * 2 + k, x) * 0.92, 0.05, 0.05, Color(0.59, 0.47, 0.24, 0.28) if k % 2 else Color(1, 1, 1, 0.4))
-			if y >= 156 and h > 0.5: draw_arc(Vector2(x + 0.5, y + 1.2), 0.6, PI * 1.2, PI * 1.8, 8, Color(0.67, 0.55, 0.31, 0.25), 0.03)
+			var coast := Ground.is_coast(x, y)
+			for k in 7:
+				var sp := Vector2(x + Town.hash2(k, x * 3 + y) * 0.92, y + Town.hash2(y * 2 + k, x) * 0.92)
+				if coast and not Ground.dry_at(sp + Vector2(0.025, 0.025)): continue
+				R(sp.x, sp.y, 0.05, 0.05, Color(0.59, 0.47, 0.24, 0.28) if k % 2 else Color(1, 1, 1, 0.4))
+			if y >= 156 and h > 0.5 and not coast: draw_arc(Vector2(x + 0.5, y + 1.2), 0.6, PI * 1.2, PI * 1.8, 8, Color(0.67, 0.55, 0.31, 0.25), 0.03)
 		T.PATH, T.HIDE:
 			for k in 4: draw_circle(Vector2(x + Town.hash2(k, x) * 0.9 + 0.05, y + Town.hash2(y, k) * 0.9 + 0.05), 0.04, Color(0.55, 0.47, 0.31, 0.3))
 		T.DOCK:
@@ -163,6 +167,8 @@ func _shore(X0: int, X1: int, Y0: int, Y1: int) -> void:
 				if not Town.inb(nx, ny): continue
 				var nt: int = Town.tile[Town.idx(nx, ny)]
 				if Town.is_water_t(nt): continue
+				# sandy shores get a smooth curved edge from the ground texture instead
+				if Ground.is_coast(x, y) and Ground._sandy(nx, ny): continue
 				var bands := [[0.18, Color(0.04, 0.12, 0.16, 0.2)], [0.05, Color(1, 1, 1, 0.2)]] if (nt in HARD or Town.in_bridge(nx, ny)) else \
 					[[0.22, Color(0.59, 0.67, 0.47, 0.3)], [0.12, Color(0.85, 0.78, 0.59, 0.85)], [0.05, Color(0.47, 0.39, 0.24, 0.35)]]
 				for b in bands:
