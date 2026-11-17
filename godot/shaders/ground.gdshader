@@ -11,6 +11,8 @@ uniform vec2 map_size = vec2(112.0, 184.0);
 uniform float sun = 1.0;                        // 1 at noon on a clear day, 0 at night
 uniform float rain = 0.0;
 uniform vec3 sky_col = vec3(0.55, 0.75, 0.92);  // the sky the water reflects, from Main.sky_tint()
+uniform float wetness = 0.0;                        // how wet the ground still is: rises in rain, dries over a few hours
+uniform float mist = 0.0;                       // morning mist lying over the water
 
 float hash(vec2 p) {
 	p = fract(p * vec2(0.1031, 0.1030));
@@ -131,6 +133,33 @@ vec3 shade_sand(vec3 col, vec2 p, vec4 wm) {
 	return c.rgb;
 }
 
+// wet pavement: darker, with puddles that hold the sky and ring with raindrops
+vec3 wet_ground(vec3 c, vec2 p, float amount, float t, float hold) {
+	if (amount < 0.01) return c;
+	c *= 1.0 - amount * 0.2;
+	c += sky_col * 0.05 * amount;
+	float pm = fbm(p * 0.42 + vec2(13.1, 7.7)) + noise(p * 2.1) * 0.08;
+	float lvl = 0.7 - amount * 0.06 * hold;
+	float puddle = smoothstep(lvl, lvl + 0.025, pm) * hold;
+	if (puddle > 0.001) {
+		vec3 sky = mix(sky_col, vec3(0.52, 0.62, 0.72), 0.55);
+		vec3 pc = mix(c * 0.55, sky * 0.8, 0.38);
+		// raindrop rings in the puddle
+		vec2 g = floor(p * 2.5);
+		vec2 f = fract(p * 2.5) - 0.5;
+		float ph = fract(t * 1.3 + hash(g) * 7.0);
+		vec2 o = (hash22(g + floor(t * 1.3 + hash(g) * 7.0)) - 0.5) * 0.5;
+		float d = length(f - o);
+		float ring = (1.0 - smoothstep(0.0, 0.05, abs(d - ph * 0.45))) * (1.0 - ph) * rain;
+		pc += vec3(0.8, 0.9, 1.0) * ring * 0.35;
+		// a soft highlight along the puddle edge
+		float edge = smoothstep(lvl, lvl + 0.01, pm) - smoothstep(lvl + 0.01, lvl + 0.04, pm);
+		pc += vec3(1.0) * edge * 0.08;
+		c = mix(c, pc, puddle);
+	}
+	return c;
+}
+
 void fragment() {
 	vec4 c = texture(TEXTURE, UV);
 	vec2 p = UV * map_size;           // in tiles
@@ -191,8 +220,17 @@ void fragment() {
 			float grain = noise(vec2(p.x * 1.5, p.y * 30.0));
 			c.rgb *= 0.92 + grain * 0.12 + big * 0.06;
 		}
-		// rain darkens everything a little
+		// rain darkens everything a little, and wet pavement keeps puddles for a while after
 		c.rgb *= 1.0 - rain * 0.12;
+		if ((mat > 1.5 && mat < 3.5) || (mat > 7.5 && mat < 9.5)) c.rgb = wet_ground(c.rgb, p, wetness, t, mat < 2.5 ? 1.0 : mat < 3.5 ? 0.45 : 0.7);
+		else if (mat < 1.5 || (mat > 5.5 && mat < 7.5)) c.rgb *= 1.0 - wetness * 0.08;
+	}
+	// morning mist drifting low over the water and the banks next to it
+	if (mist > 0.01) {
+		float near = smoothstep(0.05, 0.85, wm.r);
+		float m = fbm(p * 0.22 + vec2(t * 0.05, t * 0.018)) * 0.75 + fbm(p * 0.6 - vec2(t * 0.03, 0.0)) * 0.35;
+		float a = mist * near * smoothstep(0.28, 0.75, m) * 0.9;
+		c.rgb = mix(c.rgb, vec3(0.92, 0.94, 0.96) * (0.75 + 0.25 * sun), a);
 	}
 	COLOR = c;
 }
