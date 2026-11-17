@@ -80,6 +80,8 @@ func _ready() -> void:
 	mat.shader = GROUND_SHADER
 	mat.set_shader_parameter("water_mask", Ground.make_water_mask())
 	mat.set_shader_parameter("materials", Ground.make_material_tex())
+	mat.set_shader_parameter("coast", Ground.make_coast_tex())
+	mat.set_shader_parameter("water_col", Ground.water_tex)
 	mat.set_shader_parameter("map_size", Vector2(Town.MW, Town.MH))
 	ground.material = mat
 	ground_mat = mat
@@ -139,6 +141,7 @@ func _ready() -> void:
 		if Game.hour() >= 7 and Game.hour() < 19: Art.person(ci, Vector2(50.6, 32.55), 0.4, Color("#13807b"), Color("#e2583e")), 32.55, true))
 	player = Player.new()
 	ents.add_child(player)
+	for k in ["kayak", "skiff"]: ents.add_child(ParkedBoat.new(k))
 	fishing.player = player
 	ents.add_child(Drawer.make(func(ci):
 		ci.draw_rect(Rect2(ROSA.x + 0.25, ROSA.y - 0.05, 0.36, 0.3), Color("#e9e4d8"))
@@ -284,6 +287,7 @@ func _ready() -> void:
 		if a == "--open=journal": open_journal()
 		if a == "--open=fame": journal_tab = "fame"; open_journal()
 		if a == "--open=news": journal_tab = "news"; open_journal()
+		if a == "--beach": _toggle_boat()
 		if a == "--open=map": open_map()
 		if a == "--open=bus": open_bus(0)
 		if a == "--weigh":
@@ -585,7 +589,14 @@ func _toggle_boat() -> void:
 	var m := player.toggle_boat()
 	if m != "": hud.flash(m); Game.save_game()
 	elif player.in_boat(): hud.flash("Get close to a bank to land.")
-	elif Game.S.gear.has("kayak") or Game.S.gear.has("skiff"): hud.flash("Stand right at the edge of a canal, the river or the bay to launch.")
+	elif Game.S.gear.has("kayak") or Game.S.gear.has("skiff"):
+		var pk := Player.parked()
+		var left: Array = []
+		for k in ["kayak", "skiff"]:
+			if Game.S.gear.has(k) and pk.has(k): left.append(k)
+		var all_left := left.size() == int(Game.S.gear.has("kayak")) + int(Game.S.gear.has("skiff"))
+		if all_left: hud.flash("Your %s is where you left it. It's marked on the map (M)." % " and ".join(left))
+		else: hud.flash("Stand right at the edge of a canal, the river or the bay to launch.")
 	else: hud.flash("You don't have a boat. Lou sells kayaks; the marina downtown sells a skiff.")
 
 func _cycle_bait() -> void:

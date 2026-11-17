@@ -51,6 +51,18 @@ static func ell(cx: float, cy: float, rx: float, ry: float, t: int, reg: int = -
 				tile[idx(x, y)] = t
 				if reg >= 0: region[idx(x, y)] = reg
 
+## An ellipse with a wobbly edge, for natural shapes like islands. seed picks the wobble.
+static func blob(cx: float, cy: float, rx: float, ry: float, t: int, seed: float, reg: int = -1) -> void:
+	for y in range(floori(cy - ry * 1.3), ceili(cy + ry * 1.3) + 1):
+		for x in range(floori(cx - rx * 1.3), ceili(cx + rx * 1.3) + 1):
+			var dx := (x + 0.5 - cx) / rx
+			var dy := (y + 0.5 - cy) / ry
+			var a := atan2(dy, dx)
+			var r := 1.0 + 0.1 * sin(2.0 * a + seed) + 0.07 * sin(3.0 * a + seed * 2.3) + 0.05 * sin(5.0 * a + seed * 0.7)
+			if dx * dx + dy * dy <= r * r and inb(x, y):
+				tile[idx(x, y)] = t
+				if reg >= 0: region[idx(x, y)] = reg
+
 static func zrect(x0: int, y0: int, x1: int, y1: int, z: int) -> void:
 	for y in range(y0, y1 + 1):
 		for x in range(x0, x1 + 1):
@@ -245,10 +257,15 @@ static func _build_downtown() -> void:
 	rect(83, 158, 110, 158, T.DOCK)
 	for x in [86, 91, 96, 101, 106]: rect(x, 159, x, 163, T.DOCK)
 	zrect(82, 158, 111, 163, 9)
-	ell(62, 165, 6.2, 2.4, T.SAND)
-	for y in range(162, 169):
-		for x in range(55, 70):
-			if tile[idx(x, y)] == T.SAND and hash2(x * 3, y * 5) < 0.3: set_t(x, y, T.BUSH)
+	# Bird Key: a rounded, lumpy island rather than a stretched ellipse
+	blob(62, 165, 6.4, 3.3, T.SAND, 7.0)
+	for y in range(160, 171):
+		for x in range(54, 71):
+			if tile[idx(x, y)] != T.SAND or hash2(x * 3, y * 5) >= 0.24: continue
+			var inner := true
+			for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1), Vector2i(2, 0), Vector2i(-2, 0)]:
+				if t_at(x + d.x, y + d.y) != T.SAND: inner = false
+			if inner: set_t(x, y, T.BUSH)
 	trees([[59, 164], [65, 165], [62, 166]])
 	rect(0, 120, 18, 134, T.CONC)
 	sky(1, 121, 7, 6, "#5bb5a9", 15, "SUNSHINE BANK", { "ant": true }); sky(10, 121, 7, 5, "#8cc0de", 9); sky(1, 129, 8, 5, "#e98a7b", 6, "HOTEL FLAMINGO", { "pool": true }); sky(11, 128, 6, 6, "#f6c86d", 11)
@@ -284,7 +301,7 @@ static func _build_downtown() -> void:
 	lamps.append_array([Vector2(30.5, 160), Vector2(30.5, 163), Vector2(26.6, 165.5), Vector2(35.4, 165.5), Vector2(47, 128.4), Vector2(75, 128.4), Vector2(47, 133.4), Vector2(75, 133.4)])
 	for x in range(86, 107, 5): lamps.append(Vector2(x + 0.5, 158.5))
 	for y in [111, 126, 145]: lamps.append(Vector2(81.5, y))
-	labels.append_array([{ "t": "MULLET BAY", "x": 52.0, "y": 168.6 }, { "t": "OFFSHORE · SKIFF ONLY", "x": 52.0, "y": 177.0 }, { "t": "BIRD KEY", "x": 62.0, "y": 162.2 }, { "t": "MULLET BEACH", "x": 9.0, "y": 159.0 }, { "t": "MUNICIPAL PIER", "x": 30.8, "y": 168.1 }])
+	labels.append_array([{ "t": "MULLET BAY", "x": 52.0, "y": 168.6 }, { "t": "OFFSHORE · SKIFF ONLY", "x": 52.0, "y": 177.0 }, { "t": "BIRD KEY", "x": 62.0, "y": 161.0 }, { "t": "MULLET BEACH", "x": 9.0, "y": 159.0 }, { "t": "MUNICIPAL PIER", "x": 30.8, "y": 168.1 }])
 	# the home is the yellow house by Maple Park Pond
 	for b in buildings:
 		if b.x == 8 and b.y == 7:

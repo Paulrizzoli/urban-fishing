@@ -139,11 +139,31 @@ func step(dt: float, input_dir: Vector2) -> void:
 	Game.S.x = position.x; Game.S.y = position.y; Game.S.face = face
 	queue_redraw()
 
+## Where each boat was left when you landed: kind -> [x, y, face, water x, water y].
+## (x, y) is where it's drawn, pulled up on the bank for the kayak; the water spot is where you get back in.
+## A boat you've landed stays put until you come back for it. One you've never landed goes wherever you do.
+static func parked() -> Dictionary:
+	if not (Game.S.get("parked") is Dictionary): Game.S.parked = {}
+	return Game.S.parked
+
 ## The nearest water tile you could launch from, and which boat you'd take.
 func launch_spot() -> Variant:
 	if in_boat() or not (Game.S.gear.has("kayak") or Game.S.gear.has("skiff")): return null
+	var pk := parked()
+	# a boat you left here
 	var best = null
-	var bd := 1.7
+	var bd := 2.4
+	for kind in pk:
+		if not Game.S.gear.has(kind): continue
+		var v: Array = pk[kind]
+		var d := Vector2(v[0], v[1]).distance_to(position)
+		if d < bd: bd = d; best = [Vector2(v[3], v[4]), kind]
+	if best != null: return best
+	# or one you're carrying, at any edge
+	var free_k: bool = Game.S.gear.has("kayak") and not pk.has("kayak")
+	var free_s: bool = Game.S.gear.has("skiff") and not pk.has("skiff")
+	if not (free_k or free_s): return null
+	bd = 1.7
 	for dy in range(-2, 3):
 		for dx in range(-2, 3):
 			var x := floori(position.x) + dx
@@ -151,7 +171,7 @@ func launch_spot() -> Variant:
 			if not Town.inb(x, y) or Town.tile[Town.idx(x, y)] != Town.T.WATER: continue
 			var reg: int = Town.region[Town.idx(x, y)]
 			if not (reg in [2, 9, 13, 14]): continue
-			var kind := "skiff" if Game.S.gear.has("skiff") and (reg == 13 or reg == 14) else "kayak" if Game.S.gear.has("kayak") else ""
+			var kind := "skiff" if free_s and (reg == 13 or reg == 14) else "kayak" if free_k else ""
 			if kind == "": continue
 			var d := Vector2(x + 0.5, y + 0.5).distance_to(position)
 			if d < bd: bd = d; best = [Vector2(x + 0.5, y + 0.5), kind]
@@ -175,10 +195,22 @@ func toggle_boat() -> String:
 	if in_boat():
 		var b = beach_spot()
 		if b == null: return ""
+		var w := position
+		if boat_kind() == "skiff": parked()["skiff"] = [w.x, w.y, face, w.x, w.y]
+		else:
+			# drag the kayak half up the bank, nose first, and step off beside it
+			var dir: Vector2 = (b - w).normalized()
+			var k: Vector2 = b - dir * 0.5 + dir.orthogonal() * 0.8
+			parked()["kayak"] = [k.x, k.y, dir.angle(), w.x, w.y]
 		position = b; Game.S.boat = false
 		return "You tie up the skiff and hop off." if boat_kind() == "skiff" else "You drag the kayak up the bank."
 	var l = launch_spot()
 	if l == null: return ""
+	var pk := parked()
+	if pk.has(l[1]):
+		var v: Array = pk[l[1]]
+		face = float(v[2]) + (PI if l[1] == "kayak" else 0.0)
+		pk.erase(l[1])
 	position = l[0]; Game.S.boat = true; Game.S.boat_kind = l[1]
 	return "The outboard coughs twice and catches. Steer with the arrow keys or click the water." if l[1] == "skiff" else "You push off. Paddle with the arrow keys or click the water."
 
@@ -191,18 +223,10 @@ func _draw() -> void:
 				draw_set_transform(w.p - position, w.a, Vector2(1, 0.45))
 				draw_arc(Vector2.ZERO, 0.2 + k * 0.9, 0, TAU, 20, Color(1, 1, 1, 0.5 * (1 - k)), 0.07)
 			draw_set_transform(Vector2(0, 0.1), rot, Vector2.ONE)
-			Art.ellipse(self, Vector2(0.1, 0.12), 1.5, 0.55, Color(0, 0, 0, 0.25))
-			Art.poly(self, [Vector2(1.55, 0), Vector2(0.9, -0.48), Vector2(-1.2, -0.52), Vector2(-1.25, 0.52), Vector2(0.9, 0.48)], Color("#f4f6f8"))
-			Art.poly(self, [Vector2(1.3, 0), Vector2(0.8, -0.38), Vector2(-1.05, -0.38), Vector2(-1.08, 0.38), Vector2(0.8, 0.38)], Color("#d8dde0"))
-			draw_rect(Rect2(-0.05, -0.22, 0.4, 0.44), Color("#3d4a52")); draw_rect(Rect2(0.3, -0.2, 0.08, 0.4), Color("#9fd3f0"))
-			draw_rect(Rect2(-1.45, -0.16, 0.3, 0.32), Color("#22313a"))
+			draw_skiff(self)
 		else:
 			draw_set_transform(Vector2(0, 0.1), rot, Vector2.ONE)
-			Art.ellipse(self, Vector2(0.08, 0.1), 1.15, 0.3, Color(0, 0, 0, 0.25))
-			Art.ellipse(self, Vector2.ZERO, 1.15, 0.29, Color("#f2b134"))
-			Art.ellipse(self, Vector2.ZERO, 0.36, 0.17, Color("#22313a"))
-			var pa := sin(bob * 0.6) * 0.5
-			draw_line(Vector2(-0.1 + pa * 0.3, -0.75), Vector2(0.1 - pa * 0.3, 0.75), Color("#3d2b1a"), 0.06)
+			draw_kayak(self, sin(bob * 0.6) * 0.5)
 		draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
 	var z := zone_of(position)
 	var look := { "shirt": Color("#13807b"), "pants": Color("#c9b48a"), "skin": Color("#e0b48c"), "hair": Color("#6b4a2a"),
@@ -218,6 +242,26 @@ func _draw() -> void:
 		Art.character(self, Vector2.ZERO, face, look, bob, false, 2, tip, rod_bend)
 	else:
 		Art.character(self, Vector2.ZERO, face, look, bob, walking, 1)
+
+## The boats, drawn around their own middle and pointing right (rotate with draw_set_transform first).
+static func draw_skiff(ci: CanvasItem) -> void:
+	Art.ellipse(ci, Vector2(0.1, 0.12), 1.5, 0.55, Color(0, 0, 0, 0.25))
+	Art.poly(ci, [Vector2(1.55, 0), Vector2(0.9, -0.48), Vector2(-1.2, -0.52), Vector2(-1.25, 0.52), Vector2(0.9, 0.48)], Color("#f4f6f8"))
+	Art.poly(ci, [Vector2(1.3, 0), Vector2(0.8, -0.38), Vector2(-1.05, -0.38), Vector2(-1.08, 0.38), Vector2(0.8, 0.38)], Color("#d8dde0"))
+	ci.draw_rect(Rect2(-0.05, -0.22, 0.4, 0.44), Color("#3d4a52")); ci.draw_rect(Rect2(0.3, -0.2, 0.08, 0.4), Color("#9fd3f0"))
+	ci.draw_rect(Rect2(-1.45, -0.16, 0.3, 0.32), Color("#22313a"))
+
+## paddle: how far the paddle is swung, or null for one lying along the deck
+static func draw_kayak(ci: CanvasItem, paddle: Variant) -> void:
+	Art.ellipse(ci, Vector2(0.08, 0.1), 1.15, 0.3, Color(0, 0, 0, 0.25))
+	Art.ellipse(ci, Vector2.ZERO, 1.15, 0.29, Color("#f2b134"))
+	Art.ellipse(ci, Vector2.ZERO, 0.36, 0.17, Color("#22313a"))
+	if paddle == null:
+		ci.draw_line(Vector2(-0.95, 0.1), Vector2(0.9, -0.06), Color("#3d2b1a"), 0.06)
+		for e in [Vector2(-0.95, 0.1), Vector2(0.9, -0.06)]: Art.ellipse(ci, e, 0.16, 0.07, Color("#2b7ea6"))
+	else:
+		var pa: float = paddle
+		ci.draw_line(Vector2(-0.1 + pa * 0.3, -0.75), Vector2(0.1 - pa * 0.3, 0.75), Color("#3d2b1a"), 0.06)
 
 func rod_tip() -> Vector2:
 	return position + Vector2(cos(face) * 0.95, sin(face) * 0.95 - 0.4)

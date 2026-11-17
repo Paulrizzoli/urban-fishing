@@ -58,7 +58,7 @@ func _load_json(path: String) -> Variant:
 func fresh() -> Dictionary:
 	return { "day": 1, "min": 6 * 60 + 30.0, "cash": 30, "rep": 0, "x": 48.5, "y": 33.2, "face": PI / 2, "gear": {}, "cooler_cap": 5,
 		"cooler": [], "journal": {}, "bait": "worms", "started": false, "news": [],
-		"boat": false, "boat_kind": "kayak", "offenses": {}, "order": {}, "park_day": 0, "swept_day": 0, "story": {}, "story_day": 0, "story_told": false,
+		"boat": false, "boat_kind": "kayak", "parked": {}, "offenses": {}, "order": {}, "park_day": 0, "swept_day": 0, "story": {}, "story_day": 0, "story_told": false,
 		"tips_heard": 0, "rosa": 0, "visited": {}, "busts": 0, "unlock": 1 }.merged(Story.fresh_state())
 
 func save_path(n := slot) -> String: return SLOT_PATHS[clampi(n, 1, SLOTS) - 1]
