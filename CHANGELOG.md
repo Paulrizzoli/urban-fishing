@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.42 | Nov 18, 2026 | A sound polish: splashes sized to your bait and your fish, the drag and the line under strain, guards who shout, engines and motors, the sounds of each place, and footsteps |
 | v0.9.41 | Nov 18, 2026 | Gentler cars: most just bump you onto the sidewalk, and a knockout costs 30 minutes and $10 |
 | v0.9.40 | Nov 18, 2026 | Aim your cast anywhere with a cast marker, and side twitches that really reel the lure in |
 | v0.9.39 | Nov 18, 2026 | The black box at the top of the Mill Race is now a sluice gate, and the Lakeside Park dock reaches the water |
@@ -65,6 +66,21 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.42 · Sound polish
+
+_Nov 18, 2026 · Builds: `UrbanFishing-v0.9.42-windows.zip`, `UrbanFishing-v0.9.42-godot-project.zip`, sound preview `urban-fishing-sound-preview-v0.9.42.mp4`_
+
+- **Splashes that fit what's on your line:** worms, bread and the feather jig go in with a soft plip, live shrimp and the spinner or glow lure with a small splash, a spoon, hot dogs and squid with a bigger one, and the popper with a chug. A sloppy cast slaps down with spray. A cast into a bush rustles, and one onto dry land ticks and skitters. Twitching the popper chugs; other lures skip.
+- **The fight:** setting the hook zips the line tight with a swirl. A hooked fish's splashes grow with its weight (under 3 lb, under 12 lb, and bigger). The drag buzzes when the fish runs or the line's near breaking, the line sings and creaks as the strain builds, and the reel's clicking slows as it gets harder to turn. A landed fish flops on the bank; junk lands with a hollow clank. The music dips while you fight a fish.
+- **Guards who shout:** when a guard has really seen you they shout ("Hey!", "Hey, you!" or "Stop!", each guard in their own voice) and blow a whistle. Cameras beep and dogs bark.
+- **Traffic and boats:** you hear the engines of the two nearest cars, pitched by how fast they're going, and a city hum when the streets are busy. Marina boats under way have outboard motors, your skiff has its own motor that idles when you stop, and a kayak paddle dips with each stroke.
+- **The sounds of each place:** surf on the beaches, laughing gulls over the bay and the reservoir by day, fountains in the plaza and Bayfront Park, the power station's hum, and wind on windy and stormy days. In Ironwater, the spillway roars (the music dips near it), the woolen mill thumps and clatters from 6 AM to 9 PM, and Riverhawks Field has a crowd from noon to 10 PM, with the crack of a bat and a cheer now and then (rained out in a storm).
+- **Footsteps** that change with what you walk on: sidewalk and street, grass, sand, dock planks, and splashy steps in puddles, in the rain, on the flooded street and in the storm drain.
+- **Thunder** sometimes cracks right overhead with the flash, instead of always rolling in a second later. Thunderstorms get the swamp blues, away from guarded ground.
+- **Menus** whoosh open and closed.
+- The volume settings (master, music, effects and ambience) cover all of it: places and weather are under Ambience, everything else under Effects.
+- All the new sounds are made from code by `tools/make_audio.py`, like the old ones, so they're original to the game. `tools/make_sound_preview.sh` records the preview video with Godot's movie writer.
 
 ## v0.9.41 · Gentler cars
 

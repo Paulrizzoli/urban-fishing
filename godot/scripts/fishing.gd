@@ -367,11 +367,12 @@ func release_cast() -> void:
 	if not is_water(p):
 		state = "idle"
 		var tt := Town.t_at(floori(p.x), floori(p.y))
-		Sound.play("cast")
+		Sound.play("cast"); Sound.play_later("lure_snag" if tt == Town.T.BUSH or tt == Town.T.TREE else "lure_dirt", 0.24)
 		emit_signal("message", "Snagged a bush. Reel it back and try again." if tt == Town.T.BUSH or tt == Town.T.TREE else "That landed on dry land. Try again.")
 		return
 	bob = p; spot = region_at(p); state = "wait"; t = 0.0; wait_t = 0.0; target = null; blind = false; twitch = 0.0
-	Sound.play("cast"); Sound.play_later("plop", 0.22, -2.0 if quiet else 2.0)
+	Sound.play("cast"); Sound.play_later(Soundscape.entry(), 0.22, 0.0 if quiet else 2.0)
+	if not quiet: Sound.play_later("cast_bad", 0.23, -2.0)
 	splash = 0.35 if quiet else 0.7; splash_big = not quiet
 	WaterFx.ripple(p, 0.6 if quiet else 1.1)
 	if not quiet:
@@ -403,7 +404,7 @@ func action_down() -> void:
 			emit_signal("message", "Too early! It spat the hook."); Sound.play("splash", -4)
 			drop_target(6); state = "wait"; wait_t = 0.0; t = 0.0; blind = false
 		"bite":
-			Sound.play("splash")
+			Sound.play("hookset")
 			state = "reel"; tension = 0.35; progress = 0.3; ang = 0.0; run = 0.0; run_t = randf_range(0.6, 1.4); thrash_t = randf_range(1.0, 2.2); holding = true
 			bob0 = bob
 			var a: float = (bob - player.position).angle()
@@ -424,7 +425,7 @@ func twitch_side(dir: int) -> void:
 	if state != "wait" or bob == null: return
 	twitch = 1.4; splash = 0.25; splash_big = false
 	twitch_tilt = -dir
-	Sound.play("plop", -10.0)
+	Sound.play("pop" if Game.S.bait == "popper" else "twitch", -2.0, 0.12)
 	if manhole >= 0: return
 	# dart sideways, then come in: the new spot is always TWITCH_PULL closer to you than before,
 	# however the lure sits, so every twitch in either direction reels it in a little
@@ -519,7 +520,7 @@ func update(dt: float) -> void:
 			if side >= 1: tension += 0.3; ang *= 0.4; emit_signal("message", "It ran the line sideways! Pull the other way.")
 			thrash_t -= dt
 			if thrash_t <= 0:
-				tension += fp * 0.32 * rt; splash = 0.45; splash_big = true; Sound.play("splash", -3); thrash_t = randf_range(1.1, 3.0) / (0.55 + fp)
+				tension += fp * 0.32 * rt; splash = 0.45; splash_big = true; Sound.play(Soundscape.fish_splash(fw), -2.0, 0.08); thrash_t = randf_range(1.1, 3.0) / (0.55 + fp)
 			tension = maxf(0.0, tension)
 			var k := clampf(progress, 0, 1) * 0.85
 			bob = bob0 + (shore - bob0) * k + perp * ang * 1.6
@@ -529,7 +530,7 @@ func update(dt: float) -> void:
 				state = "idle"; holding = false; drop_target(20); Sound.play("snap")
 				emit_signal("message", "Snap! The line broke." + (" That felt like something legendary." if fish.get("legend", false) else ""))
 			elif progress <= 0:
-				state = "idle"; holding = false; drop_target(20); emit_signal("message", "It got away."); Sound.play("splash")
+				state = "idle"; holding = false; drop_target(20); emit_signal("message", "It got away."); Sound.play(Soundscape.fish_splash(fw))
 			elif progress >= 1: _land()
 	if state == "idle": bob = null; manhole = -1; slide = Vector2.ZERO
 	queue_redraw()
@@ -539,6 +540,7 @@ func _land() -> void:
 	var w := fw if fw > 0 else fish_weight(f)
 	state = "idle"; holding = false
 	Sound.play("legend" if f.get("legend", false) else "catch", 0.0, 0.0)
+	Sound.play("clunk" if f.get("junk", false) else "flop", -3.0, 0.1)
 	if target != null: target.gone = true; target = null
 	var value: int = int(f.flat) if f.has("flat") else maxi(1, int(round(w * f.pp)))
 	var rec: Dictionary = Game.S.journal.get(f.n, {})

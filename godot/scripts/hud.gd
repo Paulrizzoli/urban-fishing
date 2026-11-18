@@ -354,6 +354,7 @@ func _draw_meters() -> void:
 func is_open() -> bool: return modal.visible
 
 func close() -> void:
+	if modal.visible: Sound.play("ui_close", -4.0)
 	modal.visible = false
 
 ## Opens a card. parts: [["h3", text], ["h2", text], ["p", text], ["sub", text], ["quote", text],
@@ -555,6 +556,7 @@ func open(parts: Array, wide := false, width := 0.0) -> void:
 					hb.add_child(b)
 				card_box.add_child(hb)
 	if not modal.visible:
+		Sound.play("ui_open", -4.0)
 		modal.visible = true
 		modal.modulate.a = 0
 		var card: Control = card_box.get_parent().get_parent()

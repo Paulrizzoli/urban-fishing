@@ -58,6 +58,7 @@ var water_fx: WaterFx
 var traffic: Traffic
 var harbor: Harbor
 var town_life: TownLife
+var soundscape: Soundscape
 var base_zoom := 1.0
 var zoom_k := 1.0        # extra zoom while a fish is on the line
 var shake := 0.0         # seconds of screen shake left
@@ -284,6 +285,12 @@ func _ready() -> void:
 	traffic.setup(ents)
 	traffic.hit_player.connect(_knocked_down)
 	Obstacles.traffic = traffic
+	soundscape = Soundscape.new()
+	soundscape.player = player; soundscape.fishing = fishing; soundscape.traffic = traffic; soundscape.harbor = harbor; soundscape.guards = guards
+	soundscape.menu_open = func() -> bool: return menu != null and menu.title_open
+	add_child(soundscape)
+	soundscape.setup()
+	soundscape.run_test_hooks.call_deferred()
 	town_life = TownLife.new()
 	town_life.player = player
 	add_child(town_life)
@@ -650,11 +657,13 @@ func _want_music() -> String:
 	var z := Player.zone_of(player.position)
 	if Town.level == 1:
 		if z >= 20: return "prowl"
+		if Game.wx.get("storm", false): return "swamp"
 		if Game.darkness() > 0.3: return "miami"
 		return "swamp" if Game.time_band() == "low" or player.position.y < 56 else "steel"
 	if z == 3: return "reactor"
 	if z in [1, 2, 5, 6, 7, 8, 9]: return "prowl"
 	if z == 4: return "swamp"
+	if Game.wx.get("storm", false): return "swamp"
 	if player.position.y > 115: return "miami" if Game.darkness() > 0.3 else "yacht"
 	if Game.darkness() > 0.3: return "miami"
 	if Game.time_band() == "low": return "swamp"
@@ -666,7 +675,6 @@ func _audio(dt: float) -> void:
 		music_t = 0.5
 		Sound.set_music(_want_music())
 	Sound.set_ambience(clampf(Game.darkness() / 0.62, 0, 1), Game.wx.rain)
-	Sound.set_reeling(fishing.state == "reel" and fishing.holding and not hud.is_open())
 	alert_t -= dt
 	if guards.detect > 0.05 and prev_detect <= 0.05 and alert_t <= 0: Sound.play("alert"); alert_t = 3.0
 	prev_detect = guards.detect
