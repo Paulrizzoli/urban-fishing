@@ -274,6 +274,8 @@ func _ready() -> void:
 	world.add_child(guards)
 	guards.setup(ents)
 	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--guards="): guards.walk_ahead(float(a.substr(9)))
+	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--hoa="): guards.hoa_t = float(a.substr(6))   # where the HOA resident's car is in its run
 	traffic = Traffic.new()
 	traffic.player = player
