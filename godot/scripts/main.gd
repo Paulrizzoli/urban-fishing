@@ -27,7 +27,9 @@ var glow_node: Drawer
 var sky_nodes: Array = []
 var save_t := 0.0
 var near := ""
-var latch := { "shop": false, "home": false, "marina": false, "drain": false }
+var latch := { "shop": false, "home": false, "marina": false, "drain": false, "boat": false }
+var watch_zone := -1
+var watch_seen := {}   # zone -> when its "who's watching" line last showed (seconds)
 const DRAIN_GRATE := Vector2(46.5, 57.5)
 var guards: Guards
 var prev_zone := 0
@@ -67,9 +69,9 @@ var test_frames := 0
 var test_shot_frame := 90   # --shot-frame=N takes the shot later, e.g. to see a prompt fade out
 
 func _ready() -> void:
-	# the test hooks that put you somewhere or deep in the story start with the whole town open
+	# the test hooks that put you somewhere or deep in the story skip Lou's sneaking lesson
 	for a in OS.get_cmdline_user_args():
-		if a.begins_with("--at=") or a.begins_with("--story=") or a.begins_with("--act2=") or a.begins_with("--boat="): Game.S.unlock = Unlocks.LAST
+		if a.begins_with("--at=") or a.begins_with("--story=") or a.begins_with("--act2=") or a.begins_with("--boat="): Game.S.sneak_lesson = true
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--at="):
 			var v := a.substr(5).split(",")
@@ -77,6 +79,7 @@ func _ready() -> void:
 		if a.begins_with("--shot="): test_shot = a.substr(7)
 		if a.begins_with("--shot-frame="): test_shot_frame = int(a.substr(13))
 		if a.begins_with("--boat="): Game.S.boat = true; Game.S.boat_kind = a.substr(7); Game.S.gear.kayak = 1; Game.S.gear.skiff = 1
+		if a == "--lesson": Game.S.sneak_lesson = false   # see Lou's sneaking lesson on the next guarded ground
 		if a.begins_with("--day="): Game.S.day = int(a.substr(6)); Game.S.min += (Game.S.day - 1) * 1440.0
 		if a.begins_with("--story="): Game.S.saga.ch = int(a.substr(8)) - 1; Game.S.saga.done = int(a.substr(8)) > 1; Game.S.day = maxi(int(Game.S.day), Story.NOTE_DAY)
 		if a == "--gear=all":
@@ -96,7 +99,6 @@ func _ready() -> void:
 			for f in [[1, 2], [1, 4], [1, 5], [4, 1], [14, 4], [15, 0], [2, 7], [16, 7]]:
 				var fd: Dictionary = Game.spots[f[0]].fish[f[1]]
 				Game.S.cooler.append({ "n": fd.n, "w": fd.w[0], "value": 20 + f[1] * 7, "spot": f[0], "legend": fd.get("legend", false), "junk": fd.get("junk", false), "day": 1, "tm": 0 })
-		if a.begins_with("--unlock="): Game.S.unlock = int(a.substr(9)); Game.S.started = true
 		if a.begins_with("--act2="): Game.S.saga.finished = true; Game.S.saga.ch = 7; Game.S.act2.ch = int(a.substr(7)) - 1; Game.S.act2.done = int(a.substr(7)) > 1; Game.S.day = maxi(int(Game.S.day), 9)
 	Game.wx = Weather.compute(int(Game.S.day), Game.hour())
 	RenderingServer.set_default_clear_color(Color("#0b1a3a"))
@@ -248,13 +250,10 @@ func _ready() -> void:
 	guards.busted.connect(_busted)
 	Game.new_day.connect(_on_new_day)
 	if Game.cur_order() == null: Game.new_order()
-	elif Unlocks.step() == 1 and not Game.S.order.done and not Game.order_easy(Game.cur_order()): Game.new_order()
+	elif Unlocks.early() and not Game.S.order.done and not Game.order_easy(Game.cur_order()): Game.new_order()
 	var line := Drawer.make(fishing.draw_line_layer, 0, true)
 	line.z_index = 5
 	world.add_child(line)
-	var bars := Drawer.make(func(ci): Unlocks.draw_barriers(ci, _view_tiles()), 0, true)
-	bars.z_index = 3
-	world.add_child(bars)
 	var wxd := Drawer.make(func(ci): Weather.ripples(ci, _view_tiles()), 0, true)
 	wxd.z_index = 4
 	world.add_child(wxd)
@@ -494,10 +493,10 @@ func _process(dt: float) -> void:
 		if ach_t > 1:
 			ach_t = 0
 			for a in Story.check_ach(): Game.toast.emit("%s: %s +$50, +3 rep" % [a[1], a[2]], "LOU'S WALL OF FAME")
-			if fishing.state == "idle" and Game.S.started and Unlocks.ready():
-				Sound.play("plaque"); hud.open(Unlocks.advance(hud.close)); player.rebuild_grids()
 		if player.position.y > 115 and not Game.S.visited.has("dt"): Game.S.visited.dt = 1; hud.flash("Downtown Port Mullet. The bay is at the bottom of the street.")
 		_drain_hint()
+		_watch_hint()
+		_boat_hint()
 	near = ""
 	if fishing.state == "idle":
 		if player.in_boat(): near = "fish"
@@ -584,7 +583,37 @@ func _test_shot() -> bool:
 		get_tree().quit()
 	return true
 
-## Walk up to the storm drain grate and it tells you what's stopping you: the town step it opens at, or the gear you're missing.
+## Walk up to the storm drain grate and it tells you what's stopping you: the gear you're missing.
+## Walking into a guarded place: Lou's sneaking lesson the first time, then a line about who's watching and when.
+func _watch_hint() -> void:
+	var z := Player.zone_of(player.position)
+	if z == watch_zone: return
+	watch_zone = z
+	var note := Unlocks.watch_note(z)
+	if note == "": return
+	if z in Unlocks.GUARDED_ZONES and not Game.S.get("sneak_lesson", false) and fishing.state == "idle" and not hud.is_open():
+		Game.S.sneak_lesson = true; Game.save_game()
+		hud.open(Unlocks.sneak_lesson(z, hud.close)); return
+	var now := Time.get_ticks_msec() / 1000.0
+	if now - float(watch_seen.get(z, -999.0)) < 90.0: return
+	watch_seen[z] = now
+	hud.flash(note); hud.hint_t = 7.0
+
+## Paddling up to water your boat can't take: the kayak at the open ocean, the skiff at the warm outflow.
+func _boat_hint() -> void:
+	if not player.in_boat(): latch.boat = false; return
+	var kind := player.boat_kind()
+	var ahead := player.position + Vector2.from_angle(player.face) * 0.9
+	var t := Town.t_at(floori(ahead.x), floori(ahead.y))
+	var why := ""
+	if t == Town.T.DEEP and kind != "skiff": why = "Past the channel markers it's open ocean, too rough for a kayak. You need a skiff. The marina downtown sells one."
+	elif t == Town.T.WARM and kind == "skiff": why = "The outflow channel is too tight and shallow for the skiff. Bring the kayak."
+	if why == "": latch.boat = false; return
+	var now := Time.get_ticks_msec() / 1000.0
+	if latch.boat or not player.moving or now - float(watch_seen.get("boat", -999.0)) < 30.0: return
+	latch.boat = true; watch_seen["boat"] = now
+	hud.flash(why); hud.hint_t = 5.0
+
 func _drain_hint() -> void:
 	var d := player.position.distance_to(DRAIN_GRATE)
 	if d > 2.4: latch.drain = false
@@ -772,7 +801,6 @@ func _unhandled_input(e: InputEvent) -> void:
 			fishing.start_cast(wp); fishing.power = pw; fishing.t = tt
 			return
 		if fishing.state != "idle": _action_down(); return
-		if not Unlocks.open_p(wp): hud.flash("Road closed for now. " + Unlocks.goal() + ". Press M for the map.")
 		if fishing.near_water() and fishing.is_water(wp) and wp.distance_to(player.position) <= Fishing.MAXR + 0.6:
 			fishing.start_cast(wp); return
 		player.walk_to(wp)
@@ -831,7 +859,6 @@ func _on_landed(c: Dictionary) -> void:
 	if not c.junk and (c.legend or c.record or float(c.w) >= 12.0):
 		shake = 0.5; shake_px = 14.0 if c.legend else 8.0
 	Story.on_catch(c)
-	Unlocks.on_catch(c)
 	var worn := Crafting.wear(c)
 	if int(c.spot) == 15 and Game.rod_level() < 4 and c.pull > 0.75 and not Game.S.get("big_rod_hint", false):
 		Game.S.big_rod_hint = true; Game.hint.emit("That nearly pulled your arms off. The marina sells a big-game rod.")
@@ -907,10 +934,10 @@ func open_shop() -> void:
 							func(ci, r): ItemIcons.draw_catch(ci, cc, r)])
 				parts.append(["row", [["Sell everything for " + Game.money(total), _sell_all, true, "go"]]])
 			last_sale = 0
-			if Unlocks.step() == 1 and Story.species_got() < Unlocks.SPECIES_2:
+			if Story.species_got() < Unlocks.SPECIES_EARLY:
 				var tips := Unlocks.lou_tips(3)
 				if not tips.is_empty():
-					parts.append(["p", "Lou: \"You need more kinds of fish to get out of this neighborhood. Here's what's biting around here.\""])
+					parts.append(["p", "Lou: \"Still learning? Here's what's biting on the public water. No gear, no guards.\""])
 					for tp in tips: parts.append(["sub", tp])
 		"order":
 			var o = Game.cur_order()
@@ -1121,8 +1148,6 @@ func _chips() -> Array:
 	var out := []
 	var g := Story.goal_text()
 	if g != "": out.append([g, "coral"])
-	var u := Unlocks.chip()
-	if u != "": out.append([u, "sea"])
 	var o = Game.cur_order()
 	if o != null:
 		out.append(["Lou's order: done ✓" if Game.S.order.done else "Lou wants: %s (%d/%d)" % [o.s, mini(Game.order_matches().size(), int(o.count)), int(o.count)], "paper"])
@@ -1468,10 +1493,9 @@ func open_journal() -> void:
 var map_view: MapView
 func open_map() -> void:
 	map_view = MapView.new(self)
-	map_view.locked = Unlocks.map_overlay() if Unlocks.step() < Unlocks.LAST else null
 	map_view.custom_minimum_size = Vector2(0, get_viewport_rect().size.y - 250)
 	hud.open([["h3", "Port Mullet · drag to move, scroll or + and − to zoom"], ["node", map_view],
-		["sub", "Zoom in for street names and how many of each spot's fish you've caught. Lou's is on US-1; downtown and the bay are way down south." + ("" if Unlocks.step() >= Unlocks.LAST else " Grey: closed for now. " + Unlocks.goal() + ".")],
+		["sub", "Zoom in for street names and how many of each spot's fish you've caught. Lou's is on US-1; downtown and the bay are way down south. Every place is open from day one. The red-striped places are private and watched, so go when the guards are away, or bring a disguise."],
 		["row", [["Close", func(): hud.close(), true, "hot"], ["Journal (J)", open_journal]]]], true)
 
 # ---------- the Route 1 bus ----------
@@ -1481,8 +1505,7 @@ func open_bus(i: int) -> void:
 	for j in Story.BUS.size():
 		if j == i: continue
 		var jj := j
-		var open := Unlocks.open_p(Story.BUS[j][1])
-		parts.append(["item", Story.BUS[j][0], Story.BUS[j][2] if open else "Road closed for now. " + Unlocks.goal() + ".", "Ride ($2)" if open else "Closed", func(): _ride_bus(jj), Game.S.cash >= 2 and open])
+		parts.append(["item", Story.BUS[j][0], Story.BUS[j][2], "Ride ($2)", func(): _ride_bus(jj), Game.S.cash >= 2])
 	parts.append(["row", [["Walk instead", func(): hud.close(), true, "hot"]]])
 	hud.open(parts)
 

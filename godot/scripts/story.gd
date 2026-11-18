@@ -88,7 +88,7 @@ static func goal_text() -> String:
 	var S: Dictionary = Game.S.saga
 	var c := saga_cur()
 	if not c.is_empty():
-		if S.done: return "Story: Lou's next job needs more of the map open" if _waiting() else "Story: head back to Lou's"
+		if S.done: return "Story: head back to Lou's"
 		if c.kind == "pay": return "Story: %s (%s of %s)" % [c.goal, Game.money(S.paid_ch), Game.money(c.amt)]
 		if c.kind == "payoff": return "Story: %s, %s left" % [c.goal, Game.money(S.left)]
 		return "Story: " + c.goal
@@ -98,18 +98,11 @@ static func goal_text() -> String:
 	if Game.S.saga.finished and int(Game.S.act2.ch) == 0 and int(Game.S.day) > int(Game.S.saga.fin_day): return "Lou wants you to see something on TV"
 	return ""
 
-## Lou's next job (Heron Lakes, then the power station) waits until that part of town is open.
-static func _waiting() -> bool:
-	var S: Dictionary = Game.S.saga
-	if S.finished or not S.done: return false
-	var nxt := int(S.ch) + 1
-	return (nxt == 3 and Unlocks.step() < 3) or (nxt == 4 and Unlocks.step() < 4)
-
 static func _complete(which: String) -> void:
 	var S: Dictionary = Game.S[which]
 	if S.done: return
 	S.done = true
-	Game.hint.emit("Story: Lou's next job needs more of the map open." if _waiting() else "Story: head back to Lou's.")
+	Game.hint.emit("Story: head back to Lou's.")
 	Game.save_game()
 
 static func on_catch(c: Dictionary) -> void:
@@ -162,7 +155,6 @@ static func _saga_scene() -> Array:
 		S.ch = 1; S.done = false; S.paid_ch = 0; Game.save_game()
 		return _saga_card(0, 1)
 	if not S.done or saga_cur().is_empty(): return []
-	if _waiting(): return []
 	var prev := int(S.ch)
 	var c: Dictionary = SAGA[prev]
 	if c.has("reward"): S.left = maxi(0, int(S.left) - int(c.reward))

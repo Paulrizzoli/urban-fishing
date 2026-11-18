@@ -33,11 +33,10 @@ func _grid(solid: Callable) -> AStarGrid2D:
 ## Static walls for path planning. Gates count as open; collision decides at the gate itself.
 static func walk_solid(x: int, y: int) -> bool:
 	var t: int = Town.tile[Town.idx(x, y)]
-	if not Unlocks.open_at(x, y): return true
 	if t == Town.T.PGATE or t == Town.T.HGATE or t == Town.T.GRATE: return false
 	return t in Town.BLOCK
 
-## Call after part of town opens up.
+## Call after the walkable map changes.
 func rebuild_grids() -> void:
 	walk_grid = _grid(func(x, y): return walk_solid(x, y))
 	boat_grids.clear()
@@ -49,7 +48,7 @@ func in_boat() -> bool: return Game.S.get("boat", false)
 func boat_kind() -> String: return Game.S.get("boat_kind", "kayak")
 
 func walkable(x: int, y: int) -> bool:
-	if not Town.inb(x, y) or not Unlocks.open_at(x, y): return false
+	if not Town.inb(x, y): return false
 	var t: int = Town.tile[Town.idx(x, y)]
 	var h := Game.hour()
 	match t:
@@ -60,7 +59,6 @@ func walkable(x: int, y: int) -> bool:
 
 ## Why you can't go through the storm drain grate right now, in plain words, or "" if you can.
 static func drain_block() -> String:
-	if not Unlocks.open_at(46, 57): return "The storm drain is barricaded for now. It opens with the last part of town. " + Unlocks.goal() + "."
 	var miss := []
 	if not Game.S.gear.has("flashlight"): miss.append("a flashlight")
 	if not Game.S.gear.has("waders"): miss.append("waders")
@@ -68,7 +66,7 @@ static func drain_block() -> String:
 	return "The storm drain grate. You need %s to go down there. Lou sells %s." % [" and ".join(miss), "both" if miss.size() > 1 else "it"]
 
 static func boatable(x: int, y: int, kind: String) -> bool:
-	if not Town.inb(x, y) or not Unlocks.open_at(x, y): return false
+	if not Town.inb(x, y): return false
 	if Town.in_bridge(x, y): return true
 	var t: int = Town.tile[Town.idx(x, y)]
 	if not Town.is_water_t(t): return false

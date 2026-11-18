@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.26 | Nov 18, 2026 | The whole town is open from day one: places are kept from you by gear or guards, not by progress |
 | v0.9.25 | Nov 18, 2026 | Lou's bait chart the first time you walk into Lou's, and place names that fade after 5 seconds |
 | v0.9.24 | Nov 18, 2026 | The storm drain tells you what you still need to get in, and the grate is easier to walk through |
 | v0.9.23 | Nov 18, 2026 | A detailed town map: street names, building roofs, real shorelines, fishing spot and shop icons, a legend |
@@ -49,6 +50,19 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.26 · The whole town, from day one
+
+_Nov 18, 2026 · Builds: `UrbanFishing-v0.9.26-windows.zip`, `UrbanFishing-v0.9.26-godot-project.zip`, screenshots in `screenshots/v0.9.26/`_
+
+- **No more opening the map in steps:** every road, bus stop and body of water is open from the start. The barricades, the buoy lines, the grey "closed for now" areas on the map and the "Map: catch 5 kinds of fish" goal are gone, and so are the "Map unlocked" cards. The bus goes everywhere on day one.
+- **What still keeps you out is gear or people:**
+  - Gear: the storm drain needs a flashlight and waders, the manholes need a pry bar, the open ocean past the channel markers needs the skiff, and the warm outflow channel is kayak only.
+  - People: every private place keeps its guards, staff, cameras and floodlights on their usual hours, so you go when they're away or bring the right disguise.
+- **Each place tells you what you need:** walk into a guarded place and a line says who's watching and when it's your turn, for example "Pelican Point golf course. The groundskeeper drives his cart around 6 AM to 7 PM. Come after dark, or wear a golf polo from Lou's." The marina only says so after 9 PM, when the docks close. Paddle a kayak up to the open ocean and it tells you to get a skiff; the storm drain grate says which of the flashlight and waders you're missing.
+- **Lou still teaches the small stuff:** his bait chart on your first visit, tips in the Sell tab while you've caught fewer than 5 kinds of fish (now pointing at the public water you can fish with no gear and no guards), and easy first orders until you've filled one. Lou's sneaking lesson ("Time you learned to sneak.") now shows the first time you walk onto guarded ground, with that place's hours.
+- **Story:** Lou's jobs at Heron Lakes and the power station no longer wait for the map to open up.
+- **Old saves:** load as they are, with the whole town open. A save that had already reached Lou's sneaking lesson doesn't see it again.
 
 ## v0.9.25 · Lou's bait chart up front, and place names that fade
 
