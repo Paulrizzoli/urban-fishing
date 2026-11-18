@@ -119,6 +119,7 @@ static func build() -> void:
 	launch_k = [2, 9, 13, 14]; launch_s = [13, 14]
 	if level == 1:
 		Ironwater.build()
+		Buyers.place()
 		_join_roads()
 		_build_driveways()
 		_build_depth()
@@ -323,7 +324,7 @@ static func _build_downtown() -> void:
 	rect(0, 139, 18, 153, T.CONC)
 	bld(1, 140, 9, 6, "#f4efe4", "flat", "CITY HALL"); sky(12, 140, 6, 6, "#9aa6ad", 10); sky(1, 148, 7, 5, "#c9b6e4", 7); sky(10, 148, 8, 5, "#5bb5a9", 5)
 	rect(23, 139, 38, 153, T.CONC)
-	sky(24, 140, 7, 7, "#3d6e8e", 20, "ONE MULLET PLACE", { "heli": true, "glass": true }); sky(33, 140, 5, 6, "#f3a6a0", 8); bld(24, 149, 14, 4, "#f1d9a8", "flat", "SEASIDE MARKET")
+	sky(24, 140, 7, 7, "#3d6e8e", 20, "ONE MULLET PLACE", { "heli": true, "glass": true }); sky(33, 140, 5, 6, "#f3a6a0", 8)   # the Seaside Fish Market below is one of the Buyers
 	rect(44, 139, 77, 153, T.CONC)
 	sky(45, 140, 6, 6, "#8cc0de", 13); sky(53, 140, 6, 6, "#e98a7b", 9); sky(61, 140, 7, 6, "#9fd3c7", 17, "SKYLINE ONE", { "ant": true, "glass": true }); sky(70, 140, 7, 6, "#f6c86d", 8)
 	bld(45, 148, 10, 5, "#b8c1c6", "flat", "PARKING"); bld(57, 148, 9, 5, "#f4efe4", "flat"); bld(68, 148, 9, 5, "#e2583e", "flat", "THE RIVER ROOM")
@@ -337,7 +338,9 @@ static func _build_downtown() -> void:
 	lamps.append_array([Vector2(30.5, 160), Vector2(30.5, 163), Vector2(26.6, 165.5), Vector2(35.4, 165.5), Vector2(47, 128.4), Vector2(75, 128.4), Vector2(47, 133.4), Vector2(75, 133.4)])
 	for x in range(86, 107, 5): lamps.append(Vector2(x + 0.5, 158.5))
 	for y in [111, 126, 145]: lamps.append(Vector2(81.5, y))
-	labels.append_array([{ "t": "MULLET BAY", "x": 52.0, "y": 168.6 }, { "t": "OFFSHORE · SKIFF ONLY", "x": 52.0, "y": 177.0 }, { "t": "BIRD KEY", "x": 62.0, "y": 161.0 }, { "t": "MULLET BEACH", "x": 9.0, "y": 159.0 }, { "t": "MUNICIPAL PIER", "x": 30.8, "y": 168.1 }])
+	labels.append_array([{ "t": "MULLET BAY", "x": 52.0, "y": 168.6 }, { "t": "OFFSHORE · SKIFF ONLY", "x": 52.0, "y": 177.0 }, { "t": "BIRD KEY", "x": 62.0, "y": 161.0 }, { "t": "MULLET BEACH", "x": 14.5, "y": 160.2 }, { "t": "MUNICIPAL PIER", "x": 30.8, "y": 168.1 }])
+	# the fish shack on Mullet Beach and the fish market on Bayshore Dr (see buyers.gd)
+	Buyers.place()
 	# the home is the yellow house by Maple Park Pond
 	for b in buildings:
 		if b.x == 8 and b.y == 7:

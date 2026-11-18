@@ -228,6 +228,10 @@ func refresh(near: String) -> void:
 		"idle":
 			label = { "fish": "Cast", "shop": "Go in" if Town.level == 1 else "Enter Lou's", "home": "Go inside", "marina": "Enter the marina", "fin": "Peek inside" if Fintastic.closed() else "Enter FINTASTIC!", "oldtimer": "Talk to the old-timer", "rosa": "Talk to Walt" if Town.level == 1 else "Talk to Rosa", "bus": "Ride the bus", "part": "Pick it up",
 				"manhole": "Fish the manhole" if S.gear.has("prybar") else "Lift the cover" }.get(near, "")
+			if near.begins_with("buy:"):
+				var bd := Buyers.by_id(near.substr(4))
+				label = ("Go in" if Buyers.open_now(bd) else "Closed: look in") if not bd.is_empty() else ""
+			elif near.begins_with("board:"): label = "Read the price board"; col = TEAL
 			if near in ["oldtimer", "rosa", "marina", "bus", "part"]: col = TEAL
 		"power": label = "Release!"
 		"wait": label = ("Pulling up…" if fishing.holding else "Jig the line") if fishing.manhole >= 0 else "Retrieving…" if fishing.holding else "Twitch the lure"; col = PAPER
@@ -243,7 +247,7 @@ func refresh(near: String) -> void:
 	action.add_theme_color_override("font_hover_color", Color.WHITE if col == CORAL else INK)
 	action.add_theme_color_override("font_pressed_color", Color.WHITE if col == CORAL else INK)
 	var dt := get_process_delta_time()
-	if st == "idle" and near in PLACES:
+	if st == "idle" and (near in PLACES or near.begins_with("buy:") or near.begins_with("board:")):
 		if near != place_near: place_near = near; place_t = 0.0
 		place_t += dt
 	else: place_near = ""; place_t = 0.0
@@ -259,6 +263,11 @@ func refresh(near: String) -> void:
 			"nibble": m = "It's nibbling… wait for the big dip."
 			"bite": m = "NOW!"
 			"reel": m = "Hold to reel. Keep the needle in the green. Pull ◀ ▶ against the fish."
+		if st == "idle" and (near.begins_with("buy:") or near.begins_with("board:")):
+			var bd := Buyers.by_id(near.get_slice(":", 1))
+			if not bd.is_empty():
+				if near.begins_with("board:"): m = "%s's price board. Press E to read today's prices." % bd.name
+				else: m = "%s. %s %s. Press E to go in." % [bd.name, "Open" if Buyers.open_now(bd) else "Closed. Open", Buyers.hours_text(bd)]
 		if place_near != "":
 			if place_t >= PLACE_SECS: m = ""
 			else: hint.modulate.a = clampf((PLACE_SECS - place_t) / 0.6, 0.0, 1.0)

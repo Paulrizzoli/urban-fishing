@@ -148,6 +148,7 @@ const PAPER := Color(0.98, 0.95, 0.89)
 const SPOT_BLUE := Color("#2b7ea6")
 const GOLD := Color("#f2b134")
 const SHOP_RED := Color("#e2583e")
+const FOOD := Color("#13807b")   # restaurants and fish markets on the map
 
 ## Where each fishing spot's marker goes, in tiles. Big waters get a hand-picked spot so it doesn't sit on a label or a bridge.
 const SPOT_AT := { 2: Vector2(70.5, 52.5), 7: Vector2(18.5, 63.5), 9: Vector2(70.5, 79.5), 13: Vector2(79.5, 128), 14: Vector2(44, 163.5), 15: Vector2(30, 177.5) }
@@ -155,7 +156,12 @@ const SPOT_AT := { 2: Vector2(70.5, 52.5), 7: Vector2(18.5, 63.5), 9: Vector2(70
 const PLACES := [["Lou's Bait & Tackle", Vector2(49, 29.5), "hook"], ["Mullet Bay Marina", Vector2(88.5, 142.5), "anchor"], ["FINTASTIC! Outdoors", Vector2(88.5, 124.5), "bag"]]
 const PLACES2 := [["Calder River Outfitters", Vector2(33.5, 85.5), "hook"], ["Ironwater Station", Vector2(25, 168), "bag"]]
 const SPOT_AT2 := { 20: Vector2(66, 14), 21: Vector2(56, 44), 22: Vector2(56, 112) }
-static func places() -> Array: return PLACES2 if Town.level == 1 else PLACES
+static func places() -> Array:
+	var out: Array = (PLACES2 if Town.level == 1 else PLACES).duplicate()
+	for bd in Buyers.here():
+		var r: Array = bd.bld
+		out.append([bd.name, Vector2(float(r[0]) + float(r[2]) / 2.0, float(r[1]) + float(r[3]) / 2.0), "fork" if bd.kind == "restaurant" else "fish"])
+	return out
 
 static var _spots: Array = []     # [id, tile, name]
 
@@ -317,7 +323,7 @@ static func bus_icon(ci: CanvasItem, p: Vector2, s: float) -> void:
 static func place_icon(ci: CanvasItem, p: Vector2, s: float, kind: String) -> void:
 	ci.draw_circle(p + Vector2(1, 1.5), s, Color(0, 0, 0, 0.25))
 	ci.draw_circle(p, s, PAPER)
-	ci.draw_circle(p, s * 0.84, SHOP_RED if kind != "anchor" else Color("#1f4e79"))
+	ci.draw_circle(p, s * 0.84, Color("#1f4e79") if kind == "anchor" else FOOD if kind in ["fork", "fish"] else SHOP_RED)
 	var w := maxf(1.6, s * 0.16)
 	match kind:
 		"hook":
@@ -330,6 +336,19 @@ static func place_icon(ci: CanvasItem, p: Vector2, s: float, kind: String) -> vo
 			ci.draw_line(p + Vector2(-s * 0.25, -s * 0.25), p + Vector2(s * 0.25, -s * 0.25), PAPER, w, true)
 			ci.draw_arc(p + Vector2(0, s * 0.12), s * 0.4, 0.15, PI - 0.15, 12, PAPER, w, true)
 			ci.draw_arc(p + Vector2(0, -s * 0.52), s * 0.12, 0, TAU, 10, PAPER, w * 0.7, true)
+		"fork":
+			# a fork and a knife
+			ci.draw_line(p + Vector2(-s * 0.22, -s * 0.5), p + Vector2(-s * 0.22, s * 0.52), PAPER, w, true)
+			for dx in [-0.4, -0.22, -0.04]: ci.draw_line(p + Vector2(s * dx, -s * 0.52), p + Vector2(s * dx, -s * 0.18), PAPER, w * 0.6, true)
+			ci.draw_line(p + Vector2(-s * 0.4, -s * 0.18), p + Vector2(-s * 0.04, -s * 0.18), PAPER, w * 0.7, true)
+			ci.draw_colored_polygon(PackedVector2Array([p + Vector2(s * 0.18, -s * 0.52), p + Vector2(s * 0.4, -s * 0.3), p + Vector2(s * 0.36, s * 0.05), p + Vector2(s * 0.18, s * 0.05)]), PAPER)
+			ci.draw_line(p + Vector2(s * 0.26, 0), p + Vector2(s * 0.26, s * 0.52), PAPER, w, true)
+		"fish":
+			var pts := PackedVector2Array()
+			for i in 14: pts.append(p + Vector2(-s * 0.1 + cos(i * TAU / 14) * s * 0.4, sin(i * TAU / 14) * s * 0.24))
+			ci.draw_colored_polygon(pts, PAPER)
+			ci.draw_colored_polygon(PackedVector2Array([p + Vector2(s * 0.22, 0), p + Vector2(s * 0.55, -s * 0.28), p + Vector2(s * 0.55, s * 0.28)]), PAPER)
+			ci.draw_circle(p + Vector2(-s * 0.3, -s * 0.04), s * 0.06, FOOD)
 		"bag":
 			ci.draw_rect(Rect2(p + Vector2(-s * 0.38, -s * 0.18), Vector2(s * 0.76, s * 0.66)), PAPER)
 			ci.draw_arc(p + Vector2(0, -s * 0.18), s * 0.2, PI, TAU, 10, PAPER, w, true)
@@ -354,7 +373,7 @@ func _compass(ci: CanvasItem, c: Vector2) -> void:
 
 func _legend(ci: CanvasItem) -> void:
 	var rows := [["you", "You"], ["home", "Home"], ["spot", "Fishing spot (fish caught / all)"], ["all", "Every fish caught there"],
-		["shop", "Shop"], ["bus", "Bus stop ($2 ride)"], ["private", "Private: keep your head down"], ["road", "Street"]]
+		["shop", "Shop"], ["food", "Restaurant · fish market"], ["bus", "Bus stop ($2 ride)"], ["private", "Private: keep your head down"], ["road", "Street"]]
 	var fs := 12
 	var lh := 22.0
 	var w := 236.0
@@ -373,6 +392,7 @@ func _legend(ci: CanvasItem) -> void:
 			"spot": spot_icon(ci, ic, 8)
 			"all": spot_icon(ci, ic, 8, true, true)
 			"shop": place_icon(ci, ic, 8.5, "hook")
+			"food": place_icon(ci, ic + Vector2(-5, 0), 7, "fork"); place_icon(ci, ic + Vector2(6, 0), 7, "fish")
 			"bus": bus_icon(ci, ic, 7)
 			"private":
 				var sw := Rect2(ic - Vector2(10, 7), Vector2(20, 14))

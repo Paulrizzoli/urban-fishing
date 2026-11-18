@@ -1,0 +1,95 @@
+{
+ "_about": "Fish buyers besides Lou and Dot, town by town (0 Port Mullet, 1 Ironwater). Each town can have any number. kind 'restaurant': a chef buys only today's catch, only what's on today's menu, a few a day, and pays extra. kind 'market': buys any fish, at prices that change every day, posted on a board by the door. bld is [x, y, w, h] in tiles; the door is in the middle of the bottom row unless door is given. board is where the price board stands. See scripts/buyers.gd.",
+ "0": [
+  {
+   "id": "shack", "kind": "restaurant", "name": "Bonita's Fish Shack", "short": "Bonita's", "who": "Bonita", "role": "Chef and owner",
+   "bld": [3, 157, 8, 3], "color": "#4fb3a8", "style": "shack", "sign": "BONITA'S", "subsign": "FISH SHACK · ON THE SAND",
+   "hours": [11, 22], "cap": 6, "fresh": 1.5, "special": 2.2, "dishes_a_day": 4,
+   "look": { "skin": "#b07a52", "hair": "#2a1c14", "coat": "#fbf3e2", "apron": "#e2583e", "hat": "bandana", "hat_col": "#e2583e", "extra": "shades" },
+   "pic": { "wall": "#4fb3a8", "wall2": "#3a9a90", "trim": "#f6c86d", "floor": "#c9a574", "window": "sea", "sign_col": "#e2583e" },
+   "menu": {
+    "Mullet": "Smoked mullet dip", "Mangrove Snapper": "Fried whole snapper", "Sheepshead": "Sheepshead sandwich", "Mahi-Mahi": "Mahi tacos",
+    "Kingfish": "Smoked kingfish spread", "Blackfin Tuna": "Seared tuna bowl", "Blue Crab": "Blue crab cakes", "Spotted Seatrout": "Blackened trout",
+    "Tilapia": "Fried tilapia basket", "Channel Catfish": "Catfish and hushpuppies", "Bluegill": "Fried bream", "Bonnethead Shark": "Shark bites"
+   },
+   "greet": ["Sit anywhere that isn't sandy. So, nowhere.", "You smell like the bay. That's a good start.", "Bring it in the back, mijo. Let me see it.", "Caught today? Then we talk."],
+   "talk": [
+    "Lou buys fish to sell bait. I buy fish to feed people. Different kind of buyer. I pay more, but it has to be swimming this morning.",
+    "Day-old fish goes to Lou. I'm not putting a day-old snapper in front of a tourist. Okay, I am, but not one of yours.",
+    "Whatever's on the special board, I need it bad. That's why it's the special.",
+    "The smoked mullet dip is my grandmother's. The smoker is my grandfather's. He's still mad about it.",
+    "Six fish a day, that's my walk-in. I'm a shack. Hector downtown takes the rest by the pound.",
+    "Snook and redfish? Not on my menu. Bonita has standards and a fishing license.",
+    "Tourists ask if the mahi is dolphin. I say yes. Then I say no. It's a whole bit."
+   ],
+   "blurb": "A blue shack on stilts at the top of Mullet Beach, with a tin roof, a pelican on the sign and a line out the door at lunch."
+  },
+  {
+   "id": "seaside", "kind": "market", "name": "Seaside Fish Market", "short": "the fish market", "who": "Hector", "role": "Fishmonger",
+   "bld": [24, 149, 14, 4], "color": "#f1d9a8", "style": "fishmkt", "sign": "SEASIDE FISH MARKET", "subsign": "FRESH OFF THE BOAT · BY THE POUND",
+   "board": [34.6, 153.6], "hours": [5, 15], "dayold": 0.75, "offlist": 0.7,
+   "look": { "skin": "#d9a77c", "hair": "#4a3a2e", "coat": "#e4e8ea", "apron": "#f2b134", "hat": "cap", "hat_col": "#2b7ea6", "extra": "mustache" },
+   "pic": { "wall": "#e8eef0", "wall2": "#c9d6da", "trim": "#2b7ea6", "floor": "#9aa6ad", "window": "street", "sign_col": "#2b7ea6" },
+   "board_fish": ["Mullet", "Snook", "Redfish", "Spotted Seatrout", "Mangrove Snapper", "Sheepshead", "Mahi-Mahi", "Kingfish", "Blackfin Tuna", "Blue Crab",
+    "Tilapia", "Channel Catfish", "Jack Crevalle", "Bonnethead Shark", "Pinfish", "Ladyfish", "Largemouth Bass", "Peacock Bass"],
+   "greet": ["Ice it or lose it.", "What've you got? Put it on the scale.", "Prices are on the board. The board doesn't lie. I might.", "Morning. Mind the hose."],
+   "talk": [
+    "The board changes every morning at five. Depends what the boats brought in. If they all came back with mullet, mullet's cheap. If nobody caught snapper, I'll pay you anything.",
+    "HOT means the restaurants are calling me for it. CHEAP means I've got a cooler full and nobody's calling.",
+    "Yesterday's fish I still take, but it's yesterday's fish. Three quarters, take it or leave it.",
+    "Lou pays the same every day. I don't. Some days I'm better. Some days, go see Lou.",
+    "Koi? Goldfish? I'll take it, it's a market. I'm not putting it on the board.",
+    "Bonita on the beach buys fresh, off her menu, six a day. I buy by the pound, all day. Everybody wins. Mostly me.",
+    "We close at three. After that the gulls run the place."
+   ],
+   "blurb": "A long, cold room on Bayshore Dr with a hose on the floor, beds of crushed ice, a scale that's been here since the seventies and a chalkboard of today's prices out front."
+  }
+ ],
+ "1": [
+  {
+   "id": "tailrace", "kind": "restaurant", "name": "The Tailrace Supper Club", "short": "the Tailrace", "who": "Marge", "role": "Cook, owner, bartender",
+   "bld": [73, 110, 7, 5], "color": "#7a3a2e", "style": "supper", "sign": "TAILRACE", "subsign": "SUPPER CLUB · FISH FRY",
+   "hours": [16, 23], "cap": 6, "fresh": 1.5, "special": 2.0, "dishes_a_day": 4,
+   "fry_day": 6, "fry_fresh": 1.8, "fry_cap": 12, "fry_dishes": 7,
+   "look": { "skin": "#f0c8a8", "hair": "#c8c8cc", "coat": "#6a8a6a", "apron": "#fbf3e2", "hat": "hairnet", "hat_col": "#c8c8cc", "extra": "glasses" },
+   "pic": { "wall": "#7a3a2e", "wall2": "#5a2a22", "trim": "#c9a574", "floor": "#4a3a2e", "window": "river", "sign_col": "#c93b2a" },
+   "menu": {
+    "Walleye": "Walleye basket", "Yellow Perch": "Lake perch fry", "Black Crappie": "Crappie sandwich", "Bluegill": "Fried bluegill",
+    "Pumpkinseed": "Panfish plate", "Sauger": "Sauger fingers", "White Bass": "Beer-battered white bass", "Rainbow Trout": "Pan-fried trout",
+    "Brook Trout": "Brookie in brown butter", "Brown Trout": "Smoked trout on rye", "Channel Catfish": "Cornmeal catfish", "Smallmouth Bass": "Smallmouth with rye bread"
+   },
+   "greet": ["Sit at the bar, hon. The booths are for people who tip.", "You're the Florida one. Dot told me.", "Kitchen's hot. What've you got?", "Supper's at five. You're early, so you're working."],
+   "talk": [
+    "Friday is fish fry. Every Friday since 1958. I buy twice as much and I pay better, because the whole town comes in and they all want walleye.",
+    "Caught today or don't bother. I can smell yesterday from here.",
+    "The special's on the chalkboard. If you've got it, I'll pay double. If you don't, go get it. The boil's right there.",
+    "Rye bread, coleslaw, potato pancakes, applesauce. You don't get a choice. That's the supper club.",
+    "Dot sells you worms. I sell you a brandy old fashioned. Between us we've got you covered.",
+    "Carp? Gus at the market smokes those. I'm a supper club, hon, not a science fair.",
+    "We open at four. Before that I'm asleep in booth six."
+   ],
+   "blurb": "A dark-wood supper club by the viaduct with a neon fish in the window, a relish tray on every table and a Friday fish fry the whole town lines up for."
+  },
+  {
+   "id": "pubmkt", "kind": "market", "name": "Ironwater Public Market", "short": "the public market", "who": "Gus", "role": "Fish and smokehouse stall",
+   "bld": [82, 110, 14, 6], "color": "#7a8a6a", "style": "hall", "sign": "IRONWATER PUBLIC MARKET", "subsign": "LINDQVIST FISH & SMOKEHOUSE",
+   "board": [93.0, 116.6], "hours": [6, 16], "dayold": 0.75, "offlist": 0.7,
+   "smoke": ["Common Carp", "Mirror Carp", "Freshwater Drum", "Skipjack Herring", "Longnose Gar"],
+   "look": { "skin": "#e8c0a0", "hair": "#c9a060", "coat": "#a8382e", "apron": "#5a4a3a", "hat": "beanie", "hat_col": "#2b4a6a", "extra": "beard" },
+   "pic": { "wall": "#8a9a7a", "wall2": "#6a7a5a", "trim": "#c9a574", "floor": "#6a6460", "window": "hall", "sign_col": "#5a4a3a" },
+   "board_fish": ["Walleye", "Yellow Perch", "Black Crappie", "Sauger", "Smallmouth Bass", "White Bass", "Striped Bass", "Channel Catfish", "Flathead Catfish",
+    "Rainbow Trout", "Brown Trout", "Brook Trout", "Bluegill", "Pumpkinseed", "Common Carp", "Mirror Carp", "Freshwater Drum", "Paddlefish", "Skipjack Herring", "Largemouth Bass"],
+   "greet": ["Gus. Lindqvist Fish and Smokehouse. Since my grandfather.", "Smell that? Applewood. Come in.", "Board's out front. Changes every morning.", "Put it on the scale, let's see."],
+   "talk": [
+    "Carp, drum, gar, skipjack: everybody else turns their nose up, so they never go cheap with me. I smoke 'em. Smoked carp on a cracker, you'd cry.",
+    "The board changes every morning. If the walleye run's on, walleye's cheap. If it's slow, I'll pay up.",
+    "Paddlefish? Now you're talking. Don't ask what I do with the eggs. It's legal. Mostly.",
+    "Marge at the Tailrace takes the fresh stuff for her fry, a few a day. On Fridays she's desperate. Ask her.",
+    "Florida fish? Sure, I'll take them. Nobody up here knows what to do with a mullet, so they're not on the board.",
+    "Yesterday's catch is fine for the smoker. I still pay less for it.",
+    "Market's open six to four. After that it's just me and the smokehouse."
+   ],
+   "blurb": "An old brick market hall by the viaduct, mostly cheese, pickles and flannel, with Gus's fish counter and smokehouse in the back corner where it's warm."
+  }
+ ]
+}
