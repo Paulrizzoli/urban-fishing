@@ -94,8 +94,8 @@ func manhole_near() -> int:
 	return -1
 
 func start_manhole(i: int) -> void:
-	if not Game.S.gear.has("prybar"): emit_signal("message", "The cover's too heavy to lift by hand. Lou sells a pry bar for $15."); return
-	if Game.S.cooler.size() >= Game.S.cooler_cap: emit_signal("message", "Cooler's full. Sell at Lou's first."); return
+	if not Game.S.gear.has("prybar"): emit_signal("message", "The cover's too heavy to lift by hand. %s sells a pry bar for $15." % Buyers.baseline()); return
+	if Game.S.cooler.size() >= Game.S.cooler_cap: emit_signal("message", "Cooler's full. Sell at %s's first." % Buyers.baseline()); return
 	var mh: Dictionary = Game.S.get("mh", {})
 	var r: Dictionary = mh.get(str(i), {})
 	if not r.is_empty() and int(r.day) == int(Game.S.day) and int(r.n) >= MANHOLE_TRIES:
@@ -335,11 +335,11 @@ func visible_shadow(s: Dictionary) -> bool: return not s.leaving and not s.hooke
 # ---------- the minigame ----------
 func start_cast(pt = null) -> void:
 	if not near_water(): return
-	if Game.S.cooler.size() >= Game.S.cooler_cap: emit_signal("message", "Cooler's full. Sell at Lou's first."); return
+	if Game.S.cooler.size() >= Game.S.cooler_cap: emit_signal("message", "Cooler's full. Sell at %s's first." % Buyers.baseline()); return
 	player.path.clear()
 	state = "power"; t = 0.0
 	# the marker starts on the nearest fish in reach (or where you clicked), then it's yours to move
-	var p: Vector2 = player.position + Vector2.from_angle(player.face) * (MINR + reach()) / 2
+	var p: Vector2 = _open_water_ahead()
 	if pt != null: p = pt
 	else:
 		var bd := 99.0
@@ -349,7 +349,25 @@ func start_cast(pt = null) -> void:
 			if d >= MINR and d <= reach() and d < bd: bd = d; p = s.pos
 	set_mark(p)
 
-## How far your rod casts: the garage-sale rod reaches MAXR, every rod up adds a bit more.
+## Where the cast marker starts when there's no fish in reach: the middle of the water you're facing,
+## so on a narrow canal or the mill race it doesn't start out on the far bank. If there's no water
+## that way, the nearest water in reach; if there's none at all, halfway out the way you're facing.
+func _open_water_ahead() -> Vector2:
+	var pos := player.position
+	var fallback := pos + Vector2.from_angle(player.face) * (MINR + reach()) / 2
+	for k in [0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6, -6, 7, -7, 8]:
+		var dir := Vector2.from_angle(player.face + k * PI / 8)
+		var first := -1.0
+		var last := -1.0
+		var d := MINR
+		while d <= reach():
+			if is_water(pos + dir * d):
+				if first < 0: first = d
+				last = d
+			elif first >= 0: break
+			d += 0.25
+		if first >= 0: return pos + dir * (first + last) / 2
+	return fallback
 func reach() -> float: return MAXR + Game.rod_level() * 0.4
 
 ## Puts the cast marker at p, kept between the shortest cast and your rod's reach, and aims at it.

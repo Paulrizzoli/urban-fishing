@@ -29,6 +29,8 @@ static func lot_cars(d: Dictionary) -> Array:
 	for x in range(d.x0, d.x1 + 1):
 		var hh := Town.hash2(x * 17, d.y0 * 5)
 		if hh > 0.55: continue
+		# keep the space in front of a shop or market door clear, so you can walk out of it
+		if Town.t_at(x, d.y0 - 1) == Town.T.DOOR or Town.t_at(x, d.y0 - 2) == Town.T.DOOR: continue
 		var cyy: float = d.y0 + 1.15 + (0.12 if hh > 0.3 else 0.0)
 		out.append([Vector2(x + 0.53, cyy), PI / 2 if hh > 0.2 else -PI / 2, x])
 	return out
@@ -72,5 +74,17 @@ static func depth(p: Vector2, r: float, on_water: bool) -> float:
 			if not c.visible or c.fade < 0.5 or c.position.distance_squared_to(p) > 4.0: continue
 			d = maxf(d, box_depth(p, r, c.position, c.ang, c.L * 0.5, c.W * 0.5))
 	return d
+
+## The tiles a parked car fills, so a walk you click for goes around parked cars instead of
+## into them (and stopping there).
+static func parked_tiles() -> Array:
+	if not _built: _build()
+	var out := []
+	for o in parked:
+		var c: Vector2 = o[0]
+		for y in range(floori(c.y) - 2, floori(c.y) + 3):
+			for x in range(floori(c.x) - 2, floori(c.x) + 3):
+				if box_depth(Vector2(x + 0.5, y + 0.5), 0.2, c, o[1], o[2], o[3]) > 0.0: out.append(Vector2i(x, y))
+	return out
 
 static func blocked(p: Vector2, r: float, on_water: bool) -> bool: return depth(p, r, on_water) > 0.0
