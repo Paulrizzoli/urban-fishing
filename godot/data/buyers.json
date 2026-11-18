@@ -1,5 +1,5 @@
 {
- "_about": "Fish buyers besides Lou and Dot, town by town (0 Port Mullet, 1 Ironwater). Each town can have any number. kind 'restaurant': a chef buys only today's catch, only what's on today's menu, a few a day, and pays extra. kind 'market': buys any fish, at prices that change every day, posted on a board by the door. bld is [x, y, w, h] in tiles; the door is in the middle of the bottom row unless door is given. board is where the price board stands. See scripts/buyers.gd.",
+ "_about": "Fish buyers besides Lou, Dot and Sal, town by town (0 Port Mullet, 1 Ironwater, 2 Gannet Harbor). Each town can have any number. kind 'restaurant': a chef buys only today's catch, only what's on today's menu, a few a day, and pays extra. kind 'market': buys any fish, at prices that change every day, posted on a board by the door. bld is [x, y, w, h] in tiles; the door is in the middle of the bottom row unless door is given. board is where the price board stands. See scripts/buyers.gd.",
  "0": [
   {
    "id": "shack", "kind": "restaurant", "name": "Bonita's Fish Shack", "short": "Bonita's", "who": "Bonita", "role": "Chef and owner",
@@ -90,6 +90,76 @@
     "Market's open six to four. After that it's just me and the smokehouse."
    ],
    "blurb": "An old brick market hall by the viaduct, mostly cheese, pickles and flannel, with Gus's fish counter and smokehouse in the back corner where it's warm."
+  }
+ ],
+ "2": [
+  {
+   "id": "chowder",
+   "kind": "restaurant",
+   "name": "Pilot Street Chowder House",
+   "short": "the Chowder House",
+   "who": "Nora",
+   "role": "Chef and owner",
+   "bld": [44, 52, 11, 4],
+   "color": "#2e4a5e",
+   "style": "supper",
+   "sign": "CHOWDER HOUSE",
+   "subsign": "OYSTERS · CHOWDER · SINCE 1921",
+   "hours": [11, 23],
+   "cap": 8,
+   "fresh": 1.5,
+   "special": 2.2,
+   "dishes_a_day": 4,
+   "look": {"skin": "#f2cfb4", "hair": "#b8452e", "coat": "#fbf3e2", "apron": "#2e4a5e", "hat": "bandana", "hat_col": "#2e4a5e", "extra": "glasses"},
+   "pic": {"wall": "#2e4a5e", "wall2": "#22384a", "trim": "#c9a574", "floor": "#5a4a3a", "window": "street", "sign_col": "#2e4a5e"},
+   "menu": {
+    "Striped Bass": "Grilled striper", "Bluefish": "Smoked bluefish pâté", "Black Sea Bass": "Whole roasted sea bass", "Scup": "Fried porgy",
+    "Atlantic Mackerel": "Pickled mackerel", "Winter Flounder": "Flounder meunière", "Summer Flounder": "Fluke crudo", "Tautog": "Blackfish chowder",
+    "Atlantic Cod": "Fish and chips", "Haddock": "Baked haddock", "Pollock": "Pollock chowder", "Bluefin Tuna": "Tuna tartare"
+   },
+   "greet": ["Stools at the bar, booths for the suits. You're a stool.", "Florida? Don't tell anyone here. Come in.", "Caught it this morning? Show me the eyes.", "Kitchen door's round the back. Mind the oyster shells."],
+   "talk": [
+    "Sal at Pier 6 buys everything at the same price. I buy what's on tonight's board, a few a day, and I pay for it. Has to be caught today.",
+    "Chowder is cod, haddock or pollock. Not tomatoes. Never tomatoes. I will ask you to leave.",
+    "The special's on the chalkboard. Bring me one caught today and I'll pay you more than twice what Sal does.",
+    "Eight dishes a day off the boats. After that the walk-in's full and you're back at the Exchange.",
+    "Bluefish has to be fresh or it tastes like a penny. Smoke it the same day or don't bother.",
+    "Bluefin? If you land one of those under the bridge, you call me first. Not the Exchange. Me.",
+    "We've been on Pilot Street since 1921. The bridge is newer than the bar."
+   ],
+   "blurb": "A narrow old chowder house across from Pier 6, with a long zinc bar, a chalkboard of tonight's fish, a pile of oyster shells out back and the bridge lights in the window."
+  },
+  {
+   "id": "exchange",
+   "kind": "market",
+   "name": "Gannet Fish Exchange",
+   "short": "the Fish Exchange",
+   "who": "Vinnie",
+   "role": "Floor boss",
+   "bld": [42, 32, 15, 8],
+   "color": "#c8b89a",
+   "style": "fishmkt",
+   "sign": "GANNET FISH EXCHANGE",
+   "subsign": "WHOLESALE · RETAIL · SINCE 1888",
+   "board": [54.5, 40.6],
+   "hours": [3, 13],
+   "dayold": 0.75,
+   "offlist": 0.7,
+   "smoke": ["Spiny Dogfish", "Northern Searobin", "American Eel", "Conger Eel"],
+   "look": {"skin": "#d9a77c", "hair": "#2a2420", "coat": "#e4e8ea", "apron": "#e8a33a", "hat": "beanie", "hat_col": "#3a4a5a", "extra": "mustache"},
+   "pic": {"wall": "#c9cfd2", "wall2": "#a8b2b6", "trim": "#3a4a5a", "floor": "#8a949a", "window": "hall", "sign_col": "#3a4a5a"},
+   "board_fish": ["Striped Bass", "Bluefish", "Black Sea Bass", "Scup", "Atlantic Mackerel", "Winter Flounder", "Summer Flounder", "Tautog", "Atlantic Cod", "Haddock", "Pollock", "Atlantic Bonito", "False Albacore", "Bluefin Tuna", "Spiny Dogfish", "Northern Searobin", "Conger Eel", "American Eel", "White Perch", "Cunner"],
+   "greet": ["Outta the way of the forklift!", "Vinnie. Floor boss. What've you got?", "Board's out front. Prices go up at three, down by noon.", "Ice. Scale. Money. That's the Exchange."],
+   "talk": [
+    "The board goes up at three in the morning when the boats come in. If they all brought cod, cod's cheap. If nobody found stripers, I'll pay you anything.",
+    "HOT means the restaurants are on the phone for it. CHEAP means the floor's full of it.",
+    "Dogfish, searobin, eels: the tourists won't touch 'em, but they go to the smokers and the Asian markets, so they never go cheap here.",
+    "Yesterday's fish I still take. Three quarters of the board. That's the Exchange.",
+    "Sal across the lot pays the same every day. I don't. Come here when it's HOT, go to Sal when it's not.",
+    "Nora at the Chowder House buys fresh, a few a day, off her menu. She pays better than me. Don't tell her I said that.",
+    "Floor shuts at one. After that it's hoses and gulls."
+   ],
+   "blurb": "A long brick fish exchange on Harbor Ave with roll-up doors, forklifts, floors running with ice melt and a chalkboard of today's prices out front."
   }
  ]
 }

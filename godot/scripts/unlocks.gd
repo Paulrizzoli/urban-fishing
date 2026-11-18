@@ -16,7 +16,7 @@ const SPECIES_EARLY := 5
 const EASY := [1, 2, 9, 13, 14, 17]
 ## Zones with guards, staff or cameras (golf course, office park, power station, Sunsplash,
 ## Heron Lakes, the airport, Marlowe Tower). The marina docks only count at night.
-const GUARDED_ZONES := [1, 2, 3, 5, 6, 7, 8, 20, 21, 22, 23]
+const GUARDED_ZONES := [1, 2, 3, 5, 6, 7, 8, 20, 21, 22, 23, 30, 31, 32, 33]
 
 ## Who's watching each guarded zone and when it's your turn. Shown when you walk in.
 const WATCH := {
@@ -31,6 +31,10 @@ const WATCH := {
 	20: "The Ironwater Dam wing walls, right over the boil. Restricted. The ranger walks the west wall 6 AM to 9 PM, and cameras sweep both walls around the clock.",
 	21: "The old Halvorsen Woolen Mill. A demolition site: the foreman walks it 7 AM to 5 PM (a lanyard gets you past him), and a watchman and his dog take over 9 PM to 5 AM.",
 	22: "Calder Brewing. Security walks the cooling pond day and night. A lanyard passes for a tour badge 11 AM to 7 PM, and a camera watches the dock at night.",
+	30: "The Gannet Fish Pier. The market runs 3 to 11 AM and the dockmaster walks the wharf (a lanyard passes for a buyer's badge). After eleven nobody minds you.",
+	31: "Gannet Marine Terminal. Port police drive the quay day and night, and cameras ride the cranes. A lanyard passes for a port pass 7 AM to 7 PM. Watch the truck's lights.",
+	32: "Skyline Commons rooftop garden. The attendant lets in anyone in a suit 8 AM to 8 PM, and security walks it 10 PM to 6 AM. From 8 to 10 at night and 6 to 8 in the morning, nobody's up here.",
+	33: "The bridge tower yard. Restricted. A bridge authority officer walks it 6 AM to 10 PM, and a camera on the tower watches the yard all night.",
 	23: "Riverhawks Field. The groundskeeper drives the outfield 7 AM to 5 PM (a polo gets you by), and security drives it 10 PM to 6 AM. Game time, 5 to 10 PM, nobody's looking.",
 }
 
@@ -44,6 +48,7 @@ static func spot_easy(sid: int) -> bool:
 ## The "who's watching" line for walking into a zone right now, or "".
 static func watch_note(z: int) -> String:
 	if not WATCH.has(z): return ""
+	if z == 30 and (Game.hour() < 3 or Game.hour() >= 11): return ""   # the fish market wharf is only watched during the market
 	if z == 9:
 		var h := Game.hour()
 		if h < 21 and h >= 5: return ""

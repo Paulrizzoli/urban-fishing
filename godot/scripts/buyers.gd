@@ -38,7 +38,7 @@ static func by_id(id: String) -> Dictionary:
 	return {}
 
 ## Who buys at the same price every day in this town.
-static func baseline() -> String: return "Dot" if Town.level == 1 else "Lou"
+static func baseline() -> String: return ["Lou", "Dot", "Sal"][Town.level]
 
 ## The door is in the middle of the bottom row of the building.
 static func door_tile(b: Dictionary) -> Vector2i:
@@ -128,7 +128,7 @@ static func _price_per_lb(species: String) -> float:
 	if not _pp.has(lv):
 		var m := {}
 		for sid in Game.spots:
-			if (int(sid) >= 20) != (lv == 1): continue
+			if Town.spot_town(int(sid)) != lv: continue
 			for f in Game.spots[sid].fish:
 				if f.has("pp") and not m.has(f.n): m[f.n] = float(f.pp)
 		_pp[lv] = m

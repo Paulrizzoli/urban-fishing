@@ -118,7 +118,8 @@ static func on_catch(c: Dictionary) -> void:
 	if Game.darkness() > 0.3: st.night += 1
 	if Game.wx.storm: st.storm += 1
 	if int(c.spot) == 15: st.offshore += 1
-	if int(c.spot) >= 20 and not c.get("junk", false): st.iw = int(st.get("iw", 0)) + 1
+	if Town.spot_town(int(c.spot)) == 1 and not c.get("junk", false): st.iw = int(st.get("iw", 0)) + 1
+	if Town.spot_town(int(c.spot)) == 2 and not c.get("junk", false): st.gh = int(st.get("gh", 0)) + 1
 	if int(c.spot) == 8: st.manhole += 1
 	if c.get("mutant", false) and not Game.S.get("mutant_news", false):
 		Game.S.mutant_news = true
@@ -280,6 +281,8 @@ const ACH := [
 	["act2", "The Real Deal", "Finish Act II: Trent Marlowe."],
 	["trip", "Road Trip", "Land a fish in Ironwater."],
 	["dam", "Below the Dam", "Land Old Rivet from the boil under the Ironwater Dam."],
+	["city", "Big City", "Land a fish in Gannet Harbor."],
+	["toll", "Pay the Toll", "Land the Toll Taker from under the Gannet Narrows Bridge."],
 ]
 
 static func ach_ok(id: String) -> bool:
@@ -303,6 +306,8 @@ static func ach_ok(id: String) -> bool:
 		"act2": return Game.S.act2.finished
 		"trip": return int(st.get("iw", 0)) >= 1
 		"dam": return Game.S.journal.has("Old Rivet")
+		"city": return int(st.get("gh", 0)) >= 1
+		"toll": return Game.S.journal.has("The Toll Taker")
 	return false
 
 ## Returns newly earned plaques as [name, desc] pairs (and pays for them).
@@ -424,9 +429,14 @@ const BUS2 := [["Ironwater Station", Vector2(25.5, 172.5), "The coach to Port Mu
 	["The Dam, River St", Vector2(40.5, 42.5), "The spillway, the tailwater pier, the mill and the reservoir."], ["Riverhawks Field, Bank St", Vector2(71.5, 76.5), "The ballpark and the dam visitor center."],
 	["Downtown, Bank St", Vector2(71.5, 119.5), "City Hall, the viaduct, the public market."]]
 
+## Gannet Harbor's subway, the Harbor Line, along the waterfront. The first stop is Union Station, where the coaches come in.
+const BUS3 := [["Union Station", Vector2(26.5, 175.5), "The coaches, Kettle Point Beach."], ["Commons, Pilot St", Vector2(24.5, 25.6), "The rooftop garden, the North End."],
+	["Fish Market, Harbor Ave", Vector2(58.5, 45.5), "The fish market wharf, Pier 6 Bait & Tackle."], ["Ferry Terminal, Harbor Ave", Vector2(58.5, 75.5), "The ferry slip, the Seamen's Hostel."],
+	["Narrows, Harbor Ave", Vector2(58.5, 104.5), "Narrows Park and the pier, under the bridge."], ["Port Rd", Vector2(46.5, 132.5), "The container port, the outfall, Cold Storage."]]
+
 ## The bus stops in town lv (the current town by default).
 static func bus_list(lv := -1) -> Array:
-	return BUS2 if (Town.level if lv < 0 else lv) == 1 else BUS
+	return [BUS, BUS2, BUS3][Town.level if lv < 0 else lv]
 
 static func bus_near(p: Vector2) -> int:
 	var bl := bus_list()

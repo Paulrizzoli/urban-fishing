@@ -1,6 +1,6 @@
 extends SceneTree
 ## Checks that everyone who walks a set route stays on land: every guard, patrol and cart in
-## data/watch.json (Port Mullet) and data/watch2.json (Ironwater), and the sidewalks and park paths
+## data/watch.json (Port Mullet), data/watch2.json (Ironwater) and data/watch3.json (Gannet Harbor), and the sidewalks and park paths
 ## people stroll on. (Off-duty watchers go straight home and come straight back to the start of their
 ## route, so there's no walk to and from home to check.)
 ## usage (from the repo root): godot --headless --path godot -s ../tools/check_routes.gd
@@ -12,15 +12,15 @@ const BLOCK := [Town.T.BLD, Town.T.WALL, Town.T.HWALL, Town.T.FENCE, Town.T.TREE
 var bad := 0
 
 func _initialize() -> void:
-	for lv in [0, 1]:
+	for lv in [0, 1, 2]:
 		# Town.build() on its own: Town.ensure() also resets the ground and map pictures, which
 		# need the whole game loaded
 		Town.built = false
 		Town.level = lv
 		for a in [Town.buildings, Town.labels, Town.signs, Town.lamps, Town.decor, Town.bridges, Town.driveways]: a.clear()
 		Town.build()
-		var tname: String = ["Port Mullet", "Ironwater"][lv]
-		var f := FileAccess.open("res://data/watch.json" if lv == 0 else "res://data/watch2.json", FileAccess.READ)
+		var tname: String = ["Port Mullet", "Ironwater", "Gannet Harbor"][lv]
+		var f := FileAccess.open(["res://data/watch.json", "res://data/watch2.json", "res://data/watch3.json"][lv], FileAccess.READ)
 		var d: Dictionary = JSON.parse_string(f.get_as_text())
 		for w in d.watchers:
 			if not w.has("path"): continue

@@ -51,7 +51,9 @@ const SPOTS := [[1, "p_caps"], [2, "p_wire"], [9, "p_spoon"], [13, "p_spoon"], [
 const LOU_SPOT := Vector2(52.4, 33.4)
 ## Ironwater's part spots, on the banks of its own water. Their picked-up days are kept apart from Port Mullet's.
 const SPOTS2 := [[26, "p_caps"], [22, "p_spoon"], [21, "p_wire"], [20, "p_feather"], [23, "p_cork"], [24, "p_glass"], [25, "p_beads"], [22, "p_reel"], [20, "p_graphite"], [21, "p_foam"]]
-static func _key(i: int) -> String: return str(i) if Town.level == 0 else "w%d" % i
+## Gannet Harbor's, the same way.
+const SPOTS3 := [[30, "p_spoon"], [31, "p_wire"], [32, "p_feather"], [33, "p_reel"], [34, "p_caps"], [35, "p_beads"], [36, "p_glow"], [37, "p_bigreel"], [30, "p_graphite"], [31, "p_cork"], [35, "p_glass"]]
+static func _key(i: int) -> String: return [str(i), "w%d" % i, "g%d" % i][Town.level]
 const RESPAWN_DAYS := 2
 
 static var spots: Array = []   # [[Vector2 position, part id], ...] worked out once from the map
@@ -110,7 +112,7 @@ static func build_spots() -> void:
 				if not cands.has(r): cands[r] = []
 				cands[r].append(Vector2i(x, y))
 	var seen := {}
-	for s in (SPOTS2 if Town.level == 1 else SPOTS):
+	for s in [SPOTS, SPOTS2, SPOTS3][Town.level]:
 		var r: int = s[0]
 		var k: int = seen.get(r, 0); seen[r] = k + 1   # a second spot on the same water goes elsewhere on the bank
 		if not cands.has(r): continue

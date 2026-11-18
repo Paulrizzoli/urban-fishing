@@ -26,7 +26,7 @@ var park_swing := 0.0   # the same for the Sunsplash Jungle Park gate
 var plane_hint := false
 
 func setup(ents: Node2D) -> void:
-	var f := FileAccess.open("res://data/watch.json" if Town.level == 0 else "res://data/watch2.json", FileAccess.READ)
+	var f := FileAccess.open(["res://data/watch.json", "res://data/watch2.json", "res://data/watch3.json"][Town.level], FileAccess.READ)
 	var d: Dictionary = JSON.parse_string(f.get_as_text())
 	for k in d.exit: exits[int(k)] = Vector2(d.exit[k][0], d.exit[k][1])
 	for k in d.zname: znames[int(k)] = d.zname[k]

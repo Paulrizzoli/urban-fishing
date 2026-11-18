@@ -156,8 +156,10 @@ const SPOT_AT := { 2: Vector2(70.5, 52.5), 7: Vector2(18.5, 63.5), 9: Vector2(70
 const PLACES := [["Lou's Bait & Tackle", Vector2(49, 29.5), "hook"], ["Mullet Bay Marina", Vector2(88.5, 142.5), "anchor"], ["FINTASTIC! Outdoors", Vector2(88.5, 124.5), "bag"]]
 const PLACES2 := [["Calder River Outfitters", Vector2(33.5, 85.5), "hook"], ["Ironwater Station", Vector2(25, 168), "bag"]]
 const SPOT_AT2 := { 20: Vector2(66, 14), 21: Vector2(56, 44), 22: Vector2(56, 112) }
+const PLACES3 := [["Pier 6 Bait & Tackle", Vector2(47.5, 48), "hook"], ["Union Station", Vector2(28, 171), "bag"], ["Ferry Terminal", Vector2(49.5, 66), "anchor"]]
+const SPOT_AT3 := { 30: Vector2(90, 22), 31: Vector2(89, 92), 32: Vector2(78, 47), 33: Vector2(66.5, 150), 37: Vector2(88, 140) }
 static func places() -> Array:
-	var out: Array = (PLACES2 if Town.level == 1 else PLACES).duplicate()
+	var out: Array = [PLACES, PLACES2, PLACES3][Town.level].duplicate()
 	for bd in Buyers.here():
 		var r: Array = bd.bld
 		out.append([bd.name, Vector2(float(r[0]) + float(r[2]) / 2.0, float(r[1]) + float(r[3]) / 2.0), "fork" if bd.kind == "restaurant" else "fish"])
@@ -171,7 +173,7 @@ static func spots() -> Array:
 	if not _spots.is_empty(): return _spots
 	for id in Game.spots:
 		var p: Vector2
-		var at: Dictionary = SPOT_AT2 if Town.level == 1 else SPOT_AT
+		var at: Dictionary = [SPOT_AT, SPOT_AT2, SPOT_AT3][Town.level]
 		if at.has(id): p = at[id]
 		else:
 			var sum := Vector2.ZERO

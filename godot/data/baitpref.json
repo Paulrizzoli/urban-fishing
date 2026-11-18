@@ -307,5 +307,108 @@
  ],
  "Old Founder": [
   "bread"
+ ],
+ "Bluefish": [
+  "lure",
+  "squid"
+ ],
+ "Black Sea Bass": [
+  "squid",
+  "shrimp"
+ ],
+ "Scup": [
+  "worms",
+  "squid"
+ ],
+ "Atlantic Mackerel": [
+  "lure"
+ ],
+ "Winter Flounder": [
+  "worms"
+ ],
+ "The Harbormaster": [
+  "squid",
+  "lure"
+ ],
+ "Tautog": [
+  "shrimp"
+ ],
+ "Summer Flounder": [
+  "squid",
+  "lure"
+ ],
+ "Spiny Dogfish": [
+  "squid",
+  "hotdog"
+ ],
+ "Atlantic Sturgeon": [
+  "worms"
+ ],
+ "The Toll Taker": [
+  "lure",
+  "squid"
+ ],
+ "Northern Searobin": [
+  "squid",
+  "worms"
+ ],
+ "Conger Eel": [
+  "hotdog",
+  "squid"
+ ],
+ "Atlantic Cod": [
+  "squid",
+  "shrimp"
+ ],
+ "The Fishmonger": [
+  "squid"
+ ],
+ "False Albacore": [
+  "lure"
+ ],
+ "Atlantic Bonito": [
+  "lure"
+ ],
+ "Pollock": [
+  "lure",
+  "squid"
+ ],
+ "The Stowaway": [
+  "squid"
+ ],
+ "White Perch": [
+  "worms",
+  "shrimp"
+ ],
+ "Mummichog": [
+  "bread",
+  "worms"
+ ],
+ "The Big Flush": [
+  "hotdog"
+ ],
+ "Cunner": [
+  "shrimp",
+  "worms"
+ ],
+ "The Commuter": [
+  "shrimp"
+ ],
+ "Golden Shiner": [
+  "bread",
+  "worms"
+ ],
+ "The Penthouse": [
+  "bread"
+ ],
+ "Haddock": [
+  "squid",
+  "worms"
+ ],
+ "Bluefin Tuna": [
+  "squid"
+ ],
+ "The Codfather": [
+  "squid"
  ]
 }
