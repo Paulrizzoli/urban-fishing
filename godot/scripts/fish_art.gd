@@ -80,7 +80,8 @@ class Card extends Control:
 				var a := t * 0.6 + i * TAU / 6
 				var sp := r.get_center() + Vector2(cos(a) * r.size.x * 0.42, sin(a) * r.size.y * 0.36)
 				_spark(sp, 5.0 + 2.0 * sin(t * 3.0 + i))
-		if junk: ItemIcons.draw_catch(self, item, Rect2(r.get_center() - Vector2(60, 60), Vector2(120, 120)))
+		if junk:
+			if not JunkArt.draw(self, n, r.grow(-24), t): ItemIcons.draw_catch(self, item, Rect2(r.get_center() - Vector2(60, 60), Vector2(120, 120)))
 		else: FishArt.draw(self, n, r.grow(-14), t, legend)
 	func _box() -> StyleBoxFlat:
 		var b := StyleBoxFlat.new()

@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.21 | Nov 18, 2026 | A picture of every piece of junk, on the catch card and in Lou's Sell tab |
 | v0.9.19 | Nov 17, 2026 | Runs faster, and a Graphics quality setting (Low, Medium, High) |
 | v0.9.18 | Nov 17, 2026 | Screen polish: zoom in on a hooked fish, shake on big catches, a drawing of every fish on its catch card |
 | v0.9.17 | Nov 17, 2026 | Weather: wet streets and puddles, morning mist, storm clouds |
@@ -44,6 +45,14 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.21 · Pictures of the junk
+
+_Nov 18, 2026 · Builds: `UrbanFishing-v0.9.21-windows.zip`, `UrbanFishing-v0.9.21-godot-project.zip`, screenshots in `screenshots/v0.9.21/`_
+
+- Every one of the 31 junk catches has its own drawing now, instead of the same rusty can: the flip-flop, the shopping cart, the bike, the golf balls, the cracked phone, the rubber duck, the car keys, the Florida Man VHS, the message in a bottle, the gold tooth, the wedding ring, the HOA violation notice, the Cleveland luggage tag, the Rolex, the stock certificate and the rest.
+- The drawing shows on the catch card when you reel one in, still dripping, and as the small picture next to it in Lou's Sell tab.
+- (v0.9.20 is the map update, shipped separately.)
 
 ## v0.9.19 · Faster, with a graphics setting
 
