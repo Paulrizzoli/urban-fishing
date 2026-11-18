@@ -80,7 +80,9 @@ func _process(dt: float) -> void:
 	flash_now = flash
 	if Game.wx.storm and randf() < dt * 0.1:
 		if Game.flashes: flash = 1.0
-		Sound.play_later("thunder", randf_range(0.4, 1.8))
+		# a close strike cracks right away; a far one rolls in a second or two after the flash
+		if randf() < 0.3: Sound.play_later("thunder_close", randf_range(0.05, 0.2))
+		else: Sound.play_later("thunder", randf_range(0.4, 1.8))
 	node.queue_redraw()
 
 func _draw_screen() -> void:
