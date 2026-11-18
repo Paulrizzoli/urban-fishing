@@ -58,6 +58,15 @@ func walkable(x: int, y: int) -> bool:
 		Town.T.HGATE: return Game.hoa_open or zone_of(position) == 6
 	return not (t in Town.BLOCK)
 
+## Why you can't go through the storm drain grate right now, in plain words, or "" if you can.
+static func drain_block() -> String:
+	if not Unlocks.open_at(46, 57): return "The storm drain is barricaded for now. It opens with the last part of town. " + Unlocks.goal() + "."
+	var miss := []
+	if not Game.S.gear.has("flashlight"): miss.append("a flashlight")
+	if not Game.S.gear.has("waders"): miss.append("waders")
+	if miss.is_empty(): return ""
+	return "The storm drain grate. You need %s to go down there. Lou sells %s." % [" and ".join(miss), "both" if miss.size() > 1 else "it"]
+
 static func boatable(x: int, y: int, kind: String) -> bool:
 	if not Town.inb(x, y) or not Unlocks.open_at(x, y): return false
 	if Town.in_bridge(x, y): return true
@@ -82,6 +91,21 @@ func _grid_now() -> AStarGrid2D:
 	var k := boat_kind()
 	if not boat_grids.has(k): boat_grids[k] = _grid(func(x, y): return not boatable(x, y, k))
 	return boat_grids[k]
+
+## Walking straight at a wall just beside a one-tile opening (the storm drain grate, a gate): slide sideways
+## onto the opening's line so you go through it instead of snagging on its edge.
+func _ease_into_gap(d: Vector2, amt: float) -> void:
+	var side := Vector2(d.y, d.x).abs()
+	var c := Vector2(floorf(position.x) + 0.5, floorf(position.y) + 0.5)
+	for k in [0, 1, -1]:
+		var o: Vector2 = c + side * k
+		var off := (o - position).dot(side)
+		if absf(off) > 0.75: continue
+		var lined := position + side * off
+		if collides(lined) or collides(lined + d * 0.2): continue
+		var mv := clampf(off, -amt, amt)
+		if not collides(position + side * mv): position += side * mv
+		return
 
 func walk_to(target: Vector2) -> void:
 	var g := _grid_now()
@@ -127,8 +151,10 @@ func step(dt: float, input_dir: Vector2) -> void:
 		var sp := speed()
 		var nx := position + Vector2(dir.x * sp * dt, 0)
 		if not collides(nx): position = nx
+		elif dir.y == 0.0: _ease_into_gap(Vector2(signf(dir.x), 0), sp * dt)
 		var ny := position + Vector2(0, dir.y * sp * dt)
 		if not collides(ny): position = ny
+		elif dir.x == 0.0: _ease_into_gap(Vector2(0, signf(dir.y)), sp * dt)
 		if before.distance_to(position) < 0.0005: path.clear()
 		face = dir.angle(); moving = true; bob += dt * 10
 	else: moving = false
