@@ -116,9 +116,13 @@ func _ready() -> void:
 			var ch := GroundChunk.new(cx, cy)
 			ch.z_index = -9
 			world.add_child(ch)
-	var statics := Drawer.make(_draw_statics)
-	statics.z_index = -8
-	world.add_child(statics)
+	# bridges, driveways, parked cars and fences, in 16-tile blocks so only the blocks on screen get drawn
+	for cy in range(0, Town.MH, 16):
+		for cx in range(0, Town.MW, 16):
+			var reg := Rect2(cx, cy, 16, 16)
+			var statics := Drawer.make(func(ci): _draw_statics(ci, reg))
+			statics.z_index = -8
+			world.add_child(statics)
 	var part_glints := Drawer.make(func(ci): Crafting.draw_spots(ci), 0.0, true)
 	part_glints.z_index = -6
 	world.add_child(part_glints)
@@ -144,10 +148,10 @@ func _ready() -> void:
 		var bb: Dictionary = b
 		var n: Node2D
 		match bb.kind:
-			"sky": n = Drawer.make(func(ci): Art.sky(ci, bb), bb.y + bb.h - 0.05, true)
+			"sky": n = Drawer.make(func(ci): Art.sky(ci, bb), bb.y + bb.h - 0.05, true, Art.sky_bounds(bb).grow(8))
 			"house": n = Drawer.make(func(ci): Art.house(ci, bb), bb.y + bb.h - 0.05)
-			"tower": n = Drawer.make(func(ci): Art.cooling_tower(ci, bb, Time.get_ticks_msec() / 1000.0), bb.y + bb.h - 0.05, true)
-			"volcano": n = Drawer.make(func(ci): Art.volcano(ci, bb, Time.get_ticks_msec() / 1000.0), bb.y + bb.h - 0.05, true)
+			"tower": n = Drawer.make(func(ci): Art.cooling_tower(ci, bb, Time.get_ticks_msec() / 1000.0), bb.y + bb.h - 0.05, true, Rect2(bb.x, bb.y, bb.w, bb.h).grow(10))
+			"volcano": n = Drawer.make(func(ci): Art.volcano(ci, bb, Time.get_ticks_msec() / 1000.0), bb.y + bb.h - 0.05, true, Rect2(bb.x, bb.y, bb.w, bb.h).grow(10))
 			_: n = Drawer.make(func(ci): Art.flat(ci, bb), bb.y + bb.h - 0.05)
 		ents.add_child(n)
 		if bb.kind == "sky":
@@ -162,7 +166,10 @@ func _ready() -> void:
 			var t: int = Town.tile[Town.idx(x, y)]
 			var xx := x
 			var yy := y
-			if t == Town.T.TREE: ents.add_child(Drawer.make(func(ci): Art.tree(ci, xx, yy, Time.get_ticks_msec() / 1000.0), y + 0.9, true))
+			if t == Town.T.TREE:
+				var tn := Drawer.make(func(ci): Art.tree(ci, xx, yy, Time.get_ticks_msec() / 1000.0), y + 0.9, true, Rect2(x - 1.5, y - 1.5, 4, 4))
+				(tn.get_child(0) as Drawer).sway = true
+				ents.add_child(tn)
 			elif t == Town.T.BUSH: ents.add_child(Drawer.make(func(ci): Art.bush(ci, xx, yy), y + 0.85))
 	for a in [[Vector2(3.6, 18.4), 0.2], [Vector2(16.5, 22.6), 3.4], [Vector2(29.6, 162.5), PI], [Vector2(31.4, 160.2), 0.0], [Vector2(37.4, 49.4), -0.3]]:
 		var p: Vector2 = a[0]
@@ -191,7 +198,7 @@ func _ready() -> void:
 		var mp := Vector2(mb[0], 160.4)
 		var mc := Color(mb[1])
 		var ms: bool = mb[2]
-		ents.add_child(Drawer.make(func(ci): Art.moored_boat(ci, mp, Time.get_ticks_msec() / 1000.0, mc, ms), mp.y + 1.2, true))
+		ents.add_child(Drawer.make(func(ci): Art.moored_boat(ci, mp, Time.get_ticks_msec() / 1000.0, mc, ms), mp.y + 1.2, true, Rect2(mp - Vector2(2, 3), Vector2(4, 6))))
 	for lp in Town.lamps:
 		var t := Town.t_at(floori(lp.x), floori(lp.y))
 		if Town.is_water_t(t) or t == Town.T.BLD: continue
@@ -217,11 +224,11 @@ func _ready() -> void:
 	for fl in FLAGS:
 		var fp: Vector2 = fl[0]
 		var fs: String = fl[1]
-		ents.add_child(Drawer.make(func(ci): TownLife.flag(ci, fp, fs, Time.get_ticks_msec() / 1000.0 + fp.x), fp.y, true))
+		ents.add_child(Drawer.make(func(ci): TownLife.flag(ci, fp, fs, Time.get_ticks_msec() / 1000.0 + fp.x), fp.y, true, Rect2(fp - Vector2(1, 3.5), Vector2(4, 5))))
 	for fo in FOUNTAINS:
 		var fop: Vector2 = fo[0]
 		var fob: float = fo[1]
-		ents.add_child(Drawer.make(func(ci): TownLife.fountain(ci, fop, Time.get_ticks_msec() / 1000.0 + fop.x, fob), fop.y + 0.1, true))
+		ents.add_child(Drawer.make(func(ci): TownLife.fountain(ci, fop, Time.get_ticks_msec() / 1000.0 + fop.x, fob), fop.y + 0.1, true, Rect2(fop - Vector2(3, 3.5), Vector2(6, 5))))
 	var overlay := Drawer.make(guards.draw_overlay, 0, true)
 	overlay.z_index = 7
 	world.add_child(overlay)
@@ -391,6 +398,8 @@ func _ready() -> void:
 			fishing.bob = player.position + Vector2(float(v[0]), float(v[1])); fishing.spot = fishing.region_at(fishing.bob)
 			fishing.state = v[2] if v.size() > 2 else "wait"; fishing.quiet = true
 			player.face = (fishing.bob - player.position).angle()
+		if a == "--bench": bench_f = 0
+		if a.begins_with("--gfx="): menu.settings.gfx = int(a.substr(6)); menu.apply_settings(false)
 		if a == "--hooked": # a fish on the line, being reeled in (use after --bob)
 			fishing.fish = Game.spots[fishing.spot].fish[0]; fishing.fw = 3.0; fishing.state = "bite"
 			fishing.action_down(); fishing.action_up(); fishing.progress = 0.5
@@ -419,6 +428,7 @@ func _camera(dt: float) -> void:
 # ---------- loop ----------
 func _process(dt: float) -> void:
 	dt = minf(dt, 0.05)
+	Drawer.view = _view_tiles()
 	if menu.title_open:
 		# the town drifts by behind the title screen
 		title_t += dt
@@ -520,7 +530,22 @@ func _audio(dt: float) -> void:
 	prev_detect = guards.detect
 
 ## Test hook: save a screenshot after 90 frames and quit. True while a test shot is pending.
+## Test hook --bench: time 60 frames after a warm-up, print the average and quit.
+var bench_f := -1
+var bench_t0 := 0
+var bench_proc := 0.0
+func _bench() -> void:
+	if bench_f < 0: return
+	bench_f += 1
+	if bench_f == 60: bench_t0 = Time.get_ticks_usec(); bench_proc = 0.0
+	elif bench_f > 60: bench_proc += Performance.get_monitor(Performance.TIME_PROCESS)
+	if bench_f == 120:
+		var ms := (Time.get_ticks_usec() - bench_t0) / 60000.0
+		print("BENCH frame %.2f ms, process %.2f ms, objects %d, draw calls %d" % [ms, bench_proc / 60.0 * 1000.0, Performance.get_monitor(Performance.OBJECT_NODE_COUNT), Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)])
+		get_tree().quit()
+
 func _test_shot() -> bool:
+	_bench()
 	if test_shot == "": return false
 	test_frames += 1
 	if test_frames == 90:
@@ -550,8 +575,9 @@ func _lighting() -> void:
 	ground_mat.set_shader_parameter("sun", clampf(1.0 - dk / 0.5, 0.0, 1.0) * (1.0 - Game.wx.cloud * 0.55))
 	ground_mat.set_shader_parameter("sky_col", sky_tint(h))
 	ground_mat.set_shader_parameter("rain", Game.wx.rain)
-	ground_mat.set_shader_parameter("wetness", Weather.wetness(int(Game.S.day), h))
-	ground_mat.set_shader_parameter("mist", Weather.mist(int(Game.S.day), h))
+	ground_mat.set_shader_parameter("quality", Game.quality)
+	ground_mat.set_shader_parameter("wetness", Weather.wetness(int(Game.S.day), h) if Game.quality > 0 else 0.0)
+	ground_mat.set_shader_parameter("mist", Weather.mist(int(Game.S.day), h) if Game.quality > 0 else 0.0)
 	var on := dk > 0.15
 	var view := Rect2(cam.get_screen_center_position() - get_viewport_rect().size / cam.zoom / 2, get_viewport_rect().size / cam.zoom).grow(6 * TS)
 	for l in lamp_lights:
@@ -576,6 +602,28 @@ static func _keyed(keys: Array, h: float) -> Color:
 
 static func day_tint(h: float) -> Color: return _keyed(TINTS, fposmod(h, 24.0))
 static func sky_tint(h: float) -> Color: return _keyed(SKIES, fposmod(h, 24.0))
+
+## Headlight beams and tail lights on the cars that are out.
+func _draw_headlights(ci: CanvasItem, view: Rect2, a: float) -> void:
+	# headlights on the security truck and the HOA resident's car
+	var cars := []
+	var hc = guards.hoa_car_pos()
+	if hc != null: cars.append([hc[0], hc[1], 0.95])
+	for w in guards.watchers:
+		if w.kind == "truck" and guards.active(w): cars.append([w.pos, w.dir, 1.0])
+	if traffic != null:
+		for c in traffic.cars:
+			if c.fade > 0.3: cars.append([c.position, c.ang, c.L * 0.5])
+	for cr in cars:
+		var cp: Vector2 = cr[0]
+		if not view.has_point(cp): continue
+		var fw := Vector2.from_angle(cr[1])
+		var sd := Vector2(-fw.y, fw.x)
+		var front: Vector2 = cp + fw * cr[2]
+		var beam := PackedVector2Array([front + sd * 0.3, front - sd * 0.3, front + fw * 4.5 - sd * 1.6, front + fw * 4.5 + sd * 1.6])
+		ci.draw_polygon(beam, PackedColorArray([Color(1, 0.95, 0.8, 0.32 * a), Color(1, 0.95, 0.8, 0.32 * a), Color(1, 0.95, 0.8, 0), Color(1, 0.95, 0.8, 0)]))
+		for k in [-1, 1]: _glow(ci, front + sd * 0.3 * k, 0.35, Color(1, 0.97, 0.85, 0.7 * a))
+		for k in [-1, 1]: _glow(ci, cp - fw * cr[2] + sd * 0.3 * k, 0.3, Color(1, 0.15, 0.1, 0.5 * a))
 
 ## Additive light: halos around lamps, lit windows and porch lights, and headlight beams.
 func _draw_bloom(ci: CanvasItem) -> void:
@@ -603,6 +651,8 @@ func _draw_bloom(ci: CanvasItem) -> void:
 				for j in 4:
 					var wob := sin(tt * 2.2 + j * 1.9 + lp.x) * 0.12
 					ci.draw_rect(Rect2(wp.x - 0.18 + wob, wp.y - 0.4 + j * 0.25, 0.36 - j * 0.05, 0.07), Color(warm, 0.35 * a * (1.0 - j * 0.2) / k))
+	_draw_headlights(ci, view, a)
+	if Game.quality == 0: return   # low graphics: just the lamps and headlights
 	# windows in houses and low buildings: lots lit in the evening, a few late at night
 	var lit := 0.7 if (h >= 18 and h < 23) else 0.15 if (h >= 23 or h < 5) else 0.35
 	for b in Town.buildings:
@@ -639,25 +689,6 @@ func _draw_bloom(ci: CanvasItem) -> void:
 			if Town.hash2(i, b.x * 7 + Game.S.day) < tl and b.see < 0.5: _glow(ci, r.get_center(), 0.45, Color(1, 0.75, 0.4, 0.22 * a))
 			i += 1
 	if view.has_point(Vector2(51.4, 31.6)): _glow(ci, Vector2(51.4, 31.4), 1.4, Color(1, 0.3, 0.25, 0.4 * a))
-	# headlights on the security truck and the HOA resident's car
-	var cars := []
-	var hc = guards.hoa_car_pos()
-	if hc != null: cars.append([hc[0], hc[1], 0.95])
-	for w in guards.watchers:
-		if w.kind == "truck" and guards.active(w): cars.append([w.pos, w.dir, 1.0])
-	if traffic != null:
-		for c in traffic.cars:
-			if c.fade > 0.3: cars.append([c.position, c.ang, c.L * 0.5])
-	for cr in cars:
-		var cp: Vector2 = cr[0]
-		if not view.has_point(cp): continue
-		var fw := Vector2.from_angle(cr[1])
-		var sd := Vector2(-fw.y, fw.x)
-		var front: Vector2 = cp + fw * cr[2]
-		var beam := PackedVector2Array([front + sd * 0.3, front - sd * 0.3, front + fw * 4.5 - sd * 1.6, front + fw * 4.5 + sd * 1.6])
-		ci.draw_polygon(beam, PackedColorArray([Color(1, 0.95, 0.8, 0.32 * a), Color(1, 0.95, 0.8, 0.32 * a), Color(1, 0.95, 0.8, 0), Color(1, 0.95, 0.8, 0)]))
-		for k in [-1, 1]: _glow(ci, front + sd * 0.3 * k, 0.35, Color(1, 0.97, 0.85, 0.7 * a))
-		for k in [-1, 1]: _glow(ci, cp - fw * cr[2] + sd * 0.3 * k, 0.3, Color(1, 0.15, 0.1, 0.5 * a))
 
 func _glow(ci: CanvasItem, c: Vector2, r: float, col: Color) -> void:
 	ci.draw_texture_rect(glow_tex, Rect2(c - Vector2(r, r), Vector2(r, r) * 2), false, col)
@@ -1150,9 +1181,10 @@ func _rod_bench(parts: Array) -> void:
 				func(ci, r): ItemIcons.draw(ci, oid if oid != "" else "p_tape", r), not have])
 
 # ---------- static drawings ----------
-func _draw_statics(ci: CanvasItem) -> void:
+func _draw_statics(ci: CanvasItem, reg: Rect2) -> void:
 	# bridges
 	for b in Town.bridges:
+		if not reg.has_point(Vector2(b.x0, b.y0)): continue
 		var w: float = b.x1 - b.x0 + 1
 		if b.get("h", false):
 			if b.get("foot", false): ci.draw_rect(Rect2(b.x0, b.y0, w, b.y1 - b.y0 + 1), Color("#d8d1c1"))
@@ -1171,6 +1203,7 @@ func _draw_statics(ci: CanvasItem) -> void:
 	# driveways from the houses to the street, some with a car in them
 	for dw in Town.driveways:
 		var r: Rect2 = dw.r
+		if not reg.has_point(r.position): continue
 		var d: Vector2i = dw.d
 		var vert := d.y != 0
 		# a flared apron where it meets the street
@@ -1206,14 +1239,15 @@ func _draw_statics(ci: CanvasItem) -> void:
 	for d in Town.decor:
 		if d.k != "parking": continue
 		for x in range(d.x0, d.x1 + 1):
+			if not reg.has_point(Vector2(x, d.y0)): continue
 			var hh := Town.hash2(x * 17, d.y0 * 5)
 			if hh > 0.55: continue
 			var col := Color(Art.CAR_COLORS[int(Town.hash2(x, d.y0 * 3) * Art.CAR_COLORS.size())])
 			var cyy: float = d.y0 + 1.15 + (0.12 if hh > 0.3 else 0.0)
 			Art.car(ci, Vector2(x + 0.53, cyy), PI / 2 if hh > 0.2 else -PI / 2, col, 1.65, 0.8)
 	# fences, walls and gates
-	for y in Town.MH:
-		for x in Town.MW:
+	for y in range(int(reg.position.y), mini(int(reg.end.y), Town.MH)):
+		for x in range(int(reg.position.x), mini(int(reg.end.x), Town.MW)):
 			var t: int = Town.tile[Town.idx(x, y)]
 			match t:
 				Town.T.FENCE, Town.T.GATE, Town.T.GAP:

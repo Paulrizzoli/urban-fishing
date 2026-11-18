@@ -131,7 +131,7 @@ static func ripples(ci: CanvasItem, view: Rect2) -> void:
 				var o := Vector2((Town.hash2(i, j + 10) - 0.5) * 9, (Town.hash2(i, j + 20) - 0.5) * 4)
 				var r := (3 + Town.hash2(i, j + 30) * 3.5) * (1.0 + heavy * 0.5)
 				ci.draw_texture_rect(blob, Rect2(Vector2(cx, cy) + o - Vector2(r, r) * 1.3, Vector2(r, r) * 2.6), false, Color(0.06, 0.1, 0.16, a * 0.9))
-	if heavy > 0.05:
+	if heavy > 0.05 and Game.quality > 0:
 		var fl := flash_now
 		var span2 := view.size.x + 30.0
 		for i in 18:
