@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.44 | Nov 18, 2026 | Gannet Harbor, a third town: a big harbor city with a suspension bridge, a fish market wharf, a container port and a subway |
 | v0.9.43 | Nov 18, 2026 | Seafood restaurants and fish markets in both towns: chefs who pay extra for today's catch, and market prices that change every morning |
 | v0.9.42 | Nov 18, 2026 | A sound polish: splashes sized to your bait and your fish, the drag and the line under strain, guards who shout, engines and motors, the sounds of each place, and footsteps |
 | v0.9.41 | Nov 18, 2026 | Gentler cars: most just bump you onto the sidewalk, and a knockout costs 30 minutes and $10 |
@@ -67,6 +68,33 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.44 · Gannet Harbor
+
+_Nov 18, 2026 · Builds: `UrbanFishing-v0.9.44-windows.zip`, `UrbanFishing-v0.9.44-godot-project.zip`, screenshots in `screenshots/v0.9.44/`_
+
+**Gannet Harbor, a third town.** A big harbor city up the northeast coast, built the same way as Ironwater. Stripers and bluefish run here all season.
+
+- **How to get there:** catch 6 kinds of fish in Ironwater, then take the coach from the Ironwater bus stop (6 hours, $30). There's also a direct coach from Port Mullet once you've unlocked it (12 hours, $45). The bus card in every town now lists a coach to each of the other two.
+- **Getting around:** the Harbor Line subway replaces the town bus, with stops at Union Station, Skyline Commons, the Fish Market, the Ferry Terminal, the Narrows and Port Rd. The piers sit right by the stations.
+- **Eight new fishing spots:**
+  - **Inner Harbor**, along the Harbor Walk and the public piers.
+  - **The Narrows**, under the huge Narrows suspension bridge. It uses the same shade and bridge-light bonus as the other big bridges: stripers, bluefish and conger stack up under the lights at night. The towers, cables and necklace lights are drawn in full, and you can paddle under the deck.
+  - **Fish Market Wharf**, behind the Fish Exchange. The dockmaster and a forklift work it from 3 to 11 AM.
+  - **Container Port**, behind the port fence, with stacked containers, cranes and a ship at berth. Trucks and crane cameras watch it, and floodlights come on at night. There's a gap in the fence on the south side.
+  - **The Outfall**, a sewer outfall pipe with a warm plume of water. Eels, white perch and carp, plus the junk you'd expect.
+  - **Ferry Slip**, where the ferry comes and goes, leaving a wake.
+  - **Rooftop Garden Pond** at Skyline Commons. The attendant lets in anyone in a suit from 8 AM to 8 PM, and security walks it from 10 PM to 6 AM.
+  - **Outer Harbor**, open water past Fort Kettle Island and its lighthouse. Cod, pollock, haddock, bonito and bluefin tuna, and it's deepest at the south end, so bring a skiff.
+- **New fish:** Striped Bass, Bluefish, Black Sea Bass, Scup, Atlantic Mackerel, Winter and Summer Flounder, Tautog, Spiny Dogfish, Atlantic Sturgeon, Northern Searobin, Conger Eel, Atlantic Cod, False Albacore, Atlantic Bonito, Pollock, Haddock, Bluefin Tuna, American Eel, White Perch, Mummichog and Cunner, each with its own drawing and bait likes.
+- **Eight legends:** The Harbormaster, The Toll Taker (under the bridge tower), The Fishmonger, The Stowaway (next to the ship), The Big Flush (by the outfall pipe), The Commuter, The Penthouse and The Codfather (in the deep water).
+- **New junk:** subway tokens, toll transponders, a box of left sneakers, lost dentures, a message in a bottle and more, all with pictures.
+- **Places to sell:** Sal at Pier 6 Bait & Tackle buys everything at the same price every day (like Lou and Dot), and sells a skiff. Next door, the **Gannet Fish Exchange** (Vinnie, 3 AM to 1 PM) has a price board that changes every morning, and its dogfish, searobin and eels never go cheap. Across the lot, **Pilot Street Chowder House** (Nora, 11 AM to 11 PM) buys up to 8 fish a day, caught today and on tonight's menu: striper, bluefish, sea bass, porgy, mackerel, flounder, fluke, blackfish, cod, haddock, pollock and bluefin. Both are on the map.
+- **People and places:** Theo, an old-timer out on the public pier past the bridge, gives tips. The Seamen's Hostel has $12 bunks.
+- **Guards with hours:** the fish market wharf, the container port, the rooftop garden and the bridge tower yard each have watchers and opening hours, and the game tells you about them when you walk up.
+- **Fish actually spawn:** every Gannet Harbor spot fills with fish shadows from the start (checked spot by spot).
+- **Two new achievements:** Big City (reach Gannet Harbor) and Pay the Toll (catch The Toll Taker).
+- **Fixes along the way:** Ironwater's outfitter now shows its own name on its sign instead of Lou's.
 
 ## v0.9.43 · Restaurants and fish markets
 

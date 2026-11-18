@@ -547,9 +547,25 @@ func _ready() -> void:
 					sheet.draw_string(Game.font_bold, r.position + Vector2(2, 100), ids[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("#22313a")))
 			hud.open([["node", sheet]], true)
 		if a == "--open=bus": open_bus(0)
+		if a.begins_with("--open=catches="): # every fish and bit of junk in town N, drawn as on the catch card, for checking the art
+			var lv := int(a.substr(15))
+			var names := []
+			for sid in Game.spots:
+				if Town.spot_town(int(sid)) != lv: continue
+				for fd in Game.spots[sid].fish:
+					if not names.any(func(x): return x[0] == fd.n): names.append([fd.n, fd.get("junk", false), fd.get("legend", false)])
+			var sheet := Control.new(); sheet.custom_minimum_size = Vector2(1180, ceili(names.size() / 8.0) * 92)
+			sheet.draw.connect(func():
+				for i in names.size():
+					var r := Rect2(Vector2((i % 8) * 147 + 2, (i / 8) * 92 + 2), Vector2(141, 70))
+					sheet.draw_rect(r, Color("#fbf6e6") if names[i][2] else Color("#eef4f2"))
+					if names[i][1]: JunkArt.draw(sheet, names[i][0], r.grow(-8))
+					else: FishArt.draw(sheet, names[i][0], r.grow(-6), 0.0, names[i][2])
+					sheet.draw_string(Game.font_bold, r.position + Vector2(2, 84), names[i][0], HORIZONTAL_ALIGNMENT_LEFT, 141, 11, Color("#22313a")))
+			hud.open([["node", sheet]], true)
 		if a.begins_with("--coach="): # ride the coach to town N (the scene reloads there; then this does nothing)
 			var to := int(a.substr(8))
-			if int(Game.S.level) != to: Game.S.cash = maxi(int(Game.S.cash), COACH_FARE); _take_coach(to)
+			if int(Game.S.level) != to: Game.S.cash = maxi(int(Game.S.cash), int(COACHES.get("%d-%d" % [Town.level, to], [COACH_FARE])[0])); _take_coach(to)
 		if a == "--fresh-iw": Game.S.iw_seen = false
 		if a == "--fresh-gh": Game.S.gh_seen = false
 		if a == "--weigh":

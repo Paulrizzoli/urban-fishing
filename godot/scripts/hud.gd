@@ -226,7 +226,7 @@ func refresh(near: String) -> void:
 	var col := SUN
 	match st:
 		"idle":
-			label = { "fish": "Cast", "shop": "Go in" if Town.level != 0 else "Enter Lou's", "home": "Go inside", "marina": "Enter the marina", "fin": "Peek inside" if Fintastic.closed() else "Enter FINTASTIC!", "oldtimer": "Talk to the old-timer", "rosa": ["Talk to Rosa", "Talk to Walt", "Talk to Theo"][Town.level], "bus": "Ride the bus", "part": "Pick it up",
+			label = { "fish": "Cast", "shop": "Go in" if Town.level != 0 else "Enter Lou's", "home": "Go inside", "marina": "Enter the marina", "fin": "Peek inside" if Fintastic.closed() else "Enter FINTASTIC!", "oldtimer": "Talk to the old-timer", "rosa": ["Talk to Rosa", "Talk to Walt", "Talk to Theo"][Town.level], "bus": "Ride the train" if Town.level == 2 else "Ride the bus", "part": "Pick it up",
 				"manhole": "Fish the manhole" if S.gear.has("prybar") else "Lift the cover" }.get(near, "")
 			if near.begins_with("buy:"):
 				var bd := Buyers.by_id(near.substr(4))

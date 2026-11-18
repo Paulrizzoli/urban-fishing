@@ -60,7 +60,7 @@ static func build() -> void:
 	Town.sky(20, 32, 7, 6, "#5b7f9a", 16, "", { "glass": true, "ant": true })
 	Town.sky(29, 32, 7, 7, "#a8604a", 9, "CUSTOM HOUSE")
 	Town.sky(20, 42, 6, 6, "#8c7c9c", 12)
-	Town.sky(28, 42, 8, 6, "#2f5a7a", 20, "KETTLE BANK TOWER", { "glass": true, "logo": true })
+	Town.sky(28, 42, 8, 6, "#2f5a7a", 20, "KETTLE BANK TOWER", { "glass": true, "ant": true })
 	Town.bld(20, 51, 16, 4, "#c8b89a", "flat", "OLD STATE HOUSE")
 	_rowhouses(0, 31, 14, 56)
 	_market()

@@ -55,6 +55,7 @@ The current version is in `project.godot` (`config/version`) and shows on the ti
 - [x] Traffic, FINTASTIC! (walk in, Brayden, the flashy extras) and the energy drink
 - [ ] Manholes, the storm drain's darkness, the power station's Geiger counter, golf course gator, home aquarium
 - [x] Title screen, pause menu, controls screen, settings (full screen, window size, VSync, lightning flashes), fades and a save indicator
+- [x] Ironwater (v0.9.34) and Gannet Harbor (v0.9.42), two more towns reached by coach
 - [x] Music and sound: seven tunes that change with where you are and the time of day, sound effects, day, night and rain ambience, and volume settings
 - [ ] Real art to replace the code-drawn shapes
 
@@ -62,13 +63,13 @@ The current version is in `project.godot` (`config/version`) and shows on the ti
 
 Everything is drawn in tile units. The `World` node is scaled to 32 pixels per tile.
 
-- `scripts/town.gd` builds the map: tiles, water regions, private zones and buildings. `Town.level` picks the town: 0 is Port Mullet, 1 is Ironwater, which `scripts/ironwater.gd` lays out (dam and spillway, river, the high viaduct, mill, brewery, ballpark), with its guards in `data/watch2.json`
+- `scripts/town.gd` builds the map: tiles, water regions, private zones and buildings. `Town.level` picks the town: 0 is Port Mullet, 1 is Ironwater, which `scripts/ironwater.gd` lays out (dam and spillway, river, the high viaduct, mill, brewery, ballpark), with its guards in `data/watch2.json`, and 2 is Gannet Harbor, which `scripts/gannet.gd` lays out (the harbor, the fish market wharf, the ferry slip, the Narrows suspension bridge, the outfall, the container port, the rooftop garden), with its guards in `data/watch3.json`. Fishing spots 1-19 are Port Mullet's, 20-29 Ironwater's and 30-37 Gannet Harbor's (`Town.spot_town`), and every spot needs a fish count in `Fishing.SHCOUNT` or no fish spawn there
 - `scripts/ground.gd` bakes the ground into one texture; `ground_chunk.gd` draws fine detail per 8×8 chunk
 - `scripts/art.gd` has the drawing code for buildings, plants, people and fish
 - `scripts/fishing.gd` runs the fish shadows and the fishing minigame; `lure_art.gd` draws the bait or lure on the end of your line
 - `scripts/guards.gd` runs everyone who keeps you off private water
 - `scripts/story.gd` has both story acts, the Wall of Fame plaques, the Mullet Bay Slam and the bus; `story_art.gd` draws the story card pictures
-- `scripts/bridges.gd` has the bridges you paddle under: the decks drawn over boats and fish, the shade and dark water under them, the bridge lights, and which fish gather there
+- `scripts/bridges.gd` has the bridges you paddle under (and Gannet Harbor's suspension bridge, drawn with its towers and cables): the decks drawn over boats and fish, the shade and dark water under them, the bridge lights, and which fish gather there
 - `scripts/weather.gd` works out each day's weather and draws rain, lightning and cloud shadows
 - `scripts/menu.gd` is the title screen, pause menu, controls, settings and screen fades
 - `scripts/sound.gd` (autoload `Sound`) plays the music, ambience and effects; `scripts/soundscape.gd` turns up the sounds around you (surf, gulls, the spillway, the mill, the ballpark, fountains, cars, boats, footsteps, the drag and the line, guards' shouts) by how close they are
@@ -85,7 +86,7 @@ Everything is drawn in tile units. The `World` node is scaled to 32 pixels per t
 godot --path . --resolution 1280x720 -- --at=12,15.5,15 --day=5 --shot=storm.png
 ```
 
-starts at tile (12, 15.5) at 3 PM on day 5 (a thunderstorm day), saves a screenshot after 90 frames and quits. Other hooks: `--open=buy:<id>[:sell|menu|board|talk]` and `--open=board:<id>` (a restaurant or fish market from `data/buyers.json`), `--cooler=fresh` (a cooler of today's catch from the town you're in), `--open=shop|gear|order|note|marina|marina-slam|journal|fame|news|map|bus|home|bench|rodbench`, `--mapview=zoom,x,y` (with `--open=map`), `--legends=N` and `--slam=1,2,3` (fill the trophy wall and cup shelf at home), `--pet=kind,seconds` (hold Chum's reaction for a screenshot), `--story=N` and `--act2=N` (jump to a story chapter), `--weigh` (enter and weigh in at the Slam), `--land`, `--cast`, `--busted`, `--boat=kayak|skiff`, `--face=degrees` (which way you face, 0 is right), `--bait=<id>`, `--bob=dx,dy[,state]`, `--twitch=-1|1`, `--guards=seconds` (move every patrol that far along its route), `--rosa`, `--toast`, `--sounddebug` (print the loops and effects as they play), `--sounddemo=cast|fight|guard|bat` (a scripted bit for the sound preview, with `--sounddir=degrees` for which way to cast), `--title`, `--pause`, `--controls`, `--settings`. Run `--import` twice on a fresh checkout so the fonts import before the scripts parse.
+starts at tile (12, 15.5) at 3 PM on day 5 (a thunderstorm day), saves a screenshot after 90 frames and quits. Other hooks: `--open=buy:<id>[:sell|menu|board|talk]` and `--open=board:<id>` (a restaurant or fish market from `data/buyers.json`), `--cooler=fresh` (a cooler of today's catch from the town you're in), `--open=shop|gear|order|note|marina|marina-slam|journal|fame|news|map|bus|home|bench|rodbench`, `--mapview=zoom,x,y` (with `--open=map`), `--legends=N` and `--slam=1,2,3` (fill the trophy wall and cup shelf at home), `--pet=kind,seconds` (hold Chum's reaction for a screenshot), `--story=N` and `--act2=N` (jump to a story chapter), `--weigh` (enter and weigh in at the Slam), `--land`, `--cast`, `--busted`, `--boat=kayak|skiff`, `--face=degrees` (which way you face, 0 is right), `--bait=<id>`, `--bob=dx,dy[,state]`, `--twitch=-1|1`, `--guards=seconds` (move every patrol that far along its route), `--rosa`, `--toast`, `--sounddebug` (print the loops and effects as they play), `--sounddemo=cast|fight|guard|bat` (a scripted bit for the sound preview, with `--sounddir=degrees` for which way to cast), `--title`, `--pause`, `--controls`, `--settings`, `--level=N` (start in town N), `--coach=N` (ride the coach to town N), `--fresh-iw` / `--fresh-gh` (see a town's welcome card again), `--open=catches=N` (every fish and bit of junk in town N, drawn as on the catch card) and `--fishcount` (print how many fish shadows each spot has when the shot is taken, to check that fish spawn everywhere). Run `--import` twice on a fresh checkout so the fonts import before the scripts parse.
 
 ## Music and sound
 
