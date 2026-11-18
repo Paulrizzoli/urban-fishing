@@ -122,7 +122,7 @@ func _ready() -> void:
 					if fd.get("junk", false) and Game.S.cooler.size() < 8 and not Game.S.cooler.any(func(c): return c.n == fd.n):
 						Game.S.cooler.append({ "n": fd.n, "w": fd.w[0], "value": int(fd.get("flat", 1)), "spot": sid, "legend": false, "junk": true, "day": 1, "tm": 0 })
 		if a == "--cooler=fresh": # today's catch from this town's spots: some on the menus and boards, some not, one from yesterday, and a junk
-			var want := ["Mullet", "Mangrove Snapper", "Mahi-Mahi", "Snook", "Sheepshead", "Blue Crab", "Koi", "Kingfish"] if Game.S.level == 0 else ["Walleye", "Yellow Perch", "Black Crappie", "Common Carp", "Rainbow Trout", "Channel Catfish", "Sauger", "Bluegill"]
+			var want := ["Mullet", "Mangrove Snapper", "Mahi-Mahi", "Snook", "Sheepshead", "Blue Crab", "Koi", "Kingfish"] if Game.S.level == 0 else ["Striped Bass", "Bluefish", "Atlantic Cod", "Spiny Dogfish", "Scup", "Koi", "Tautog", "Haddock"] if Game.S.level == 2 else ["Walleye", "Yellow Perch", "Black Crappie", "Common Carp", "Rainbow Trout", "Channel Catfish", "Sauger", "Bluegill"]
 			for n in want:
 				for sid in Game.spots:
 					var fd = Game.spots[sid].fish.filter(func(f): return f.n == n)
@@ -2214,7 +2214,7 @@ func _coach_arrival() -> void:
 		hud.open([["h3", "Gannet Harbor · pop. 680,000 · on Gannet Bay"], ["h2", "\"Mind the gulls. They'll take a sandwich right out of your hand.\""],
 			["p", "A long way up the coast, Gannet Harbor is an old fishing city that never stopped: a fish market on a wharf, ferries crossing the inner harbor, a container port, and the Gannet Narrows Bridge hung high over the tide rip."],
 			["sub", "The Harbor Walk runs the whole waterfront, with piers by the subway stations, and it's all public. Stripers and bluefish are everywhere. Fish under the bridge at night, where the big stripers wait in the lights. The fish market wharf is busy 3 to 11 AM, and the container port, the bridge tower yard and the rooftop garden all have someone watching."],
-			["sub", "Pier 6 Bait & Tackle by the fish market buys your catch and sells everything, squid and boats included. The Seamen's Hostel has bunks. The Harbor Line subway runs along the waterfront, and the coaches leave from Union Station."],
+			["sub", "Pier 6 Bait & Tackle by the fish market buys your catch and sells everything, squid and boats included. Next door, the Gannet Fish Exchange posts new prices every morning, and the Pilot St Chowder House pays most for today's catch. The Seamen's Hostel has bunks. The Harbor Line subway runs along the waterfront, and the coaches leave from Union Station."],
 			["row", [["Let's fish", func(): hud.close(), true, "hot"]]]])
 		return
 	if Game.S.get("iw_seen", false):

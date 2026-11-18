@@ -96,7 +96,7 @@
   {
    "id": "chowder",
    "kind": "restaurant",
-   "name": "Pilot Street Chowder House",
+   "name": "Pilot St Chowder House",
    "short": "the Chowder House",
    "who": "Nora",
    "role": "Chef and owner",
@@ -104,6 +104,7 @@
    "color": "#2e4a5e",
    "style": "supper",
    "sign": "CHOWDER HOUSE",
+   "sign2": "OYSTERS · CHOWDER",
    "subsign": "OYSTERS · CHOWDER · SINCE 1921",
    "hours": [11, 23],
    "cap": 8,
