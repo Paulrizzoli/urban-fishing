@@ -24,6 +24,11 @@ static var decor: Array = []
 static var bridges: Array = []
 static var driveways: Array = []   # { r: Rect2, d: Vector2i toward the street, car: bool }
 static var built := false
+## Which town the map is: 0 Port Mullet, 1 Ironwater (the second level, see ironwater.gd).
+static var level := 0
+## Water regions you can launch the kayak / the skiff from.
+static var launch_k: Array = [2, 9, 13, 14]
+static var launch_s: Array = [13, 14]
 
 static func idx(x: int, y: int) -> int: return y * MW + x
 static func inb(x: int, y: int) -> bool: return x >= 0 and y >= 0 and x < MW and y < MH
@@ -89,12 +94,35 @@ static func trees(pts: Array) -> void:
 static func bushes(pts: Array) -> void:
 	for p in pts: set_t(p[0], p[1], T.BUSH)
 
+## Builds the map for town lv if it isn't built already, and clears everything worked out from the
+## old map (bridges, the ground's coastlines, the map picture, part spots, parked cars).
+static func ensure(lv: int) -> void:
+	if built and lv == level: return
+	built = false
+	level = lv
+	for a in [buildings, labels, signs, lamps, decor, bridges, driveways]: a.clear()
+	build()
+	Bridges.reset()
+	Ground.reset()
+	MapArt.tex = null
+	MapView.reset()
+	Crafting.spots = []
+	Obstacles.reset()
+	WaterFx.rings.clear(); WaterFx.jumps.clear(); WaterFx.trail.clear()
+
 static func build() -> void:
 	if built: return
 	built = true
 	var n := MW * MH
 	tile.resize(n); region.resize(n); zone.resize(n); floodable.resize(n); depth.resize(n)
 	tile.fill(T.GRASS); region.fill(0); zone.fill(0); floodable.fill(0); depth.fill(0)
+	launch_k = [2, 9, 13, 14]; launch_s = [13, 14]
+	if level == 1:
+		Ironwater.build()
+		_join_roads()
+		_build_driveways()
+		_build_depth()
+		return
 	# canal and banks
 	rect(0, 50, 111, 54, T.WATER, 2); rect(0, 49, 111, 49, T.WALK); rect(0, 55, 111, 55, T.WALK)
 	rect(12, 50, 13, 51, T.DOCK); rect(28, 50, 29, 51, T.DOCK); rect(80, 53, 81, 54, T.DOCK); rect(101, 53, 102, 54, T.DOCK)
@@ -394,7 +422,10 @@ static func _build_depth() -> void:
 			if is_water_t(tile[j]) and depth[j] == 0:
 				depth[j] = depth[i] + 1; q.append(j)
 
+## Inside a bridge that's level with the street (the high viaduct in Ironwater doesn't count:
+## the ground goes on underneath it).
 static func in_bridge(x: int, y: int) -> bool:
 	for b in bridges:
+		if b.get("high", false): continue
 		if x >= b.x0 and x <= b.x1 and y >= b.y0 and y <= b.y1: return true
 	return false

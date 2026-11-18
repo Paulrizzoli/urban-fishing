@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.34 | Nov 18, 2026 | Ironwater, a second town: a dam and spillway, a high viaduct you fish under, a mill race, a brewery pond and a ballpark |
 | v0.9.33 | Nov 18, 2026 | FINTASTIC! is open: walk in, meet Brayden, and buy Trent's flashy extras |
 | v0.9.32 | Nov 18, 2026 | Have your parked kayak or skiff brought to the shore you're standing on, for a small fee |
 | v0.9.31 | Nov 18, 2026 | Place names on the ground, like BACK CANAL, fade away 5 seconds after you walk up |
@@ -57,6 +58,22 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.34 · Ironwater, a second town
+
+_Nov 18, 2026 · Builds: `UrbanFishing-v0.9.34-windows.zip`, `UrbanFishing-v0.9.34-godot-project.zip`, screenshots in `screenshots/v0.9.34/`_
+
+- **A second level: Ironwater**, an old northern mill city on the Calder River, a long way from Florida. Pines and leafy trees instead of palms, brick mills, a rail line, and its own music.
+- **Getting there:** every bus stop now has a **coach** row. It costs $25 and takes 6 hours, and it unlocks once you've caught 8 kinds of fish in Port Mullet. Your kayak and skiff come along on the roof. The coach home leaves from any Ironwater bus stop. The first time you arrive, a card shows you around. Ironwater has its own city bus with 5 stops.
+- **The Ironwater Dam and the spillway:** a big concrete dam holds back Calder Reservoir. Water pours through the gates into a churning white boil, with a buoy line, wing walls and a tailwater fishing pier. The boil is off limits to boats, and a ranger walks the west wing wall by day while cameras watch the gates. The fish stack up here: white bass, skipjack herring, drum, channel cats, sauger, striped bass and flathead catfish. **Old Rivet** waits right in the boil.
+- **The Iron Street Viaduct:** a high steel truss bridge, four lanes of traffic across the whole city. It's high enough that you walk and paddle under it, and the deck fades away while you're underneath. It uses the same bridge shade as Port Mullet: hide from guards in its shadow, and at night walleye, sauger and flatheads gather under its lights. Smallmouth and drum hang there by day. **The Viaduct Ghost**, a huge lake sturgeon you have to let go, only shows up under the viaduct.
+- **Seven new spots:** Calder Reservoir (with Lakeside Park and a boat ramp), The Spillway, the Calder River downtown, **The Mill Race** under a turning water wheel (trout, guarded by the foreman and a watchman's dog at night), the **Brewery Cooling Pond** (warm water, big carp, a security guard and cameras), the **Riverhawks Splash Pool** past the outfield wall at the ballpark (home run balls and foam fingers, a groundskeeper by day), and **Founders Park Pond**.
+- **New fish:** yellow perch, black crappie, smallmouth bass, walleye, muskellunge, white bass, skipjack herring, freshwater drum, sauger, striped bass, flathead catfish, paddlefish, lake sturgeon, rainbow, brown and brook trout, creek chub, mirror carp and pumpkinseed, each with its own picture. **Seven new legends**: The Mayor, Old Rivet, The Viaduct Ghost, The Foreman, The Brewmaster, Home Run Henry and Old Founder.
+- **New junk:** a traffic cone, a wooden bobbin, an empty keg, a home run ball and a foam finger.
+- **Places in town:** Calder River Outfitters, where Dot buys your catch and sells gear; the Riverview Motor Inn, $10 a night when you need to rest; and Walt, who fishes the tailwater pier and gives tips.
+- Rod parts turn up around Ironwater too. Two new Wall of Fame plaques: **Road Trip** (land a fish in Ironwater) and **Below the Dam** (land Old Rivet).
+- The map (M) shows Ironwater's streets, spots and shops when you're there.
+- **Saves still work.** Old saves start in Port Mullet just like before. The game remembers which town you're in.
 
 ## v0.9.33 · FINTASTIC! is open
 

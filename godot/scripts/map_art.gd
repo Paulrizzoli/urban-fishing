@@ -27,6 +27,15 @@ const STREETS := [
 	["Marina Way", Vector2(97, 117), Vector2(97, 157), 2],
 ]
 
+const STREETS2 := [
+	["Lakeshore Dr", Vector2(0, 34), Vector2(37, 34), 2], ["Lakeshore Dr", Vector2(75, 34), Vector2(112, 34), 2],
+	["River St", Vector2(42, 39), Vector2(42, 184), 2], ["Bank St", Vector2(70, 39), Vector2(70, 184), 2],
+	["1st Ave", Vector2(13, 33), Vector2(13, 184), 2], ["Bluff Ave", Vector2(99, 33), Vector2(99, 184), 2],
+	["Mill St", Vector2(0, 59), Vector2(112, 59), 2], ["Market St", Vector2(0, 125), Vector2(112, 125), 2], ["Front St", Vector2(0, 161), Vector2(112, 161), 2],
+	["I-90 Viaduct", Vector2(0, 94.5), Vector2(112, 94.5), 4],
+]
+static func streets() -> Array: return STREETS2 if Town.level == 1 else STREETS
+
 const C_GRASS := Color("#c3e3a3")
 const C_FAIR_A := Color("#a7d888")
 const C_FAIR_B := Color("#9dd07e")
@@ -164,7 +173,7 @@ class _Features extends Node2D:
 	func _draw() -> void:
 		_fairway()
 		_lots()
-		_runway()
+		if Town.level == 0: _runway()
 		_road_edges()
 		_lanes()
 		_paths()
@@ -234,7 +243,7 @@ class _Features extends Node2D:
 
 	## Dashed lines down the middle of each street, broken at the crossings.
 	func _lanes() -> void:
-		for s in MapArt.STREETS:
+		for s in MapArt.streets():
 			var a: Vector2 = s[1]
 			var b: Vector2 = s[2]
 			var w: int = s[3]

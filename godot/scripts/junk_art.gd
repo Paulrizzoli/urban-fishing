@@ -19,6 +19,7 @@ static func _fns() -> Dictionary:
 		"Tourist's Selfie Stick": _selfie, "Cruise Ship Deck Chair": _chair, "Pirate Doubloon": _doubloon,
 		"Weather Balloon": _balloon, "Lucky Penny": _penny, "Executive's Rolex": _rolex,
 		"Fintastic Stock Certificate": _certificate, "Wishing Coins": _coins,
+		"Traffic Cone": _cone, "Wooden Bobbin": _bobbin, "Empty Keg": _keg, "Home Run Ball": _baseball, "Foam Finger": _finger,
 	}
 
 ## Draw the junk named n into r. False if there's no picture for it.
@@ -355,3 +356,50 @@ static func _coins(ci: CanvasItem, t: float) -> void:
 
 static func _sparkle(ci: CanvasItem, p: Vector2, s: float) -> void:
 	ci.draw_colored_polygon(PackedVector2Array([p + Vector2(0, -s), p + Vector2(s * 0.25, -s * 0.25), p + Vector2(s, 0), p + Vector2(s * 0.25, s * 0.25), p + Vector2(0, s), p + Vector2(-s * 0.25, s * 0.25), p + Vector2(-s, 0), p + Vector2(-s * 0.25, -s * 0.25)]), Color("#fff4c0"))
+
+# ---------- Ironwater ----------
+
+static func _cone(ci: CanvasItem, _t: float) -> void:
+	_rot(ci, 0.25)
+	_poly(ci, [Vector2(-26, 24), Vector2(26, 24), Vector2(22, 18), Vector2(-22, 18)], Color("#3a3a3a"))
+	_poly(ci, [Vector2(-18, 18), Vector2(18, 18), Vector2(4, -28), Vector2(-4, -28)], Color("#f2742a"))
+	_poly(ci, [Vector2(-12.5, 0), Vector2(12.5, 0), Vector2(9.5, -10), Vector2(-9.5, -10)], Color("#f4f6f4"), 0.8)
+	ci.draw_line(Vector2(-6, 12), Vector2(-2, -22), Color(1, 1, 1, 0.3), 2.0)
+	_el(ci, Vector2(10, 21), 5, 2, Color("#6b7a3a", 0.8), false)   # river weed
+
+static func _bobbin(ci: CanvasItem, _t: float) -> void:
+	_rot(ci, -0.2)
+	_poly(ci, [Vector2(-34, -10), Vector2(34, -10), Vector2(34, 10), Vector2(-34, 10)], Color("#c8a46a"))
+	for x in [-34.0, 26.0]: _poly(ci, [Vector2(x, -16), Vector2(x + 8, -16), Vector2(x + 8, 16), Vector2(x, 16)], Color("#8a5a35"))
+	for i in 9: ci.draw_line(Vector2(-24 + i * 6, -9), Vector2(-20 + i * 6, 9), Color("#7a2a2a", 0.6), 3.0)
+	ci.draw_line(Vector2(-26, -2), Vector2(24, -2), Color(1, 1, 1, 0.2), 2.0)
+
+static func _keg(ci: CanvasItem, _t: float) -> void:
+	_poly(ci, [Vector2(-22, -28), Vector2(22, -28), Vector2(26, 0), Vector2(22, 28), Vector2(-22, 28), Vector2(-26, 0)], Color("#b8bec4"))
+	for y in [-20.0, 0.0, 20.0]: ci.draw_line(Vector2(-25, y), Vector2(25, y), Color("#7a8288"), 3.0)
+	_el(ci, Vector2(0, -28), 22, 4, Color("#d8dde0"))
+	_el(ci, Vector2(0, -28), 5, 2, Color("#3a3a3a"))
+	ci.draw_line(Vector2(-12, -14), Vector2(-10, 18), Color(1, 1, 1, 0.35), 3.0)
+	_txt(ci, Vector2(0, 9), "CALDER", 7, Color("#5a3a2a"))
+
+static func _baseball(ci: CanvasItem, t: float) -> void:
+	_el(ci, Vector2.ZERO, 24, 24, Color("#f4f0e4"))
+	for sd in [-1.0, 1.0]:
+		var pts := PackedVector2Array()
+		for i in 13:
+			var a := -1.0 + i / 12.0 * 2.0
+			pts.append(Vector2(sd * (12 - a * a * 6), a * 20))
+		ci.draw_polyline(pts, Color("#c8402a"), 1.6)
+		for i in 6:
+			var a := -0.8 + i * 0.32
+			var p := Vector2(sd * (12 - a * a * 6), a * 20)
+			ci.draw_line(p - Vector2(3, 0), p + Vector2(3, 0), Color("#c8402a"), 1.2)
+	ci.draw_line(Vector2(-8, 4), Vector2(6, -2), Color("#2a4a8a", 0.8), 1.4)   # somebody's autograph
+	ci.draw_line(Vector2(6, -2), Vector2(10, 3), Color("#2a4a8a", 0.8), 1.4)
+	_sparkle(ci, Vector2(18, -18), 3 + sin(t * 4.0))
+
+static func _finger(ci: CanvasItem, _t: float) -> void:
+	_rot(ci, 0.15)
+	_poly(ci, [Vector2(-20, 28), Vector2(20, 28), Vector2(22, -4), Vector2(8, -6), Vector2(8, -30), Vector2(-4, -30), Vector2(-6, -6), Vector2(-22, -2)], Color("#2b7ea6"))
+	_txt(ci, Vector2(0, 14), "#1", 14, Color("#f2c040"))
+	_txt(ci, Vector2(0, 24), "HAWKS", 6, Color.WHITE)

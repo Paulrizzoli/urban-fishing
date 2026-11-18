@@ -41,6 +41,26 @@ const KINDS := {
 	"sailfish": { "h": 0.18, "back": "#1f3a6a", "side": "#8aa0b8", "belly": "#eef0f4", "fin": "#2a4a8a", "tail": "lunate", "dorsal": "sail", "pat": "dark_bars", "bill": true },
 	"grouper": { "h": 0.38, "back": "#5a4a32", "side": "#8a7a52", "belly": "#c8b890", "fin": "#5a4a32", "tail": "round", "dorsal": "spiny", "pat": "mottle", "mouth": 1.8, "blunt": true },
 	"arowana": { "h": 0.2, "back": "#7a8a90", "side": "#d8dee0", "belly": "#f2f4f4", "fin": "#a8b4b8", "tail": "round", "dorsal": "back", "pat": "bigscales", "upmouth": true, "barbels": true },
+	# Ironwater's river fish
+	"perch": { "h": 0.3, "back": "#4a5a2a", "side": "#c8b84a", "belly": "#f0e8c8", "fin": "#e07a3a", "tail": "fork", "dorsal": "two", "pat": "bars" },
+	"crappie": { "h": 0.46, "back": "#3a4a4a", "side": "#b8c0b0", "belly": "#e8ece4", "fin": "#5a6a60", "tail": "soft", "dorsal": "long", "pat": "specks", "mouth": 1.3 },
+	"smallmouth": { "h": 0.31, "back": "#5a4a2a", "side": "#a8864a", "belly": "#e8dcc0", "fin": "#8a6a3a", "tail": "square", "dorsal": "spiny", "pat": "bars_faint", "mouth": 1.4 },
+	"walleye": { "h": 0.22, "back": "#5a5a2a", "side": "#c8b060", "belly": "#f0ecd8", "fin": "#8a7a40", "tail": "fork", "dorsal": "two", "pat": "mottle", "snout": 1.2, "teeth": true },
+	"sauger": { "h": 0.21, "back": "#5a5232", "side": "#b0a070", "belly": "#ece6d0", "fin": "#7a7040", "tail": "fork", "dorsal": "two", "pat": "spots", "snout": 1.2 },
+	"muskie": { "h": 0.17, "back": "#4a5a3a", "side": "#a8b07a", "belly": "#e8e8d0", "fin": "#b06a3a", "tail": "fork", "dorsal": "back", "pat": "dark_bars", "snout": 1.6, "teeth": true },
+	"whitebass": { "h": 0.36, "back": "#4a5a6a", "side": "#d8dce0", "belly": "#f4f6f6", "fin": "#9aa4aa", "tail": "fork", "dorsal": "two", "pat": "stripes" },
+	"striper": { "h": 0.27, "back": "#3a4a5a", "side": "#d0d6da", "belly": "#f4f6f6", "fin": "#7a8a94", "tail": "fork", "dorsal": "two", "pat": "stripes", "mouth": 1.3 },
+	"skipjack": { "h": 0.24, "back": "#2f5a6a", "side": "#d0dce0", "belly": "#f4f6f8", "fin": "#8aa0a8", "tail": "deepfork", "dorsal": "small", "pat": "none", "upmouth": true },
+	"drum": { "h": 0.4, "back": "#6a6a6a", "side": "#c8c8c0", "belly": "#eceae4", "fin": "#8a8a84", "tail": "round", "dorsal": "long", "pat": "scales", "blunt": true },
+	"flathead": { "h": 0.22, "back": "#6a5a32", "side": "#a8905a", "belly": "#e8dcc0", "fin": "#6a5a38", "tail": "square", "dorsal": "small", "pat": "mottle", "whisk": true, "flat": true },
+	"mirror": { "h": 0.3, "back": "#6a5a2a", "side": "#c0a060", "belly": "#e8d8a8", "fin": "#8a6a38", "tail": "fork", "dorsal": "long", "pat": "bigscales", "whisk": true },
+	"paddle": { "h": 0.2, "back": "#4f5f6a", "side": "#8d9ca6", "belly": "#e4e8ea", "fin": "#5f6f7a", "tail": "shark", "dorsal": "small", "pat": "none", "bill": true },
+	"sturgeon": { "h": 0.16, "back": "#5a5a50", "side": "#8a8a7a", "belly": "#d8d6c8", "fin": "#6a6a5a", "tail": "shark", "dorsal": "back", "pat": "spots", "barbels": true, "snout": 1.5 },
+	"rainbow": { "h": 0.25, "back": "#4a6a4a", "side": "#c8c4ac", "belly": "#f0ece0", "fin": "#8a9a7a", "tail": "square", "dorsal": "small", "pat": "rainbow" },
+	"brown": { "h": 0.26, "back": "#5a4a2a", "side": "#c8a868", "belly": "#f0e4c0", "fin": "#8a6a3a", "tail": "square", "dorsal": "small", "pat": "halo", "mouth": 1.3 },
+	"brook": { "h": 0.25, "back": "#3a4a3a", "side": "#7a8a5a", "belly": "#e8783a", "fin": "#e8783a", "tail": "square", "dorsal": "small", "pat": "halo" },
+	"chub": { "h": 0.24, "back": "#5a6a6a", "side": "#c8ccc4", "belly": "#eceee8", "fin": "#8a948e", "tail": "fork", "dorsal": "small", "pat": "line" },
+	"pumpkinseed": { "h": 0.48, "back": "#4a6a5a", "side": "#c8a85a", "belly": "#e8a03a", "fin": "#6a7a5a", "tail": "soft", "dorsal": "spiny", "pat": "blue_spots", "ear": true },
 	"other": { "h": 0.3, "back": "#5a6a74", "side": "#b8c4ca", "belly": "#eef0f0", "fin": "#7a8a94", "tail": "fork", "dorsal": "spiny", "pat": "none" },
 }
 
@@ -54,6 +74,12 @@ const NAMES := {
 	"Mahi-Mahi": "mahi", "Blackfin Tuna": "tuna", "Jack Crevalle": "jack", "Spotted Seatrout": "seatrout", "Mangrove Snapper": "snapper",
 	"Grass Carp": "carp", "Bullseye Snakehead": "snakehead", "Mayan Cichlid": "cichlid", "American Eel": "eel", "Silver Arowana": "arowana",
 	"Goliath Grouper": "grouper", "Florida Gar": "gar",
+	"Yellow Perch": "perch", "Black Crappie": "crappie", "Smallmouth Bass": "smallmouth", "Walleye": "walleye", "Sauger": "sauger",
+	"Muskellunge": "muskie", "The Mayor": "muskie", "White Bass": "whitebass", "Striped Bass": "striper", "Skipjack Herring": "skipjack",
+	"Freshwater Drum": "drum", "Flathead Catfish": "flathead", "Old Rivet": "flathead", "Common Carp": "carp", "Mirror Carp": "mirror",
+	"The Brewmaster": "mirror", "Old Founder": "carp", "Longnose Gar": "gar", "Paddlefish": "paddle", "Lake Sturgeon": "sturgeon",
+	"The Viaduct Ghost": "sturgeon", "Rainbow Trout": "rainbow", "Brown Trout": "brown", "The Foreman": "brown", "Brook Trout": "brook",
+	"Creek Chub": "chub", "Pumpkinseed": "pumpkinseed", "Home Run Henry": "bass",
 }
 const WORDS := ["Bluegill", "Tilapia", "Peacock", "Bass", "Catfish", "Mullet", "Snook", "Tarpon", "Bowfin", "Goldfish", "Koi", "Eel", "Redfish", "Oscar",
 	"Pacu", "Ladyfish", "Pinfish", "Sheepshead", "Barracuda", "Shark", "Kingfish", "Sailfish"]
@@ -412,6 +438,18 @@ static func _markings(ci: CanvasItem, k: Dictionary, at: Callable, L: float, H: 
 					ci.draw_arc(p, L * s * 0.5, PI * 0.5, PI * 1.5, 6, Color(0, 0, 0, 0.12), maxf(1.0, L * 0.004))
 					v += 0.4 if k.pat == "scales" else 0.55
 				u += s; row += 1
+		"rainbow", "halo":
+			if k.pat == "rainbow":
+				var pts := PackedVector2Array()
+				for i in 16: pts.append(at.call(0.18 + i * 0.047, 0.0))
+				ci.draw_polyline(pts, Color("#e0708a", 0.55), maxf(2.0, H * 0.22))
+			for i in 22:
+				var u := 0.2 + Town.hash2(i, 21) * 0.72
+				var v := -0.85 + Town.hash2(i, 23) * 1.3
+				if k.pat == "halo":
+					ci.draw_circle(at.call(u, v), H * 0.075, Color("#f4e8d0", 0.7))
+					ci.draw_circle(at.call(u, v), H * 0.045, Color("#c8402a") if i % 3 == 0 else Color("#2a2018"))
+				else: ci.draw_circle(at.call(u, v), H * 0.035, Color("#1a1a1a", 0.8))
 		"gillspot":
 			ci.draw_circle(at.call(0.22, -0.45), H * 0.1, Color("#1a1a1a"))
 			for i in 8: ci.draw_line(at.call(0.7 + i * 0.03, -0.05), at.call(0.7 + i * 0.03, 0.15), Color(0, 0, 0, 0.2), 1.0)

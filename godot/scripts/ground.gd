@@ -6,7 +6,14 @@ const PX := 16   # texture pixels per tile
 const WPAL := {
 	1: ["#5fb3b0", "#2c7d93"], 2: ["#5ab5c4", "#21708f"], 3: ["#5fb5a6", "#2a7d8c"], 4: ["#7fd3c6", "#3a9ba6"], 5: ["#6f7a40", "#465024"], 6: ["#8fe2c6", "#3cb39a"],
 	7: ["#5ab5c4", "#21708f"], 9: ["#5aaebb", "#25708a"], 10: ["#5ec8bd", "#26879a"], 11: ["#62b4a8", "#2e7f8e"], 12: ["#78a08e", "#3f6f60"], 13: ["#56acbc", "#226b88"],
-	14: ["#74d6d4", "#2b93b6"], 15: ["#2378b0", "#0d3f78"], 16: ["#8ce6f2", "#38b6dc"], 17: ["#7fd2dc", "#3a9cbd"] }
+	14: ["#74d6d4", "#2b93b6"], 15: ["#2378b0", "#0d3f78"], 16: ["#8ce6f2", "#38b6dc"], 17: ["#7fd2dc", "#3a9cbd"],
+	# Ironwater: a deep blue-green reservoir, the foamy tailwater, the green river, the cold race, the brewery's amber pond
+	20: ["#5b98a6", "#1d5068"], 21: ["#6ea4a6", "#2f6670"], 22: ["#62928a", "#2a5459"], 23: ["#74a49c", "#36625e"], 24: ["#8f9a62", "#4f6236"],
+	25: ["#86d8ec", "#2fa2cc"], 26: ["#64ac9c", "#2e7466"] }
+
+## Forget everything worked out from the map, after the map changes (going to the other town).
+static func reset() -> void:
+	_land = PackedFloat32Array(); _coast = {}; _water_mask = null; water_img = null; water_tex = null
 
 static func base_color(x: int, y: int) -> Color:
 	var T := Town.T
@@ -63,7 +70,7 @@ const CSUB := 8                  # coast and water-mask pixels per tile
 static var _land := PackedFloat32Array()   # blurred land, one value per tile center
 static var _coast := {}          # Vector2i tile -> "sand" or "lawn", for tiles whose pixels follow the curve
 ## Natural ponds whose grassy banks follow a curve too. Man-made ones (Heron Lakes, the golf pond) keep their straight edges.
-const NATURAL_PONDS := [1]
+const NATURAL_PONDS := [1, 20, 26]
 static var water_img: Image      # water color per tile (with a one-tile border), set by make_texture
 static var water_tex: ImageTexture
 

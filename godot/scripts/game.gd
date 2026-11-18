@@ -37,7 +37,6 @@ var font_body: Font = preload("res://fonts/AtkinsonHyperlegible-Regular.ttf")
 var font_bold: Font = preload("res://fonts/AtkinsonHyperlegible-Bold.ttf")
 
 func _ready() -> void:
-	Town.build()
 	spots = {}
 	var raw: Dictionary = _load_json("res://data/spots.json")
 	for k in raw: spots[int(k)] = raw[k]
@@ -51,6 +50,7 @@ func _ready() -> void:
 	var cf := ConfigFile.new()
 	if cf.load(SLOT_CFG) == OK: slot = clampi(int(cf.get_value("slots", "last", 1)), 1, SLOTS)
 	load_game()
+	Town.ensure(int(S.level))
 
 func _load_json(path: String) -> Variant:
 	var f := FileAccess.open(path, FileAccess.READ)
@@ -60,7 +60,7 @@ func fresh() -> Dictionary:
 	return { "day": 1, "min": 6 * 60 + 30.0, "cash": 30, "rep": 0, "x": 48.5, "y": 33.2, "face": PI / 2, "gear": {}, "cooler_cap": 5,
 		"cooler": [], "journal": {}, "bait": "worms", "started": false, "news": [],
 		"boat": false, "boat_kind": "kayak", "parked": {}, "offenses": {}, "order": {}, "park_day": 0, "swept_day": 0, "story": {}, "story_day": 0, "story_told": false,
-		"tips_heard": 0, "rosa": 0, "visited": {}, "busts": 0, "sneak_lesson": false, "parts": {}, "lures": {}, "picked": {}, "mh": {}, "homerod": {}, "use_home": false }.merged(Story.fresh_state())
+		"tips_heard": 0, "rosa": 0, "visited": {}, "busts": 0, "sneak_lesson": false, "parts": {}, "lures": {}, "picked": {}, "mh": {}, "homerod": {}, "use_home": false, "level": 0 }.merged(Story.fresh_state())
 
 func save_path(n := slot) -> String: return SLOT_PATHS[clampi(n, 1, SLOTS) - 1]
 
@@ -97,7 +97,7 @@ func load_game() -> void:
 		# in the old step-by-step map, or that never had steps, don't get it again.
 		if not d.has("sneak_lesson") and (not d.has("unlock") or int(d.unlock) >= 3): S.sneak_lesson = true
 	# JSON brings every number back as a float; keep the counters whole
-	for k in ["day", "cash", "rep", "cooler_cap"]: S[k] = int(S[k])
+	for k in ["day", "cash", "rep", "cooler_cap", "level"]: S[k] = int(S[k])
 	for k in ["ch", "paid_ch", "left", "fin_day"]: S.saga[k] = int(S.saga[k])
 	for k in ["ch", "since"]: S.act2[k] = int(S.act2[k])
 	for k in S.stats: S.stats[k] = int(S.stats[k])

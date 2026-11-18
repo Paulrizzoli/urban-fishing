@@ -87,7 +87,8 @@ static func draw_catch(ci: CanvasItem, c: Dictionary, r: Rect2) -> void:
 	ci.draw_set_transform(Vector2.ZERO)
 
 static func fish_color(n: String) -> Color:
-	var keys := [["Koi", "#f07b3a"], ["Goldfish", "#f29a2e"], ["Ogon", "#e8e4d8"], ["Arowana", "#d7dde0"], ["Peacock", "#b9c23e"],
+	var keys := [["Perch", "#c8b84a"], ["Walleye", "#b8a050"], ["Sauger", "#a89a68"], ["Trout", "#b8a878"], ["Sturgeon", "#7a7a6a"], ["Ghost", "#d8d8cc"], ["Drum", "#b8b8b0"], ["Carp", "#b0a060"],
+		["Muskellunge", "#9aa070"], ["Mayor", "#9aa070"], ["Rivet", "#8a7848"], ["Pumpkinseed", "#c8a050"], ["Crappie", "#aab4a6"], ["Koi", "#f07b3a"], ["Goldfish", "#f29a2e"], ["Ogon", "#e8e4d8"], ["Arowana", "#d7dde0"], ["Peacock", "#b9c23e"],
 		["Bass", "#6f9a4c"], ["Bluegill", "#5d86a0"], ["Catfish", "#8a7b6a"], ["Tilapia", "#9aa4a8"], ["Glow", "#9be15d"],
 		["Redfish", "#c8643c"], ["Snapper", "#d0705a"], ["Mahi", "#4fb06a"], ["Tuna", "#2f4a7a"], ["Sailfish", "#3a62a8"],
 		["Shark", "#8796a0"], ["Grouper", "#7a6a4a"], ["Gar", "#7d8a52"], ["Bowfin", "#6b7a4a"], ["Snakehead", "#6a6a48"],
