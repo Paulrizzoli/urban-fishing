@@ -17,6 +17,7 @@ var watchers: Array = []
 var exits := {}
 var znames := {}
 var detect := 0.0
+const CATCH_SLOW := 2.0   # how much longer than the old pace a guard takes to bust you
 var detect_by = null
 var plane_t := 18.0
 var hoa_t := 6.0
@@ -164,7 +165,8 @@ func update(dt: float) -> void:
 		w.node.get_child(0).position.y = -w.pos.y
 	if seen_by != null:
 		var d := player.position.distance_to(seen_by.pos)
-		detect += dt * (0.55 + 0.9 * (1 - d / radius(seen_by))) * (1.7 if fishing.state != "idle" else 1.0)
+		# CATCH_SLOW halves the rate, so you get twice as long to break away once someone spots you
+		detect += dt * (0.55 + 0.9 * (1 - d / radius(seen_by))) * (1.7 if fishing.state != "idle" else 1.0) / CATCH_SLOW
 		detect_by = seen_by
 		if detect >= 1:
 			detect = 0

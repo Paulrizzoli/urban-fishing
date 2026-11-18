@@ -1588,17 +1588,14 @@ func _draw_statics(ci: CanvasItem, reg: Rect2) -> void:
 		for x in range(int(reg.position.x), mini(int(reg.end.x), Town.MW)):
 			var t: int = Town.tile[Town.idx(x, y)]
 			match t:
-				Town.T.FENCE, Town.T.GATE, Town.T.GAP:
+				Town.T.FENCE:
+					_draw_fence(ci, x, y)
+				Town.T.GATE:
 					var hor := Town.t_at(x - 1, y) == Town.T.FENCE or Town.t_at(x + 1, y) == Town.T.FENCE
-					var a := Vector2(x, y + 0.5) if hor else Vector2(x + 0.5, y)
-					var b2 := Vector2(x + 1, y + 0.5) if hor else Vector2(x + 0.5, y + 1)
-					if t == Town.T.FENCE:
-						ci.draw_line(a + Vector2(0.06, 0.08), b2 + Vector2(0.06, 0.08), Color(0, 0, 0, 0.18), 0.08)
-						ci.draw_line(a, b2, Color("#c9ced2"), 0.08)
-						ci.draw_rect(Rect2(x, y + 0.42, 0.14, 0.16) if hor else Rect2(x + 0.42, y, 0.16, 0.14), Color("#8b9196"))
-					elif t == Town.T.GATE:
-						ci.draw_rect(Rect2(x, y + 0.38, 0.16, 0.24) if hor else Rect2(x + 0.38, y, 0.24, 0.16), Color("#8b9196"))
-						ci.draw_rect(Rect2(x + 0.84, y + 0.38, 0.16, 0.24) if hor else Rect2(x + 0.38, y + 0.84, 0.24, 0.16), Color("#8b9196"))
+					ci.draw_rect(Rect2(x, y + 0.38, 0.16, 0.24) if hor else Rect2(x + 0.38, y, 0.24, 0.16), Color("#8b9196"))
+					ci.draw_rect(Rect2(x + 0.84, y + 0.38, 0.16, 0.24) if hor else Rect2(x + 0.38, y + 0.84, 0.24, 0.16), Color("#8b9196"))
+				Town.T.GAP:
+					_draw_fence_hole(ci, x, y)
 				Town.T.HWALL:
 					var hor2 := Town.t_at(x - 1, y) in [Town.T.HWALL, Town.T.HGATE] or Town.t_at(x + 1, y) in [Town.T.HWALL, Town.T.HGATE]
 					ci.draw_rect(Rect2(x + 0.1, y + 0.1, 1, 1), Color(0, 0, 0, 0.12))
@@ -1609,6 +1606,56 @@ func _draw_statics(ci: CanvasItem, reg: Rect2) -> void:
 					for k in 4: ci.draw_rect(Rect2(x + 0.15 + k * 0.2, y + 0.1, 0.07, 0.8), Color("#6b6f6a"))
 				Town.T.HIDE:
 					ci.draw_rect(Rect2(x + 0.2, y, 0.6, 0.75), Color("#24363a"))
+
+## One fence tile. A straight run spans the whole tile, as before; a corner or a T joins its
+## rails at the middle of the tile under a corner post, so the fence closes up with no gap.
+func _draw_fence(ci: CanvasItem, x: int, y: int) -> void:
+	var joins := [Town.T.FENCE, Town.T.GATE, Town.T.GAP]
+	var l: bool = Town.t_at(x - 1, y) in joins
+	var r: bool = Town.t_at(x + 1, y) in joins
+	var u: bool = Town.t_at(x, y - 1) in joins
+	var d: bool = Town.t_at(x, y + 1) in joins
+	var rail := Color("#c9ced2")
+	var post := Color("#8b9196")
+	var shadow := Color(0, 0, 0, 0.18)
+	var sh := Vector2(0.06, 0.08)
+	var c := Vector2(x + 0.5, y + 0.5)
+	var segs: Array = []
+	if (l or r) and (u or d):
+		for pair in [[l, Vector2(-0.5, 0)], [r, Vector2(0.5, 0)], [u, Vector2(0, -0.5)], [d, Vector2(0, 0.5)]]:
+			if pair[0]: segs.append([c, c + pair[1]])
+	elif l or r: segs.append([Vector2(x, y + 0.5), Vector2(x + 1, y + 0.5)])
+	else: segs.append([Vector2(x + 0.5, y), Vector2(x + 0.5, y + 1)])
+	for sg in segs: ci.draw_line(sg[0] + sh, sg[1] + sh, shadow, 0.08)
+	for sg in segs: ci.draw_line(sg[0], sg[1], rail, 0.08)
+	if (l or r) and (u or d): ci.draw_rect(Rect2(c - Vector2(0.11, 0.11), Vector2(0.22, 0.22)), post)
+	elif l or r: ci.draw_rect(Rect2(x, y + 0.42, 0.14, 0.16), post)
+	else: ci.draw_rect(Rect2(x + 0.42, y, 0.16, 0.14), post)
+
+## A squeeze-through hole: the fence is cut and its ends peeled back, so it reads as a way in.
+func _draw_fence_hole(ci: CanvasItem, x: int, y: int) -> void:
+	var hor := Town.t_at(x - 1, y) == Town.T.FENCE or Town.t_at(x + 1, y) == Town.T.FENCE
+	var rail := Color("#c9ced2")
+	var shadow := Color(0, 0, 0, 0.18)
+	var sh := Vector2(0.06, 0.08)
+	var along := Vector2(1, 0) if hor else Vector2(0, 1)
+	var side := Vector2(0, 1) if hor else Vector2(1, 0)
+	var a := Vector2(x, y + 0.5) if hor else Vector2(x + 0.5, y)
+	var b := a + along
+	# each cut end runs a little way in, then curls off to one side
+	var ends := [[a, along, side], [b, -along, -side]]
+	for e in ends:
+		var p0: Vector2 = e[0]
+		var p1: Vector2 = p0 + e[1] * 0.2
+		var p2: Vector2 = p1 + e[1] * 0.1 + e[2] * 0.2
+		for col_off in [[shadow, sh], [rail, Vector2.ZERO]]:
+			ci.draw_line(p0 + col_off[1], p1 + col_off[1], col_off[0], 0.07)
+			ci.draw_line(p1 + col_off[1], p2 + col_off[1], col_off[0], 0.06)
+	# a few snapped wires hanging in the opening
+	for k in 3:
+		var t := 0.36 + k * 0.14
+		var q := a + along * t
+		ci.draw_line(q - side * 0.08, q + side * (0.04 + 0.04 * k), Color(rail, 0.75), 0.03)
 
 func _draw_labels(ci: CanvasItem) -> void:
 	var ink := Color("#22313a")

@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.38 | Nov 18, 2026 | Fence corners that close up, holes you can see, and guards that take twice as long to bust you |
 | v0.9.37 | Nov 18, 2026 | Fish in Ironwater: its spots fill with fish shadows you can cast at, like Port Mullet's |
 | v0.9.36 | Nov 18, 2026 | Guards and patrols stay on land: no more walking across ponds, channels and the mill race |
 | v0.9.35 | Nov 18, 2026 | A real gate at Heron Lakes that swings open for residents' cars, and a gate at Sunsplash Jungle Park that shows when it's closed |
@@ -61,6 +62,14 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.38 · Closed fence corners, and more time to run
+
+_Nov 18, 2026 · Builds: `UrbanFishing-v0.9.38-windows.zip`, `UrbanFishing-v0.9.38-godot-project.zip`_
+
+- **Fence corners close up.** Every fenced lot in both towns (the golf course, the power station, the airport, the Mill Race, the brewery, Riverhawks Field and the dam's wing walls) was drawn with a gap at each corner, where the side rail stopped short of the top rail. It looked like you could slip through, but you couldn't. The rails now meet at a corner post, so the fence looks as solid as it is.
+- **The real ways in look like holes.** Each big guarded lot already had one spot where you can squeeze through the fence, but it was drawn as a plain gap with nothing to mark it. Now it shows as a cut in the fence with the wire peeled back and a few snapped strands, so you can spot the sneaky way in from the street. They're where they were: the bottom of the golf course behind the bushes, the east side of the power station by the mangroves, the west side of the airport, the bottom of the Mill Race lot, the west side of the brewery and the west side of Riverhawks Field.
+- **Guards take twice as long to bust you.** Once a guard or camera spots you, the meter that fills before you're caught now fills at half the speed, so you get twice as long to break away. That goes for both towns.
 
 ## v0.9.37 · Fish in Ironwater
 
