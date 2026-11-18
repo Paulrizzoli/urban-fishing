@@ -27,7 +27,7 @@ var glow_node: Drawer
 var sky_nodes: Array = []
 var save_t := 0.0
 var near := ""
-var latch := { "shop": false, "home": false, "marina": false, "fin": false, "drain": false, "boat": false }
+var latch := { "shop": false, "home": false, "marina": false, "fin": false, "drain": false, "boat": false, "gate": false }
 var watch_zone := -1
 var watch_seen := {}   # zone -> when its "who's watching" line last showed (seconds)
 const DRAIN_GRATE := Vector2(46.5, 57.5)
@@ -273,6 +273,8 @@ func _ready() -> void:
 	guards.z_index = -4
 	world.add_child(guards)
 	guards.setup(ents)
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--hoa="): guards.hoa_t = float(a.substr(6))   # where the HOA resident's car is in its run
 	traffic = Traffic.new()
 	traffic.player = player
 	add_child(traffic)
@@ -587,7 +589,7 @@ func _process(dt: float) -> void:
 			ach_t = 0
 			for a in Story.check_ach(): Game.toast.emit("%s: %s +$50, +3 rep" % [a[1], a[2]], "LOU'S WALL OF FAME")
 		if Town.level == 0 and player.position.y > 115 and not Game.S.visited.has("dt"): Game.S.visited.dt = 1; hud.flash("Downtown Port Mullet. The bay is at the bottom of the street.")
-		if Town.level == 0: _drain_hint()
+		if Town.level == 0: _drain_hint(); _gate_hint()
 		_watch_hint()
 		_boat_hint()
 	near = ""
@@ -716,6 +718,21 @@ func _boat_hint() -> void:
 	if latch.boat or not player.moving or now - float(watch_seen.get("boat", -999.0)) < 30.0: return
 	latch.boat = true; watch_seen["boat"] = now
 	hud.flash(why); hud.hint_t = 5.0
+
+## Walking up to a gate that's shut (Heron Lakes, or Sunsplash Jungle Park after hours): say why, and how to get in.
+func _gate_hint() -> void:
+	if player.in_boat(): latch.gate = false; return
+	var why := ""
+	for g in [Guards.HOA_GATE, Guards.PARK_GATE]:
+		var c := Vector2(g.x + 0.5, g.y - 0.5)
+		if player.position.distance_to(c) > 1.3 or player.position.y > g.y: continue
+		if player.walkable(g.x, g.y) or not player.moving or sin(player.face) < 0.3: continue
+		if g == Guards.HOA_GATE: why = "The Heron Lakes gate only opens for residents. Wait for a resident's car to pull up and slip in right behind it, or paddle up the back channel."
+		else: why = "Sunsplash Jungle Park is closed. The gate opens at 9 AM and shuts at 6 PM."
+	if why == "": latch.gate = false; return
+	if latch.gate: return
+	latch.gate = true
+	hud.flash(why); hud.hint_t = 6.0
 
 func _drain_hint() -> void:
 	var d := player.position.distance_to(DRAIN_GRATE)

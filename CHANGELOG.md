@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.35 | Nov 18, 2026 | A real gate at Heron Lakes that swings open for residents' cars, and a gate at Sunsplash Jungle Park that shows when it's closed |
 | v0.9.34 | Nov 18, 2026 | Ironwater, a second town: a dam and spillway, a high viaduct you fish under, a mill race, a brewery pond and a ballpark |
 | v0.9.33 | Nov 18, 2026 | FINTASTIC! is open: walk in, meet Brayden, and buy Trent's flashy extras |
 | v0.9.32 | Nov 18, 2026 | Have your parked kayak or skiff brought to the shore you're standing on, for a small fee |
@@ -58,6 +59,16 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.35 · Gates you can see
+
+_Nov 18, 2026 · Builds: `UrbanFishing-v0.9.35-windows.zip`, `UrbanFishing-v0.9.35-godot-project.zip`, screenshots in `screenshots/v0.9.35/`_
+
+- **The Heron Lakes gate is there now.** The gap in the wall used to look like an open sidewalk, with an invisible wall in it. Now there are two stucco gateposts with lanterns, a pair of black iron gates, a green HERON LAKES · RESIDENTS ONLY plaque on the wall and a call box on the sidewalk with a red light.
+- **It opens for residents.** When the resident's white car pulls up, the call box goes green and the gates swing in. Slip through right behind the car before they swing shut again. You can always walk out from inside.
+- **Sunsplash Jungle Park has a gate too.** The park's entrance in the fence was also invisible. Now it has yellow posts and green gates that stand open 9 AM to 6 PM, and a CLOSED sign hangs on them after hours.
+- **Walk into a shut gate and the game tells you why:** at Heron Lakes, to wait for a resident's car or paddle up the back channel; at Sunsplash, when the park opens.
+- The other entrances already showed what stops you: the airport and power station gates are open gateways with a guard, and the storm drain grate tells you what gear you need.
 
 ## v0.9.34 · Ironwater, a second town
 
