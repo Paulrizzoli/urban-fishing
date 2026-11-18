@@ -15,6 +15,7 @@ const SWEET := 0.075
 var player: Player
 var shadows: Array = []
 var regtiles := {}
+var shadetiles := {}      # region -> the tiles in a bridge's shade, where fish like to gather
 
 # minigame state
 var state := "idle"
@@ -61,10 +62,13 @@ func _ready() -> void:
 	for y in Town.MH:
 		for x in Town.MW:
 			var i := Town.idx(x, y)
-			if Town.region[i] and Town.is_water_t(Town.tile[i]):
+			if Town.region[i] and (Town.is_water_t(Town.tile[i]) or Bridges.wet_tile(x, y)):
 				var r: int = Town.region[i]
 				if not regtiles.has(r): regtiles[r] = []
 				regtiles[r].append(Vector2i(x, y))
+				if Bridges.shade_at(Vector2(x + 0.5, y + 0.5)) > 0.25:
+					if not shadetiles.has(r): shadetiles[r] = []
+					shadetiles[r].append(Vector2i(x, y))
 			if Town.floodable[i]:
 				if not regtiles.has(7): regtiles[7] = []
 				regtiles[7].append(Vector2i(x, y))
@@ -149,7 +153,7 @@ func fish_weight(f: Dictionary) -> float:
 	var v := w0 + (w1 - w0) * pow(randf(), 0.8 if f.get("legend", false) else 1.7)
 	return snappedf(v, 0.01 if w1 < 3 else 0.1)
 
-func pick_fish(reg: int, ok: Callable) -> Variant:
+func pick_fish(reg: int, ok: Callable, boost := {}) -> Variant:
 	if not Game.spots.has(reg): return null
 	var band := Game.time_band()
 	var lst := []
@@ -161,7 +165,7 @@ func pick_fish(reg: int, ok: Callable) -> Variant:
 	var ws := []
 	var total := 0.0
 	for f in lst:
-		var w: float = f.r * Game.bait_mul(f) * (0.5 if f.get("legend", false) and Game.rod_level() == 0 else 1.0)
+		var w: float = f.r * Game.bait_mul(f) * (0.5 if f.get("legend", false) and Game.rod_level() == 0 else 1.0) * float(boost.get(f.n, 1.0))
 		ws.append(w); total += w
 	var s := randf() * total
 	for i in lst.size():
@@ -176,10 +180,15 @@ func spawn_shadow(reg: int) -> void:
 	var has_legend := false
 	for s in shadows:
 		if s.reg == reg and s.fish.get("legend", false) and not s.leaving: has_legend = true
-	var f = pick_fish(reg, func(x): return not x.get("junk", false) and not (has_legend and x.get("legend", false)))
+	# a good share of the fish hang around in the shade of a bridge, and different ones turn up there
+	var night := Game.darkness() > 0.3
+	var shady: bool = shadetiles.has(reg) and randf() < (0.5 if night else 0.35)
+	var f = pick_fish(reg, func(x): return not x.get("junk", false) and not (has_legend and x.get("legend", false)), Bridges.boosts(night) if shady else {})
 	if f == null: return
-	var cand := tiles
-	if f.has("near") or f.get("bridge", false): cand = tiles.filter(func(v): return near_ok(f, v.x, v.y))
+	var cand: Array = shadetiles[reg] if shady else tiles
+	if f.has("near") or f.get("bridge", false):
+		cand = cand.filter(func(v): return near_ok(f, v.x, v.y))
+		if cand.is_empty(): cand = tiles.filter(func(v): return near_ok(f, v.x, v.y))
 	if cand.is_empty(): return
 	var tp: Vector2i = cand.pick_random()
 	for k in 20:   # not on a tile the curved bank mostly covers
@@ -203,7 +212,7 @@ func shadow_goal(s: Dictionary) -> void:
 ## Can a fish be here? Its own water region, and on the curved shores (beaches, Bird Key, Maple Park
 ## Pond) the water you can see, with a little room so it doesn't poke its nose into the bank.
 func swimmable(p: Vector2, reg: int, margin := 0.42) -> bool:
-	if region_at(p) != reg or not is_water(p): return false
+	if region_at(p) != reg or not (is_water(p) or Bridges.wet_tile(floori(p.x), floori(p.y))): return false
 	if reg != 7 and Ground.is_coast(floori(p.x), floori(p.y)) and Ground.land_at(p) > margin: return false
 	return true
 
@@ -309,7 +318,7 @@ func flee_dir(s: Dictionary) -> Vector2:
 			if clear_swim(s.pos, s.pos + tr * 1.5, s.reg): return tr
 	return away
 
-func visible_shadow(s: Dictionary) -> bool: return not s.leaving and not s.hooked and s.fade > 0.5
+func visible_shadow(s: Dictionary) -> bool: return not s.leaving and not s.hooked and s.fade > 0.5 and Bridges.covered(s.pos) < 0
 
 # ---------- the minigame ----------
 func start_cast(pt = null) -> void:
@@ -445,14 +454,16 @@ func update(dt: float) -> void:
 					drop_target(0); state = "idle"; holding = false; emit_signal("message", "Reeled all the way in. Cast again."); return
 				bob = n; twitch = maxf(twitch, 0.3)
 			if target == null:
+				# fish in a bridge's shade are quicker to come out for the bait
+				var sh := Bridges.shade_at(bob)
 				for s in shadows:
 					if s.reg != spot or s.wary > 0 or s.spook > 0 or s.fade < 0.6 or s.leaving: continue
-					var R := 2.3 + (0.8 if Game.bait_mul(s.fish) > 1 else 0.0) + (1.6 if twitch > 0 else 0.0)
+					var R := 2.3 + (0.8 if Game.bait_mul(s.fish) > 1 else 0.0) + (1.6 if twitch > 0 else 0.0) + sh * 0.9
 					if s.pos.distance_to(bob) > R: continue
-					var rate: float = (0.22 if s.fish.get("legend", false) else 0.45 if s.fish.pull > 0.6 else 0.85) * (2.0 if twitch > 0 and not s.fish.get("legend", false) else 1.0) * Game.bait_mul(s.fish) * (1.0 if quiet else 0.6) * (1.0 + 0.7 * Game.wx.rain)
+					var rate: float = (0.22 if s.fish.get("legend", false) else 0.45 if s.fish.pull > 0.6 else 0.85) * (2.0 if twitch > 0 and not s.fish.get("legend", false) else 1.0) * Game.bait_mul(s.fish) * (1.0 if quiet else 0.6) * (1.0 + 0.7 * Game.wx.rain) * (1.0 + 0.6 * sh)
 					if randf() < rate * dt: s.go = true; target = s; break
-				if target == null and wait_t > 14 and randf() < dt * 0.25:
-					var f = pick_fish(spot, func(x): return x.get("junk", false) or (not x.get("legend", false) and x.pull <= 0.55))
+				if target == null and wait_t > 14 - sh * 5 and randf() < dt * 0.25:
+					var f = pick_fish(spot, func(x): return x.get("junk", false) or (not x.get("legend", false) and x.pull <= 0.55), Bridges.boosts(Game.darkness() > 0.3) if sh > 0.25 else {})
 					if f != null: fish = f; fw = fish_weight(f); blind = true; state = "nibble"; t = 0.0; nib = randf_range(0.3, 0.9); Sound.play("nibble")
 			elif target.leaving or target.gone or target.spook > 0: drop_target(0)
 			elif target.pos.distance_to(bob) < 0.32:
