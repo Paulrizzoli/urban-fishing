@@ -46,6 +46,7 @@ var ground_tex: Texture2D
 var ground_mat: ShaderMaterial
 var water_fx: WaterFx
 var traffic: Traffic
+var harbor: Harbor
 var town_life: TownLife
 var base_zoom := 1.0
 var zoom_k := 1.0        # extra zoom while a fish is on the line
@@ -66,6 +67,7 @@ var alert_t := 0.0
 # test hook: godot --path . -- --at=x,y,hour --shot=out.png [--open=shop]
 var test_shot := ""
 var test_frames := 0
+var test_dir := Vector2.ZERO   # --walk=dx,dy holds that direction down, for checking what you bump into
 var test_shot_frame := 90   # --shot-frame=N takes the shot later, e.g. to see a prompt fade out
 
 func _ready() -> void:
@@ -215,12 +217,13 @@ func _ready() -> void:
 		Art.person(ci, ROSA, PI / 2 + 0.35, Color("#e2583e"), Color("#fbf3e2"), true)
 		ci.draw_circle(ROSA + Vector2(-0.42, 0.1), 0.14, Color("#9aa6ad")), ROSA.y))
 	ents.add_child(Drawer.make(func(ci): ci.draw_rect(Rect2(OLDTIMER.x - 0.5, OLDTIMER.y + 0.15, 0.3, 0.3), Color("#2c5f8a")), OLDTIMER.y + 0.01))
-	# boats tied up at the marina
-	for mb in [[93.5, "#2b7ea6", false], [103.5, "#e2583e", true], [108.5, "#13807b", false]]:
-		var mp := Vector2(mb[0], 160.4)
-		var mc := Color(mb[1])
-		var ms: bool = mb[2]
-		ents.add_child(Drawer.make(func(ci): Art.moored_boat(ci, mp, Time.get_ticks_msec() / 1000.0, mc, ms), mp.y + 1.2, true, Rect2(mp - Vector2(2, 3), Vector2(4, 6))))
+	# boats tied up at the marina, which head out now and then
+	harbor = Harbor.new()
+	harbor.player = player
+	add_child(harbor)
+	harbor.setup(ents)
+	harbor.hit_player.connect(_capsized)
+	Obstacles.harbor = harbor
 	for lp in Town.lamps:
 		var t := Town.t_at(floori(lp.x), floori(lp.y))
 		if Town.is_water_t(t) or t == Town.T.BLD: continue
@@ -239,6 +242,8 @@ func _ready() -> void:
 	traffic.player = player
 	add_child(traffic)
 	traffic.setup(ents)
+	traffic.hit_player.connect(_knocked_down)
+	Obstacles.traffic = traffic
 	town_life = TownLife.new()
 	town_life.player = player
 	add_child(town_life)
@@ -402,6 +407,26 @@ func _ready() -> void:
 		if a == "--open=rodbench": home_tab = "rod"; open_home()
 		if a.begins_with("--homerod="): Game.S.homerod = Crafting.rod_stats(Array(a.substr(10).split(","))); Game.S.use_home = true
 		if a == "--busted": _busted(guards.watchers[0])
+		if a.begins_with("--walk="): var wv := a.substr(7).split(","); test_dir = Vector2(float(wv[0]), float(wv[1]))
+		if a == "--knocked": _knocked_down(traffic.cars[0])
+		if a == "--capsize": _capsized(harbor.boats[0])
+		if a.begins_with("--harbor=go"): harbor.test_go = true; harbor.test_route = int(a.substr(12)) if a.length() > 12 else -1
+		if a.begins_with("--harbor=hold,"): # a boat under way at player + (dx, dy), heading at you, horn going
+			var hv := a.substr(14).split(",")
+			var hb: Harbor.Boat = harbor.boats[0]
+			hb.state = "out"; hb.centre = player.position + Vector2(float(hv[0]), float(hv[1]))
+			hb.heading = (player.position - hb.centre).angle(); hb.speed = Harbor.CRUISE; hb.horn_fx = 99.0
+			harbor.test_hold = true
+			for i in 14: WaterFx.trail.append({ "p": hb.centre - Vector2.from_angle(hb.heading) * (Harbor.HL + i * 0.3) + Vector2(0, 0.1), "a": hb.heading, "t": i * 0.15, "kind": "skiff" })
+		if a.begins_with("--traffic=hold,"): # a car at player + (dx, 0) in your lane, coming at you, horn going
+			var tv := float(a.substr(15))
+			var tc: Traffic.Car = traffic.cars[0]
+			tc.position = player.position + Vector2(tv, 0); tc.d = Vector2i(-int(signf(tv)), 0); tc.ang = Vector2(tc.d).angle()
+			tc.fade = 1.0; tc.horn_fx = 99.0; tc.speed = 0.0
+			traffic.test_hold = true
+		if a == "--harbor=back": # a boat on its way back in, out in the bay
+			var hb: Harbor.Boat = harbor.boats[0]
+			hb.set_meta("out_route", harbor._route_out(hb)); hb.state = "away"; hb.away_t = 0.0
 		if a == "--rosa": talk_rosa()
 		if a == "--open=marina-slam": marina_tab = "slam"; open_marina()
 		if a == "--open=note": shop_tab = "note"; open_shop()
@@ -474,12 +499,14 @@ func _process(dt: float) -> void:
 		cam.position = Vector2(56 + 30 * sin(title_t * 0.035 + 1.2), 82 + 58 * sin(title_t * 0.021 + 1.25)) * TS
 		_lighting()
 		_audio(dt)
+		Obstacles.player_busy = true
 		hud.chips = []
 		hud.refresh("")
 		hud.action.visible = false; hud.hint.visible = false; hud.bar.visible = false
 		_test_shot()
 		return
 	hud.bar.visible = true
+	Obstacles.player_busy = hud.is_open() or fishing.state != "idle"
 	_audio(dt)
 	if not hud.is_open():
 		Game.advance(dt)
@@ -489,6 +516,7 @@ func _process(dt: float) -> void:
 			if Input.is_physical_key_pressed(KEY_RIGHT) or Input.is_physical_key_pressed(KEY_D): dir.x += 1
 			if Input.is_physical_key_pressed(KEY_UP) or Input.is_physical_key_pressed(KEY_W): dir.y -= 1
 			if Input.is_physical_key_pressed(KEY_DOWN) or Input.is_physical_key_pressed(KEY_S): dir.y += 1
+			if test_dir != Vector2.ZERO: dir = test_dir
 		player.step(dt if fishing.state == "idle" else 0.0, dir)
 		var l := Input.is_physical_key_pressed(KEY_LEFT) or Input.is_physical_key_pressed(KEY_A)
 		var r := Input.is_physical_key_pressed(KEY_RIGHT) or Input.is_physical_key_pressed(KEY_D)
@@ -1134,6 +1162,75 @@ func _busted(w: Dictionary) -> void:
 		["sub", "Offense #%d here. Fines go up each time. Try hiding in bushes, waiting for patrols to turn, or a disguise from Lou's." % n],
 		["row", [["Walk it off", func(): hud.close(), true, "hot"]]]])
 
+## A car you didn't get out of the way of. Nobody's badly hurt: you wake up at home a couple of hours
+## later with a bruise and an ER bill. Your cooler is safe.
+func _knocked_down(car) -> void:
+	if hud.is_open() or menu.title_open: return
+	Sound.play("thump", 0.0, 0.0)
+	fishing.cancel(); player.path.clear()
+	shake = 0.4; shake_px = 6.0
+	var bill := 25
+	var paid := mini(int(Game.S.cash), bill)
+	Game.S.cash -= paid
+	Game.S.knockdowns = int(Game.S.get("knockdowns", 0)) + 1
+	Game.S.boat = false
+	Game.skip_minutes(120)
+	player.position = HOME_DOOR + Vector2(0, 0.9)
+	player.face = PI / 2
+	Game.save_game()
+	var what := "A " + _car_colour(car.col) + (" pickup" if car.L > 2.0 else " car")
+	hud.open([["h3", "Knocked down in the street"], ["h2", what + " didn't stop"], ["quote", "\"I honked! You heard me honk!\""],
+		["p", "You land on your backside, see stars and wake up on your own couch two hours later with a bruise the shape of a side mirror. " +
+			("The ER bill was %s." % Game.money(bill) if paid >= bill else "The ER bill was %s; they took the %s you had." % [Game.money(bill), Game.money(paid)] if paid > 0 else "The ER let you off the bill.") + " Your cooler is safe."],
+		["sub", "Cars honk when you're in their lane. A few drivers stop, most don't, so when you hear a horn, step onto the sidewalk. Cars always wait while you have a line out."],
+		["row", [["Ouch", func(): hud.close(), true, "hot"]]]])
+
+static func _car_colour(c: Color) -> String:
+	if c.s < 0.2: return "white" if c.v > 0.8 else "silver" if c.v > 0.5 else "black"
+	var h := c.h * 360.0
+	return "red" if h < 20 or h >= 330 else "orange" if h < 45 else "yellow" if h < 70 else "green" if h < 160 else "teal" if h < 195 else "blue" if h < 260 else "purple"
+
+## A marina boat rolled your kayak or skiff. You come up spluttering, swim it to the nearest bank and
+## pull it out there. The last fish you caught slips out of the cooler, and drying off takes a while.
+func _capsized(b) -> void:
+	if hud.is_open() or menu.title_open or not player.in_boat(): return
+	Sound.play("splash", 2.0, 0.0)
+	fishing.cancel(); player.path.clear()
+	shake = 0.35; shake_px = 5.0
+	var kind := player.boat_kind()
+	var start := player.position
+	# the nearest water you could land this boat from
+	var best := Vector2(-1, -1)
+	var bd := INF
+	for dy in range(-14, 15):
+		for dx in range(-14, 15):
+			var x := floori(start.x) + dx
+			var y := floori(start.y) + dy
+			if not Player.boatable(x, y, kind) or Town.in_bridge(x, y): continue
+			var w := Vector2(x + 0.5, y + 0.5)
+			var dd := w.distance_squared_to(start)
+			if dd >= bd: continue
+			player.position = w
+			if player.beach_spot() != null: bd = dd; best = w
+	player.position = best if best.x >= 0 else start
+	if best.x >= 0: player.toggle_boat()
+	var lost := ""
+	for i in range(Game.S.cooler.size() - 1, -1, -1):
+		var c: Dictionary = Game.S.cooler[i]
+		if not c.get("legend", false):
+			lost = c.n
+			Game.S.cooler.remove_at(i)
+			break
+	Game.S.capsizes = int(Game.S.get("capsizes", 0)) + 1
+	Game.skip_minutes(45)
+	Game.save_game()
+	var boat_name := "skiff" if kind == "skiff" else "kayak"
+	hud.open([["h3", "Capsized in Mullet Bay"], ["h2", "The " + b.what + " didn't stop"], ["quote", "\"Didn't you hear the horn?\" somebody yells from the deck."],
+		["p", "Your %s rolls over and you come up spluttering. You swim it to the nearest bank and drag it out, and it takes the best part of an hour to dry off. " % boat_name +
+			("Your %s slipped out of the cooler and swam away." % lost if lost != "" else "Your cooler was empty, so nothing got away.")],
+		["sub", "Boats leaving or coming back to the marina blow their horn when you're in their way. Paddle out of their path when you hear it. They wait for you while they ease in and out of their slips."],
+		["row", [["Wring out your hat", func(): hud.close(), true, "hot"]]]])
+
 func _on_new_day() -> void:
 	Game.new_order()
 	if Game.tide_day(): hud.flash("King tide today: Low Street floods from 10 AM to 2 PM.")
@@ -1306,18 +1403,16 @@ func _draw_statics(ci: CanvasItem, reg: Rect2) -> void:
 			ci.draw_line(Vector2(r.position.x, r.end.y), r.end, Color(0, 0, 0, 0.12), 0.04)
 		if dw.car:
 			var col := Color(Art.CAR_COLORS[int(Town.hash2(int(r.position.x), int(r.position.y) * 3) * Art.CAR_COLORS.size())])
-			var near_house := r.position + (Vector2(r.size.x / 2, 1.0) if d.y == 1 else Vector2(r.size.x / 2, r.size.y - 1.0) if d.y == -1 else Vector2(r.size.x - 1.0, r.size.y / 2) if d.x == -1 else Vector2(1.0, r.size.y / 2))
-			Art.car(ci, near_house, (Vector2(d) * -1.0).angle() if Town.hash2(int(r.position.y), 5) > 0.5 else Vector2(d).angle(), col, 1.6, 0.78)
-	# parked cars in the lots
+			var pc := Obstacles.driveway_car(dw)
+			Art.car(ci, pc[0], pc[1], col, 1.6, 0.78)
+	# parked cars in the lots (the same places Obstacles uses, so you bump into what you see)
 	for d in Town.decor:
 		if d.k != "parking": continue
-		for x in range(d.x0, d.x1 + 1):
+		for pc in Obstacles.lot_cars(d):
+			var x: int = pc[2]
 			if not reg.has_point(Vector2(x, d.y0)): continue
-			var hh := Town.hash2(x * 17, d.y0 * 5)
-			if hh > 0.55: continue
 			var col := Color(Art.CAR_COLORS[int(Town.hash2(x, d.y0 * 3) * Art.CAR_COLORS.size())])
-			var cyy: float = d.y0 + 1.15 + (0.12 if hh > 0.3 else 0.0)
-			Art.car(ci, Vector2(x + 0.53, cyy), PI / 2 if hh > 0.2 else -PI / 2, col, 1.65, 0.8)
+			Art.car(ci, pc[0], pc[1], col, 1.65, 0.8)
 	# fences, walls and gates
 	for y in range(int(reg.position.y), mini(int(reg.end.y), Town.MH)):
 		for x in range(int(reg.position.x), mini(int(reg.end.x), Town.MW)):
