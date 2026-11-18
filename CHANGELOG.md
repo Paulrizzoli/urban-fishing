@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.31 | Nov 18, 2026 | Place names on the ground, like BACK CANAL, fade away 5 seconds after you walk up |
 | v0.9.30 | Nov 18, 2026 | Twitching pulls the lure in, finer line on better rods, and the journal shows each fish's bait |
 | v0.9.29 | Nov 18, 2026 | Street lights spaced out: no more posts doubled up outside Lou's, at the Plant Rd corner or on the marina dock |
 | v0.9.28 | Nov 18, 2026 | Cars and boats you can't walk or paddle through, cars that honk and then knock you down, and marina boats that head out and can roll your kayak |
@@ -54,6 +55,13 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.31 · Place names on the ground fade away
+
+_Nov 18, 2026 · Builds: `UrbanFishing-v0.9.31-windows.zip`, `UrbanFishing-v0.9.31-godot-project.zip`, screenshots in `screenshots/v0.9.31/`_
+
+- The big place names drawn in the world, like **BACK CANAL**, **MAPLE PARK POND** or **HERON LAKES**, and the name tags over named buildings, now fade away 5 seconds after they come on screen, so they don't sit over the water while you fish. Walk far enough away that a name goes off screen, come back, and it shows again for another 5 seconds.
+- The red NO FISHING signs stay, since they're signs in the world, not names.
 
 ## v0.9.30 · Twitch it in
 
