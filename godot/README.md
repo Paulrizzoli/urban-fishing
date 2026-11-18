@@ -24,7 +24,8 @@ The current version is in `project.godot` (`config/version`) and shows on the ti
 
 - **WASD / arrow keys** to walk, or **click** where you want to go
 - **F / Space / E** to cast, hook, reel, and to go through doors
-- **◀ ▶** to aim a cast, twitch the lure left or right, or pull against a running fish
+- **Arrows** (or the mouse) to move the cast marker, up to as far as your rod reaches
+- **◀ ▶** to twitch the lure in to the left or right, or pull against a running fish
 - **B** to switch bait
 - **K** to launch or land a kayak or skiff
 - **M** for the map, **J** for the journal (spots, Lou's Wall of Fame, the Gazette)

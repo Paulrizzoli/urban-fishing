@@ -511,6 +511,7 @@ func _ready() -> void:
 			_slam_weigh()
 		if a == "--toast": Game.add_news("Local Angler Buys Garage-Sale Rod, Announces 'Big Plans'")
 		if a == "--cast": fishing.start_cast()
+		if a.begins_with("--mark="): var mv := a.substr(7).split(","); fishing.set_mark(player.position + Vector2(float(mv[0]), float(mv[1])))
 		if a.begins_with("--bait="): Game.S.bait = a.substr(7)
 		if a.begins_with("--bob="): # a line already out at player + (dx, dy), in "wait" or another state
 			var v := a.substr(6).split(",")
@@ -580,6 +581,9 @@ func _process(dt: float) -> void:
 		var l := Input.is_physical_key_pressed(KEY_LEFT) or Input.is_physical_key_pressed(KEY_A)
 		var r := Input.is_physical_key_pressed(KEY_RIGHT) or Input.is_physical_key_pressed(KEY_D)
 		fishing.turn = int(r) - int(l)
+		var u := Input.is_physical_key_pressed(KEY_UP) or Input.is_physical_key_pressed(KEY_W)
+		var dn := Input.is_physical_key_pressed(KEY_DOWN) or Input.is_physical_key_pressed(KEY_S)
+		fishing.steer = Vector2(int(r) - int(l), int(dn) - int(u)) if fishing.state == "power" else Vector2.ZERO
 		fishing.pull = int(r) - int(l)
 		fishing.update(dt)
 		guards.update(dt)
@@ -915,17 +919,17 @@ func _unhandled_input(e: InputEvent) -> void:
 		elif e.pressed and k == KEY_M and fishing.state == "idle": open_map()
 		elif e.pressed and fishing.state == "wait" and (k == KEY_LEFT or k == KEY_A): fishing.twitch_side(-1)
 		elif e.pressed and fishing.state == "wait" and (k == KEY_RIGHT or k == KEY_D): fishing.twitch_side(1)
+	elif e is InputEventMouseMotion and fishing.state == "power" and not hud.is_open():
+		fishing.set_mark(get_global_mouse_position() / TS)
 	elif e is InputEventMouseButton and e.button_index == MOUSE_BUTTON_LEFT:
 		if not e.pressed:
 			fishing.action_up(); return
 		var wp: Vector2 = get_global_mouse_position() / TS
-		if fishing.state == "power" and fishing.is_water(wp) and wp.distance_to(player.position) <= Fishing.MAXR + 0.6:
-			var pw := fishing.power
-			var tt := fishing.t
-			fishing.start_cast(wp); fishing.power = pw; fishing.t = tt
+		if fishing.state == "power" and fishing.is_water(wp) and wp.distance_to(player.position) <= fishing.reach() + 0.6:
+			fishing.set_mark(wp)
 			return
 		if fishing.state != "idle": _action_down(); return
-		if fishing.near_water() and fishing.is_water(wp) and wp.distance_to(player.position) <= Fishing.MAXR + 0.6:
+		if fishing.near_water() and fishing.is_water(wp) and wp.distance_to(player.position) <= fishing.reach() + 0.6:
 			fishing.start_cast(wp); return
 		player.walk_to(wp)
 

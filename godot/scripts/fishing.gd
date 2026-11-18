@@ -10,7 +10,8 @@ const SHCOUNT := { 1: 5, 7: 7, 2: 16, 3: 6, 4: 4, 5: 5, 6: 6, 9: 12, 10: 6, 11: 
 	20: 24, 21: 14, 22: 34, 23: 5, 24: 6, 25: 4, 26: 5 }   # 20 and up are Ironwater
 const BAND := [0.22, 0.82]
 const MINR := 1.2
-const MAXR := 5.6
+const MAXR := 5.6        # how far the garage-sale rod casts; better rods reach farther (see reach())
+const MARK_SPEED := 4.5   # how fast the arrows move the cast marker, in tiles a second
 const SWEET := 0.075
 
 var player: Player
@@ -24,7 +25,9 @@ var t := 0.0
 var power := 0.0
 var aim := 0.0
 var green := 0.55
-var tgt = null          # a shadow dictionary or a {x,y,point} target
+var tgt = null          # the cast marker, { pos, point }: where you're aiming, steered with the arrows or the mouse
+var over = null         # the fish shadow under the cast marker, if any (just for show: the marker never locks on)
+var steer := Vector2.ZERO  # arrows held while aiming
 var bob = null          # Vector2
 var bob0 := Vector2.ZERO
 var shore := Vector2.ZERO
@@ -329,36 +332,36 @@ func start_cast(pt = null) -> void:
 	if Game.S.cooler.size() >= Game.S.cooler_cap: emit_signal("message", "Cooler's full. Sell at Lou's first."); return
 	player.path.clear()
 	state = "power"; t = 0.0
-	tgt = null
-	if pt != null:
-		var sd := 1.3
-		for s in shadows:
-			if visible_shadow(s) and s.pos.distance_to(pt) < sd: sd = s.pos.distance_to(pt); tgt = s
-		if tgt == null: tgt = { "pos": pt, "point": true }
+	# the marker starts on the nearest fish in reach (or where you clicked), then it's yours to move
+	var p: Vector2 = player.position + Vector2.from_angle(player.face) * (MINR + reach()) / 2
+	if pt != null: p = pt
 	else:
 		var bd := 99.0
 		for s in shadows:
 			if not visible_shadow(s): continue
 			var d: float = s.pos.distance_to(player.position)
-			if d >= MINR - 0.2 and d <= MAXR + 0.3 and d < bd: bd = d; tgt = s
-	aim = (tgt.pos - player.position).angle() if tgt != null else player.face
-	player.face = aim
+			if d >= MINR and d <= reach() and d < bd: bd = d; p = s.pos
+	set_mark(p)
 
-func aim_target(a: float) -> Variant:
-	var best = null
-	var bs := 0.32
+## How far your rod casts: the garage-sale rod reaches MAXR, every rod up adds a bit more.
+func reach() -> float: return MAXR + Game.rod_level() * 0.4
+
+## Puts the cast marker at p, kept between the shortest cast and your rod's reach, and aims at it.
+func set_mark(p: Vector2) -> void:
+	var off := p - player.position
+	if off.length() < 0.01: off = Vector2.from_angle(aim)
+	off = off.normalized() * clampf(off.length(), MINR, reach())
+	tgt = { "pos": player.position + off, "point": true }
+	aim = off.angle(); player.face = aim
+	over = null
+	var sd := 0.9
 	for s in shadows:
-		if not visible_shadow(s): continue
-		var d: float = s.pos.distance_to(player.position)
-		if d < MINR - 0.2 or d > MAXR + 0.3: continue
-		var da := absf(wrapf((s.pos - player.position).angle() - a, -PI, PI))
-		if da < bs: bs = da; best = s
-	return best
+		if visible_shadow(s) and s.pos.distance_to(tgt.pos) < sd: sd = s.pos.distance_to(tgt.pos); over = s
 
 func release_cast() -> void:
 	var err := absf(power - green)
 	quiet = err < SWEET
-	var d := MINR + power * (MAXR - MINR)
+	var d := MINR + power * (reach() - MINR)
 	var p := player.position + Vector2(cos(aim), sin(aim)) * d
 	if not quiet: p += Vector2.from_angle(randf() * TAU) * minf(1.4, err * 3)
 	if not is_water(p):
@@ -374,7 +377,7 @@ func release_cast() -> void:
 	if not quiet:
 		for s in shadows:
 			if s.reg == spot and s.pos.distance_to(p) < 2.4 + err * 4: s.spook = 2.2; s.wary = 7.0; s.go = false
-	var on_it: bool = tgt != null and not tgt.get("point", false) and tgt.pos.distance_to(p) < 1.3
+	var on_it: bool = over != null and over.pos.distance_to(p) < 1.3
 	emit_signal("message", ("Right on it. Now wait…" if on_it else "Quiet cast.") if quiet else "Splash! That spooked anything nearby.")
 
 func drop_target(wary: float) -> void:
@@ -416,22 +419,26 @@ func action_up() -> void: holding = false
 ## Left or right while waiting: twitch the lure across the water, left on screen for left and right
 ## for right, and pull it in a little toward you each time, like a real twitch retrieve. It draws fish
 ## in like a forward twitch (as in the browser game). Twitch enough and the lure comes all the way back.
-const TWITCH_PULL := 0.3
+const TWITCH_PULL := 0.45
 func twitch_side(dir: int) -> void:
 	if state != "wait" or bob == null: return
 	twitch = 1.4; splash = 0.25; splash_big = false
 	twitch_tilt = -dir
 	Sound.play("plop", -10.0)
 	if manhole >= 0: return
-	var toward: Vector2 = (player.position - bob).normalized()
-	var pull: Vector2 = toward * TWITCH_PULL
-	# sideways and in if there's room, otherwise just in (against a wall or the edge of the spot)
-	for n: Vector2 in [bob + Vector2(dir * 0.42, 0) + pull, bob + pull]:
-		if is_water(n) and region_at(n) == spot and n.distance_to(player.position) >= 1.0:
-			slide += bob - n; bob = n
-			WaterFx.ripple(n, 0.35)
-			return
-	if not is_water(bob + pull) or (bob + pull).distance_to(player.position) < 1.0:
+	# dart sideways, then come in: the new spot is always TWITCH_PULL closer to you than before,
+	# however the lure sits, so every twitch in either direction reels it in a little
+	var r: float = bob.distance_to(player.position) - TWITCH_PULL
+	var straight: Vector2 = player.position + (bob - player.position).normalized() * r
+	var side: Vector2 = bob + Vector2(dir * 0.42, 0)
+	side = player.position + (side - player.position).normalized() * r
+	if r >= 1.0:
+		for n: Vector2 in [side, straight]:
+			if is_water(n) and region_at(n) == spot:
+				slide += bob - n; bob = n
+				WaterFx.ripple(n, 0.35)
+				return
+	if r < 1.0 or not is_water(straight):
 		drop_target(0); state = "idle"; holding = false; emit_signal("message", "Reeled all the way in. Cast again.")
 
 ## How thick the line looks: better rods (bought or home-built) have lighter, finer line, so it goes
@@ -439,6 +446,7 @@ func twitch_side(dir: int) -> void:
 static func line_width() -> float:
 	var k := clampf((1.0 - float(Game.rod().t)) / 0.5, 0.0, 1.0)
 	return lerpf(0.032, 0.011, k)
+
 
 func update(dt: float) -> void:
 	update_shadows(dt)
@@ -454,12 +462,9 @@ func update(dt: float) -> void:
 	match state:
 		"power":
 			t += dt; power = (sin(t * 2.6 - PI / 2) + 1) / 2
-			if turn != 0:
-				aim += turn * 1.8 * dt; tgt = aim_target(aim)
-			elif tgt != null and not tgt.get("point", false): aim = (tgt.pos - player.position).angle()
-			if tgt != null and (tgt.get("gone", false) or tgt.get("leaving", false) or tgt.get("hooked", false)): tgt = null
-			green = clampf((tgt.pos.distance_to(player.position) - MINR) / (MAXR - MINR), 0, 1) if tgt != null else 0.55
-			player.face = aim
+			# the arrows steer the marker around the water, like a cursor; it never snaps to a fish
+			set_mark(tgt.pos + steer.normalized() * MARK_SPEED * dt if steer != Vector2.ZERO else tgt.pos)
+			green = clampf((tgt.pos.distance_to(player.position) - MINR) / (reach() - MINR), 0, 1)
 		"wait" when manhole >= 0: _manhole_wait(dt)
 		"wait":
 			t += dt; wait_t += dt; twitch -= dt
@@ -577,8 +582,10 @@ func _draw() -> void:
 func draw_line_layer(ci: CanvasItem) -> void:
 	var now := Time.get_ticks_msec() / 1000.0
 	if state == "power":
-		var d := MINR + power * (MAXR - MINR)
+		var d := MINR + power * (reach() - MINR)
 		var l := player.position + Vector2.from_angle(aim) * d
+		# how far the rod casts: a faint arc at its reach, either side of where you're aiming
+		ci.draw_arc(player.position, reach(), aim - 0.6, aim + 0.6, 32, Color(1, 1, 1, 0.5), 0.06, true)
 		var ok := absf(power - green) < SWEET
 		var mid := (player.position + l) / 2 + Vector2(0, -1.4)
 		var arc := PackedVector2Array()
@@ -587,7 +594,8 @@ func draw_line_layer(ci: CanvasItem) -> void:
 		ci.draw_dashed_line(arc[6], arc[12], Color(1, 1, 1, 0.55), 0.05, 0.2)
 		if tgt != null:
 			var tp: Vector2 = tgt.pos
-			var gc := Color(0.56, 0.82, 0.62, 0.95)
+			# the marker: green with a fish under it, white over open water, red over dry land
+			var gc := Color(0.56, 0.82, 0.62, 0.95) if over != null else Color(1, 1, 1, 0.85) if is_water(tp) else Color(1, 0.55, 0.45, 0.9)
 			ci.draw_arc(tp, 0.55, 0, TAU, 24, gc, 0.07)
 			for dv in [Vector2(1, 0), Vector2(-1, 0), Vector2(0, 1), Vector2(0, -1)]: ci.draw_line(tp + dv * 0.35, tp + dv * 0.85, gc, 0.07)
 		ci.draw_arc(l, 0.28 if ok else 0.38, 0, TAU, 24, Color("#8fd19e") if ok else Color(1, 1, 1, 0.95), 0.09)
