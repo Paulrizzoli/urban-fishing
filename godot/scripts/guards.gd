@@ -8,6 +8,8 @@ signal busted(w: Dictionary)
 
 const PLANE_CYCLE := 55.0
 const HOA_CYCLE := 26.0
+const HOA_GATE := Vector2i(61, 86)    # the Heron Lakes gate, in its wall
+const PARK_GATE := Vector2i(20, 86)   # the Sunsplash Jungle Park gate, in its fence
 
 var player: Player
 var fishing: Fishing
@@ -18,6 +20,8 @@ var detect := 0.0
 var detect_by = null
 var plane_t := 18.0
 var hoa_t := 6.0
+var hoa_swing := 0.0    # how far the Heron Lakes gate has swung open, 0 shut to 1 wide open
+var park_swing := 0.0   # the same for the Sunsplash Jungle Park gate
 var plane_hint := false
 
 func setup(ents: Node2D) -> void:
@@ -36,6 +40,9 @@ func setup(ents: Node2D) -> void:
 		ents.add_child(w.node)
 		watchers.append(w)
 	ents.add_child(Drawer.make(_draw_hoa_car, 84.0, true))
+	if Town.level == 0:
+		ents.add_child(Drawer.make(_draw_hoa_gate, HOA_GATE.y + 0.95, true, Rect2(HOA_GATE.x - 4, HOA_GATE.y - 2, 8, 4)))
+		ents.add_child(Drawer.make(_draw_park_gate, PARK_GATE.y + 0.95, true, Rect2(PARK_GATE.x - 3, PARK_GATE.y - 2, 6, 4)))
 
 func zone_at(p: Vector2) -> int:
 	var x := floori(p.x)
@@ -91,6 +98,10 @@ func hoa_car_pos() -> Variant:
 	if k < 2.5: return [Vector2(44 + k / 2.5 * 17.5, 83.5), 0.0]
 	return [Vector2(61.5, 83.5 + (k - 2.5) / 2.5 * 9.5), PI / 2]
 func hoa_gate_open() -> bool: return hoa_t > 1.8 and hoa_t < 4.7
+## Sunsplash Jungle Park keeps its gate open 9 AM to 6 PM (you can always walk out).
+static func park_open() -> bool:
+	var h := Game.hour()
+	return h >= 9 and h < 18
 
 func update(dt: float) -> void:
 	var was_plane := plane_t < 5
@@ -100,6 +111,8 @@ func update(dt: float) -> void:
 		if zone_at(player.position) == 7: plane_hint = true
 	hoa_t = fmod(hoa_t + dt, HOA_CYCLE)
 	Game.hoa_open = hoa_gate_open() and Town.level == 0
+	hoa_swing = move_toward(hoa_swing, 1.0 if Game.hoa_open else 0.0, dt * 1.8)
+	park_swing = move_toward(park_swing, 1.0 if park_open() else 0.0, dt * 1.2)
 	var t := Time.get_ticks_msec() / 1000.0
 	var seen_by = null
 	var pz := zone_at(player.position)
@@ -225,6 +238,87 @@ func _draw_watcher(ci: CanvasItem, w: Dictionary) -> void:
 func _draw_hoa_car(ci: CanvasItem) -> void:
 	var c = hoa_car_pos()
 	if c != null: Art.car(ci, c[0], c[1], Color("#f1f1ee"), 1.9, 0.9)
+
+## One leaf of a swing gate seen from the front: hinged at `hinge` (its foot), `w` wide and `h` tall,
+## pointing along `side` (1 right, -1 left) when shut and swinging in toward you as `open` goes to 1.
+static func _gate_leaf(ci: CanvasItem, hinge: Vector2, w: float, h: float, side: float, open: float, iron: Color, bars: int, spears: bool) -> void:
+	var a := open * PI / 2 * 0.92
+	var run := Vector2(cos(a) * w * side, sin(a) * w)   # the foot of the leaf, from the hinge out to its free end
+	var up := Vector2(0, -h)
+	# its shadow on the ground
+	Art.poly(ci, [hinge + Vector2(0.05, 0.04), hinge + run + Vector2(0.05, 0.04), hinge + run + Vector2(0.18, 0.1), hinge + Vector2(0.18, 0.1)], Color(0, 0, 0, 0.16))
+	var lw := 0.035 + 0.02 * (1 - absf(cos(a)))
+	for i in bars + 1:
+		var k := float(i) / bars
+		var f := hinge + run * k
+		var top := f + up * (1.0 + (0.08 if spears and i % 2 == 1 else 0.0))
+		ci.draw_line(f, top, iron, lw * (1.6 if i == 0 or i == bars else 1.0))
+		if spears: ci.draw_circle(top, lw * 0.9, iron)
+	for r in [0.12, 0.82]:
+		ci.draw_line(hinge + up * r, hinge + run + up * r, iron, 0.05)
+	# a curl of scrollwork near the top
+	if spears and cos(a) > 0.25:
+		var mid := hinge + run * 0.5 + up * 0.66
+		ci.draw_arc(mid, 0.09, PI, TAU, 10, iron, 0.03)
+
+## A square gatepost seen from the front: its face and a cap on top, with a lantern if `lamp`.
+static func _gate_post(ci: CanvasItem, foot: Vector2, w: float, h: float, face: Color, cap: Color, lamp: bool) -> void:
+	ci.draw_rect(Rect2(foot.x - w / 2 + 0.08, foot.y - 0.08, w, 0.18), Color(0, 0, 0, 0.18))
+	ci.draw_rect(Rect2(foot.x - w / 2, foot.y - h, w, h), face)
+	ci.draw_rect(Rect2(foot.x - w / 2, foot.y - h, w, 0.06), face.darkened(0.12))
+	ci.draw_rect(Rect2(foot.x - w / 2 - 0.05, foot.y - h - 0.2, w + 0.1, 0.22), cap)
+	ci.draw_rect(Rect2(foot.x - w / 2 - 0.05, foot.y - h + 0.0, w + 0.1, 0.04), cap.darkened(0.25))
+	if lamp:
+		var lp := foot + Vector2(0, -h - 0.34)
+		ci.draw_rect(Rect2(lp.x - 0.08, lp.y - 0.06, 0.16, 0.2), Color("#2d3236"))
+		var glow := Game.darkness()
+		ci.draw_rect(Rect2(lp.x - 0.05, lp.y - 0.02, 0.1, 0.13), Color("#fff2c4").lerp(Color("#fbd56b"), glow))
+		if glow > 0.05:
+			for k in 3: ci.draw_circle(lp + Vector2(0, 0.05), 0.25 + k * 0.22, Color(1, 0.9, 0.6, 0.14 * glow / (k + 1)))
+
+## The Heron Lakes gate: stucco posts with lanterns, a pair of black iron gates that swing in when a
+## resident's car comes up, a call box out front with a red or green light, and a RESIDENTS ONLY plaque.
+func _draw_hoa_gate(ci: CanvasItem) -> void:
+	if Town.t_at(HOA_GATE.x, HOA_GATE.y) != Town.T.HGATE: return
+	var x := float(HOA_GATE.x)
+	var foot := float(HOA_GATE.y) + 0.78
+	var iron := Color("#22282c")
+	# the plaque on the wall to the left
+	var pl := Rect2(x - 3.1, foot - 0.62, 2.2, 0.5)
+	ci.draw_rect(Rect2(pl.position + Vector2(0.06, 0.06), pl.size), Color(0, 0, 0, 0.2))
+	ci.draw_rect(pl, Color("#2f4a3c"))
+	ci.draw_rect(pl.grow(-0.04), Color("#3c5d4b"))
+	Art.text(ci, pl.get_center() + Vector2(0, -0.08), "HERON LAKES", 0.17, Color("#e9dfc4"))
+	Art.text(ci, pl.get_center() + Vector2(0, 0.12), "RESIDENTS ONLY", 0.11, Color("#c7d3c0"))
+	# the gates, behind the posts
+	_gate_leaf(ci, Vector2(x + 0.02, foot), 0.48, 0.62, 1.0, hoa_swing, iron, 6, true)
+	_gate_leaf(ci, Vector2(x + 0.98, foot), 0.48, 0.62, -1.0, hoa_swing, iron, 6, true)
+	_gate_post(ci, Vector2(x - 0.2, foot), 0.38, 0.72, Color("#eadcc2"), Color("#c96f4a"), true)
+	_gate_post(ci, Vector2(x + 1.2, foot), 0.38, 0.72, Color("#eadcc2"), Color("#c96f4a"), true)
+	# the call box on its post, out on the sidewalk where the cars pull up
+	var cb := Vector2(x - 0.55, float(HOA_GATE.y) - 0.35)
+	ci.draw_rect(Rect2(cb.x - 0.03, cb.y - 0.2, 0.06, 0.4), Color("#5b6064"))
+	ci.draw_rect(Rect2(cb.x - 0.13, cb.y - 0.42, 0.26, 0.26), Color("#33393d"))
+	ci.draw_rect(Rect2(cb.x - 0.09, cb.y - 0.38, 0.18, 0.1), Color("#8fa3ad"))
+	ci.draw_circle(cb + Vector2(0, -0.22), 0.04, Color("#5fd16b") if Game.hoa_open else Color("#e2583e"))
+
+## The Sunsplash Jungle Park gate: two bamboo-yellow posts and green tube gates, with a CLOSED sign
+## hung on them outside opening hours.
+func _draw_park_gate(ci: CanvasItem) -> void:
+	if Town.t_at(PARK_GATE.x, PARK_GATE.y) != Town.T.PGATE: return
+	var x := float(PARK_GATE.x)
+	var foot := float(PARK_GATE.y) + 0.62
+	var green := Color("#2f8a5c")
+	_gate_leaf(ci, Vector2(x + 0.04, foot), 0.46, 0.5, 1.0, park_swing, green, 4, false)
+	_gate_leaf(ci, Vector2(x + 0.96, foot), 0.46, 0.5, -1.0, park_swing, green, 4, false)
+	_gate_post(ci, Vector2(x - 0.06, foot), 0.16, 0.66, Color("#e2b04a"), Color("#e2583e"), false)
+	_gate_post(ci, Vector2(x + 1.06, foot), 0.16, 0.66, Color("#e2b04a"), Color("#e2583e"), false)
+	if park_swing < 0.15:
+		var sg := Rect2(x + 0.14, foot - 0.48, 0.72, 0.28)
+		ci.draw_line(Vector2(sg.position.x + 0.12, sg.position.y), Vector2(x + 0.5, foot - 0.58), Color("#5b4630"), 0.02)
+		ci.draw_line(Vector2(sg.end.x - 0.12, sg.position.y), Vector2(x + 0.5, foot - 0.58), Color("#5b4630"), 0.02)
+		ci.draw_rect(sg, Color("#fbf3e2"))
+		Art.text(ci, sg.get_center() + Vector2(0, 0.01), "CLOSED", 0.14, Color("#c93b2a"))
 
 ## The jet overhead, and the detection meter over the player. Drawn above everything.
 func draw_overlay(ci: CanvasItem) -> void:

@@ -50,10 +50,9 @@ func boat_kind() -> String: return Game.S.get("boat_kind", "kayak")
 func walkable(x: int, y: int) -> bool:
 	if not Town.inb(x, y): return false
 	var t: int = Town.tile[Town.idx(x, y)]
-	var h := Game.hour()
 	match t:
 		Town.T.GRATE: return Game.S.gear.has("flashlight") and Game.S.gear.has("waders")
-		Town.T.PGATE: return (h >= 9 and h < 18) or zone_of(position) == 5
+		Town.T.PGATE: return Guards.park_open() or zone_of(position) == 5
 		Town.T.HGATE: return Game.hoa_open or zone_of(position) == 6
 	return not (t in Town.BLOCK)
 
