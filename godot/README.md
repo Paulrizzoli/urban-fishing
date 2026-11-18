@@ -51,7 +51,7 @@ The current version is in `project.godot` (`config/version`) and shows on the ti
 - [x] The Mullet Bay Slam every seventh day at the marina, Lou's Wall of Fame plaques, the Port Mullet Gazette
 - [x] The Route 1 bus and its five stops
 - [x] Map (M) and journal (J)
-- [ ] Traffic, FINTASTIC! and the energy drink
+- [x] Traffic, FINTASTIC! (walk in, Brayden, the flashy extras) and the energy drink
 - [ ] Manholes, the storm drain's darkness, the power station's Geiger counter, golf course gator, home aquarium
 - [x] Title screen, pause menu, controls screen, settings (full screen, window size, VSync, lightning flashes), fades and a save indicator
 - [x] Music and sound: seven tunes that change with where you are and the time of day, sound effects, day, night and rain ambience, and volume settings

@@ -14,6 +14,8 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.33 | Nov 18, 2026 | FINTASTIC! is open: walk in, meet Brayden, and buy Trent's flashy extras |
+| v0.9.32 | Nov 18, 2026 | Have your parked kayak or skiff brought to the shore you're standing on, for a small fee |
 | v0.9.31 | Nov 18, 2026 | Place names on the ground, like BACK CANAL, fade away 5 seconds after you walk up |
 | v0.9.30 | Nov 18, 2026 | Twitching pulls the lure in, finer line on better rods, and the journal shows each fish's bait |
 | v0.9.29 | Nov 18, 2026 | Street lights spaced out: no more posts doubled up outside Lou's, at the Plant Rd corner or on the marina dock |
@@ -55,6 +57,33 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.33 · FINTASTIC! is open
+
+_Nov 18, 2026 · Builds: `UrbanFishing-v0.9.33-windows.zip`, `UrbanFishing-v0.9.33-godot-project.zip`, screenshots in `screenshots/v0.9.33/`_
+
+- **Walk in:** the FINTASTIC! Outdoor Megastore downtown, across from the marina, is a real shop now. Walk up to its door (or press E there) and you're inside a big-box store: steel trusses and a flickering light strip, aisle end caps going back to Aisle 40 ("???"), a wall of rods with Trent's face on every one, REEL DEAL looping on the TV, a life-size cardboard Trent giving a thumbs up, a glowing energy drink fridge and a robot fish on the counter that sings.
+- **Brayden:** the only team member, 17, in a FINTASTIC! visor, Team Member of the Month eleven months running. He greets you off the corporate script, blinks, sways and shuts his eyes when the robot fish sings. The **Talk to Brayden** tab has a dozen things he says off script (he buys his shrimp at Lou's), plus lines about you: the Fin Club pitch, a legend in your cooler, the energy drink you just had, Trent on TV.
+- **The stock is extras, not Lou's basics.** Nothing here replaces Lou's rods, bait or gear, and FINTASTIC! doesn't buy fish. It's all pricier stuff that goes on top:
+  - **TurboReel 9000**, $240: you reel in 15% faster with any rod, your own home-built one too.
+  - **Fighting belt & harness**, $260: fish that pull hard fight 20% less hard. Made for the big-game rod and the offshore monsters.
+  - **Rolling MegaCooler**, $220: 10 more fish, on top of Lou's bigger coolers and the marina's marine cooler (up to 40 in all).
+  - **Fin Club card**, $15: 15% off everything at FINTASTIC! for good.
+  - **REEL DEAL energy drink**, $4: you walk a lot faster for the rest of the day.
+  - **FISH MAGNET scent spray**, $12: for the rest of the day fish notice your bait from farther away and come over quicker.
+  - The **Trent Marlowe Signature Rod**, $999, is on the wall but not for sale. It's the bait-shop special with a sticker on it.
+- While the drink or the spray is working, a chip under the others says so ("Today: REEL DEAL buzz + Fish Magnet").
+- Press **the robot fish's button** for the jingle.
+- **After Act II**, when FINTASTIC! closes, the door shows the store dark and shut with CLOSED FOR REBRANDING across it and the cardboard Trent face down, and a note from Brayden. Anything you bought there keeps working.
+- New pictures for every FINTASTIC! item in the shop, in your kit and in the top bar.
+
+## v0.9.32 · Have your boat brought to you
+
+_Nov 18, 2026 · Builds: `UrbanFishing-v0.9.32-windows.zip`, `UrbanFishing-v0.9.32-godot-project.zip`, screenshots in `screenshots/v0.9.32/`_
+
+- Left your kayak on Mullet Canal and want it at Mullet Beach? Stand at the edge of any canal, the river or the bay and the button says **Have the kayak brought here, $10 (K)**. Press K, pay, and somebody from Lou's drives it over on a truck roof. You wait 20 minutes and you're sitting in it, ready to paddle.
+- The skiff works the same way for **$25**, from a marina hand, but only to the bay or the downtown river, the same places you can launch it.
+- It's offered only when your boat is more than 12 steps away. If it's nearby, walk over and launch it as usual. Not enough cash and it tells you what it costs.
 
 ## v0.9.31 · Place names on the ground fade away
 

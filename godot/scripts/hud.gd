@@ -26,7 +26,7 @@ var card_box: VBoxContainer
 var fishing: Fishing
 var hint_t := 0.0
 ## Place-name prompts (Lou's, home, the marina, the bus stop) fade out after PLACE_SECS.
-const PLACES := ["shop", "home", "marina", "bus"]
+const PLACES := ["shop", "home", "marina", "fin", "bus"]
 const PLACE_SECS := 5.0
 var place_near := ""
 var place_t := 0.0
@@ -226,7 +226,7 @@ func refresh(near: String) -> void:
 	var col := SUN
 	match st:
 		"idle":
-			label = { "fish": "Cast", "shop": "Go in" if Town.level == 1 else "Enter Lou's", "home": "Go inside", "marina": "Enter the marina", "oldtimer": "Talk to the old-timer", "rosa": "Talk to Walt" if Town.level == 1 else "Talk to Rosa", "bus": "Ride the bus", "part": "Pick it up",
+			label = { "fish": "Cast", "shop": "Go in" if Town.level == 1 else "Enter Lou's", "home": "Go inside", "marina": "Enter the marina", "fin": "Peek inside" if Fintastic.closed() else "Enter FINTASTIC!", "oldtimer": "Talk to the old-timer", "rosa": "Talk to Walt" if Town.level == 1 else "Talk to Rosa", "bus": "Ride the bus", "part": "Pick it up",
 				"manhole": "Fish the manhole" if S.gear.has("prybar") else "Lift the cover" }.get(near, "")
 			if near in ["oldtimer", "rosa", "marina", "bus", "part"]: col = TEAL
 		"power": label = "Release!"
@@ -252,7 +252,7 @@ func refresh(near: String) -> void:
 	else:
 		var m := ""
 		match st:
-			"idle": m = { "fish": "Cooler's full. Sell at Lou's." if S.cooler.size() >= S.cooler_cap else "Press F or Space to cast. B switches bait.", "shop": "Calder River Outfitters. Press E or F to go in." if Town.level == 1 else "Lou's Bait & Tackle. Press E or F to go in.", "home": "Riverview Motor Inn. Press E or F to get a room." if Town.level == 1 else "Home. Press E or F to go inside.", "marina": "Mullet Bay Marina. Press E to go in.", "oldtimer": "Press E to talk.", "rosa": "Press E to talk.", "bus": ("Calder Line bus stop. Press E to ride, or take the coach home." if Town.level == 1 else "Route 1 bus stop. Press E to ride.") + " M for the map, J for the journal.", "part": "Something shiny on the ground. Press E to pick it up.",
+			"idle": m = { "fish": "Cooler's full. Sell at Lou's." if S.cooler.size() >= S.cooler_cap else "Press F or Space to cast. B switches bait.", "shop": "Calder River Outfitters. Press E or F to go in." if Town.level == 1 else "Lou's Bait & Tackle. Press E or F to go in.", "home": "Riverview Motor Inn. Press E or F to get a room." if Town.level == 1 else "Home. Press E or F to go inside.", "marina": "Mullet Bay Marina. Press E to go in.", "fin": "FINTASTIC! is closed for rebranding. Press E to look in." if Fintastic.closed() else "FINTASTIC! Outdoor Megastore. Press E to go in.", "oldtimer": "Press E to talk.", "rosa": "Press E to talk.", "bus": ("Calder Line bus stop. Press E to ride, or take the coach home." if Town.level == 1 else "Route 1 bus stop. Press E to ride.") + " M for the map, J for the journal.", "part": "Something shiny on the ground. Press E to pick it up.",
 				"manhole": ("Cooler's full. Sell at Lou's." if S.cooler.size() >= S.cooler_cap else "A manhole. Press F to drop a line down it.") if S.gear.has("prybar") else "A manhole. The cover's too heavy. Lou sells a pry bar." }.get(near, "")
 			"power": m = "Release in the green to land right on the fish. ◀ ▶ or click the water to aim." if fishing.tgt != null else "No fish in line. ◀ ▶ to aim at a shadow, or click the water."
 			"wait": m = "Tap to jig the line. Hold to pull it back up." if fishing.manhole >= 0 else "Something's coming over…" if fishing.target != null else "Tap to twitch the lure toward you, ◀ ▶ to twitch it in, left or right. Hold to reel it back in."

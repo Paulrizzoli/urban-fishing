@@ -45,6 +45,13 @@ static func draw(ci: CanvasItem, id: String, r: Rect2, t := 0.0) -> void:
 		"skiff": _skiff(ci)
 		"shades": _shades(ci)
 		"junk": _junk(ci)
+		"turbo": _turbo(ci, t)
+		"harness": _harness(ci)
+		"megacooler": _megacooler(ci)
+		"finclub": _finclub(ci)
+		"energy": _energy(ci)
+		"magnet": _magnet(ci, t)
+		"sigrod": _sigrod(ci)
 		"p_spoon": _spoon_part(ci)
 		"p_caps": _caps(ci)
 		"p_beads": _beads(ci)
@@ -816,3 +823,93 @@ static func _tape(ci: CanvasItem) -> void:
 	ci.draw_arc(Vector2(30, 34), 14, 0, TAU, 24, Color("#8a959c"), 1.2, true)
 	ci.draw_circle(Vector2(30, 34), 9.5, INK); ci.draw_circle(Vector2(30, 34), 8, Color("#e9dcc0"))
 	_shape(ci, PackedVector2Array([Vector2(46, 44), Vector2(58, 50), Vector2(56, 56), Vector2(44, 49)]), Color("#a9b2b8"), 1.6)
+
+# ---------- FINTASTIC! stock ----------
+
+static func _label_at(ci: CanvasItem, c: Vector2, txt: String, size: int, col: Color) -> void:
+	var f: Font = Game.font_bold
+	var w := f.get_string_size(txt, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+	ci.draw_string(f, c - Vector2(w / 2, -size * 0.35), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, size, col)
+
+## A gold reel with speed lines and the handle spun round.
+static func _turbo(ci: CanvasItem, t: float) -> void:
+	for i in 3: ci.draw_line(Vector2(2, 24 + i * 9), Vector2(12 - i * 2, 24 + i * 9), Color(SEA, 0.7), 2.4, true)
+	_rr(ci, Vector2(44, 52), 12, 3, 1.5, Color("#c9a55c"))      # the foot on the rod
+	ci.draw_rect(Rect2(40, 44, 8, 6), INK)
+	_el(ci, Vector2(34, 32), 18, 18, Color("#e9b23a"))
+	_el(ci, Vector2(34, 32), 12, 12, Color("#f6d77a"), 0, 1.6)
+	ci.draw_circle(Vector2(34, 32), 4, INK); ci.draw_circle(Vector2(34, 32), 2, Color("#f6d77a"))
+	var a := t * 9.0
+	var tip := Vector2(34, 32) + Vector2.from_angle(a) * 15
+	_stroke(ci, PackedVector2Array([Vector2(34, 32), tip]), SILVER, 2.4)
+	_el(ci, tip, 3.4, 3.4, CORAL, 0, 1.4)
+	_label_at(ci, Vector2(34, 58), "9000", 10, CORAL)
+	_sparkle(ci, Vector2(55, 12), 6, Color.WHITE)
+
+## A fighting belt with its rod cup and two shoulder straps.
+static func _harness(ci: CanvasItem) -> void:
+	for sx in [-1, 1]:
+		ci.draw_polyline(PackedVector2Array([Vector2(32 + sx * 6, 6), Vector2(32 + sx * 16, 22), Vector2(32 + sx * 18, 36)]), INK, 6.4, true)
+		ci.draw_polyline(PackedVector2Array([Vector2(32 + sx * 6, 6), Vector2(32 + sx * 16, 22), Vector2(32 + sx * 18, 36)]), CORAL, 3.4, true)
+	_rr(ci, Vector2(32, 42), 27, 9, 4, Color("#2a3e5c"))
+	for x in [12, 52]: _rr(ci, Vector2(x, 42), 3.4, 4.4, 1, SILVER, 1.4)
+	_rr(ci, Vector2(32, 42), 9, 10, 3, Color("#3a3a3a"))
+	_el(ci, Vector2(32, 38), 5, 2.4, Color("#8a8f94"), 0, 1.4)
+	ci.draw_line(Vector2(32, 38), Vector2(40, 4), INK, 4.4, true)
+	ci.draw_line(Vector2(32, 38), Vector2(40, 4), Color("#2a3e5c"), 2.4, true)
+	_label_at(ci, Vector2(32, 56), "F!", 9, SUN)
+
+## A huge cooler on wheels with a pull handle and a cupholder.
+static func _megacooler(ci: CanvasItem) -> void:
+	ci.draw_polyline(PackedVector2Array([Vector2(56, 30), Vector2(62, 10), Vector2(54, 10)]), INK, 4.4, true)
+	ci.draw_polyline(PackedVector2Array([Vector2(56, 30), Vector2(62, 10), Vector2(54, 10)]), SILVER, 2.2, true)
+	_rr(ci, Vector2(30, 38), 27, 16, 4, Color("#2b7ea6"))
+	_rr(ci, Vector2(30, 21), 28, 5, 3, Color("#f2b134"))
+	ci.draw_rect(Rect2(5, 44, 50, 4), Color("#f4f7f8"))
+	_label_at(ci, Vector2(28, 36), "MEGA", 11, Color("#f4f7f8"))
+	_el(ci, Vector2(10, 18), 4, 2, Color("#3a3a3a"), 0, 1.2)     # cupholder
+	ci.draw_circle(Vector2(12, 57), 5, INK); ci.draw_circle(Vector2(48, 57), 5, INK)
+	ci.draw_circle(Vector2(12, 57), 2, SILVER); ci.draw_circle(Vector2(48, 57), 2, SILVER)
+
+## The Fin Club card, shiny side up.
+static func _finclub(ci: CanvasItem) -> void:
+	var r := Art.rrect(Vector2(32, 34), 27, 17, 4)
+	_shape(ci, r, Color("#13807b"))
+	ci.draw_colored_polygon(PackedVector2Array([Vector2(8, 46), Vector2(56, 22), Vector2(57, 30), Vector2(10, 50)]), Color(1, 1, 1, 0.18))
+	_label_at(ci, Vector2(32, 28), "FIN CLUB", 11, SUN)
+	ci.draw_rect(Rect2(10, 38, 12, 8), Color("#e9c46a")); ci.draw_rect(Rect2(10, 38, 12, 8), INK, false, 1.2)
+	for i in 3: ci.draw_line(Vector2(28, 40 + i * 3.5), Vector2(52 - i * 6, 40 + i * 3.5), Color(1, 1, 1, 0.6), 1.4)
+	_label_at(ci, Vector2(50, 10), "-15%", 10, CORAL)
+
+## A tall can of REEL DEAL energy drink with a lightning bolt.
+static func _energy(ci: CanvasItem) -> void:
+	_rr(ci, Vector2(32, 34), 13, 25, 3, Color("#1d2b45"))
+	_el(ci, Vector2(32, 10), 12, 3, SILVER, 0, 1.6)
+	ci.draw_rect(Rect2(20, 36, 24, 10), CORAL)
+	_label_at(ci, Vector2(32, 41), "REEL", 8, Color.WHITE)
+	var bolt := PackedVector2Array([Vector2(35, 14), Vector2(24, 30), Vector2(31, 30), Vector2(27, 34), Vector2(40, 24), Vector2(33, 24)])
+	_shape(ci, bolt, Color("#c6ff3a"), 1.4)
+	_label_at(ci, Vector2(32, 52), "DEAL", 8, Color("#c6ff3a"))
+	ci.draw_line(Vector2(23, 14), Vector2(23, 56), Color(1, 1, 1, 0.2), 2)
+
+## A can of FISH MAGNET scent spray, misting glitter.
+static func _magnet(ci: CanvasItem, t: float) -> void:
+	_rr(ci, Vector2(22, 40), 11, 20, 3, Color("#e2583e"))
+	_rr(ci, Vector2(22, 17), 7, 4, 1.5, SILVER, 1.4)
+	ci.draw_rect(Rect2(25, 12, 6, 4), INK)
+	ci.draw_rect(Rect2(12, 34, 20, 12), Color("#fbf3e2"))
+	_fish_at(ci, Vector2(22, 40), 0.32, Color("#5d86a0"))
+	for i in 7:
+		var k := fmod(t * 0.8 + i * 0.37, 1.0)
+		var p := Vector2(34 + k * 26, 13 - k * 8 + sin(i * 2.1) * k * 10)
+		ci.draw_circle(p, 1.8 * (1.0 - k * 0.5), Color([SUN, CORAL, Color("#c9b6e4"), Color.WHITE][i % 4], 1.0 - k))
+	_sparkle(ci, Vector2(52, 22), 5, SUN)
+
+## The Trent Marlowe Signature Rod: the bait-shop special with Trent's face stuck on it.
+static func _sigrod(ci: CanvasItem) -> void:
+	_rod(ci, Color("#3f7d4e"), SUN, Color("#c79a62"), 3.4, "spin", "")
+	ci.draw_circle(Vector2(40, 22), 9.5, INK); ci.draw_circle(Vector2(40, 22), 8, Color("#f4f7f8"))
+	ci.draw_circle(Vector2(40, 23), 5, Color("#e9c29a"))
+	ci.draw_colored_polygon(PackedVector2Array([Vector2(34.5, 22), Vector2(36, 16), Vector2(42, 15), Vector2(46, 19), Vector2(45.5, 22)]), Color("#f2d16b"))
+	ci.draw_rect(Rect2(37.5, 25, 5, 1.6), Color.WHITE)
+	_label_at(ci, Vector2(14, 58), "$999", 10, CORAL)

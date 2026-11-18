@@ -156,7 +156,7 @@ func speed() -> float:
 	if in_boat(): return 6.5 if boat_kind() == "skiff" else 3.4
 	var fl := Town.floodable[Town.idx(floori(position.x), floori(position.y))] and Game.flooded()
 	if fl or zone_of(position) == 4: return 2.6
-	return 4.4
+	return 5.6 if Fintastic.buzzing() else 4.4
 
 func step(dt: float, input_dir: Vector2) -> void:
 	var dir := input_dir
@@ -219,10 +219,51 @@ func launch_spot() -> Variant:
 		if d < bd: bd = d; best = [Vector2(v[3], v[4]), kind]
 	if best != null: return best
 	# or one you're carrying, at any edge
-	var free_k: bool = Game.S.gear.has("kayak") and not pk.has("kayak")
-	var free_s: bool = Game.S.gear.has("skiff") and not pk.has("skiff")
+	return _edge_spot(Game.S.gear.has("kayak") and not pk.has("kayak"), Game.S.gear.has("skiff") and not pk.has("skiff"))
+
+## How far away a parked boat has to be before you can pay to have it brought to you, in tiles.
+const FETCH_MIN := 12.0
+## What it costs to have a parked boat brought to the bank you're standing at.
+const FETCH_FEE := { "kayak": 10, "skiff": 25 }
+## How long you wait for it, in game minutes.
+const FETCH_MINUTES := 20.0
+
+## The water you could have a far-off parked boat brought to, and which boat: [water spot, kind, fee].
+## Only when you can't launch from here already. The kayak comes to any canal, the river or the bay;
+## the skiff only to the bay or the downtown river, the same places you can launch it from.
+func fetch_spot() -> Variant:
+	if in_boat() or launch_spot() != null: return null
+	var pk := parked()
+	var far := {}
+	for kind in ["kayak", "skiff"]:
+		if Game.S.gear.has(kind) and pk.has(kind):
+			var v: Array = pk[kind]
+			if Vector2(v[0], v[1]).distance_to(position) > FETCH_MIN: far[kind] = true
+	if far.is_empty(): return null
+	var s = _edge_spot(far.has("kayak"), far.has("skiff"))
+	if s == null: return null
+	return [s[0], s[1], int(FETCH_FEE[s[1]])]
+
+## Pay to have that boat brought here and get in it. Returns what to tell the player.
+func fetch_boat() -> String:
+	var f = fetch_spot()
+	if f == null: return ""
+	var bn := "skiff" if f[1] == "skiff" else "kayak"
+	if float(Game.S.cash) < f[2]: return "Having the %s brought here costs %s. You don't have enough cash." % [bn, Game.money(f[2])]
+	Game.S.cash -= f[2]
+	parked().erase(f[1])
+	Game.skip_minutes(FETCH_MINUTES)
+	var l = _edge_spot(f[1] == "kayak", f[1] == "skiff")
+	position = l[0]; Game.S.boat = true; Game.S.boat_kind = f[1]
+	path.clear()
+	if f[1] == "skiff": return "Paid %s. A marina hand runs the skiff around and leaves it running for you." % Game.money(f[2])
+	return "Paid %s. Somebody from Lou's drives the kayak over on a truck roof and slides it in for you." % Game.money(f[2])
+
+## The nearest water tile at the edge here that the given boats can launch from, and which: [spot, kind].
+func _edge_spot(free_k: bool, free_s: bool) -> Variant:
 	if not (free_k or free_s): return null
-	bd = 1.7
+	var best = null
+	var bd := 1.7
 	for dy in range(-2, 3):
 		for dx in range(-2, 3):
 			var x := floori(position.x) + dx
