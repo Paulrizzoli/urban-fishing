@@ -436,6 +436,9 @@ func _ready() -> void:
 		if a == "--open=fame": journal_tab = "fame"; open_journal()
 		if a == "--open=news": journal_tab = "news"; open_journal()
 		if a == "--beach": _toggle_boat()
+		if a.begins_with("--parked="): # --parked=kind,x,y: that boat was left beached at (x, y), for checking delivery
+			var pv := a.substr(9).split(","); Game.S.gear[pv[0]] = 1
+			Player.parked()[pv[0]] = [float(pv[1]), float(pv[2]), 0.0, float(pv[1]), float(pv[2])]
 		if a == "--open=map": open_map()
 		if a == "--open=icons": # every item picture, big, for checking the art
 			var ids := ["p_spoon", "p_caps", "p_beads", "p_feather", "p_wire", "p_glow", "p_glass", "p_graphite", "p_reel", "p_bigreel", "p_cork", "p_foam", "p_tape", "spoon", "popper", "jig", "glowlure", "rod0", "rod1", "rod2", "rod3", "rod4", "worms", "bait", "lure", "hotdog", "bread", "squid", "cooler", "mcooler", "camera", "polo", "lanyard", "flashlight", "waders", "geiger", "prybar", "kayak", "bigtank", "suit", "skiff", "shades", "junk"]
@@ -555,6 +558,9 @@ func _process(dt: float) -> void:
 		else:
 			var ls = player.launch_spot()
 			if ls != null: hud.boat_text = "Launch the skiff (K)" if ls[1] == "skiff" else "Launch kayak (K)"
+			else:
+				var fs = player.fetch_spot()
+				if fs != null: hud.boat_text = "Have the %s brought here, %s (K)" % [fs[1], Game.money(fs[2])]
 	hud.chips = _chips()
 	_camera(dt)
 	_lighting()
@@ -867,6 +873,9 @@ func _action_down() -> void:
 func _toggle_boat() -> void:
 	if fishing.state != "idle": return
 	var m := player.toggle_boat()
+	if m == "" and not player.in_boat() and player.fetch_spot() != null:
+		m = player.fetch_boat()
+		if player.in_boat(): Sound.play("ui_click")
 	if m != "": hud.flash(m); Game.save_game()
 	elif player.in_boat(): hud.flash("Get close to a bank to land.")
 	elif Game.S.gear.has("kayak") or Game.S.gear.has("skiff"):
