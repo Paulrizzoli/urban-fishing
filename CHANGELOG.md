@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.36 | Nov 18, 2026 | Guards and patrols stay on land: no more walking across ponds, channels and the mill race |
 | v0.9.35 | Nov 18, 2026 | A real gate at Heron Lakes that swings open for residents' cars, and a gate at Sunsplash Jungle Park that shows when it's closed |
 | v0.9.34 | Nov 18, 2026 | Ironwater, a second town: a dam and spillway, a high viaduct you fish under, a mill race, a brewery pond and a ballpark |
 | v0.9.33 | Nov 18, 2026 | FINTASTIC! is open: walk in, meet Brayden, and buy Trent's flashy extras |
@@ -59,6 +60,17 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.36 · Nobody walks on water
+
+_Nov 18, 2026 · Builds: `UrbanFishing-v0.9.36-windows.zip`, `UrbanFishing-v0.9.36-godot-project.zip`, screenshots in `screenshots/v0.9.36/`_
+
+- **The HOA president at Heron Lakes stays on dry land.** She used to stroll straight across the end of the pond and along the edge of the back channel. Now she walks all the way around: the north bank, the east side, the south bank, up the street on the west side and over the little road bridge.
+- **Plant security stops walking across the warm outflow channel.** He walks the west side of the yard, along the south end and up the east side, then turns back the way he came.
+- **The other patrols that cut across water or walls are fixed too:** the airport truck no longer drives through the drainage ditch, the Marlowe Tower guard no longer walks through a tree, and in Ironwater the dam ranger stops brushing the fence. The mill foreman and the night watchman keep to the mill side of the mill race instead of wading across it twice a lap. They can still see across the race, so the far bank isn't any safer.
+- **Guards coming on duty start their round** instead of walking in a straight line from where they wait off duty, which could take them through water or buildings.
+- People out walking already kept to sidewalks and park paths, and still do.
+- For testing: `tools/check_routes.gd` checks every patrol route in both towns for water, walls, buildings, fences and trees, and `--guards=seconds` moves every patrol along its route for screenshots.
 
 ## v0.9.35 · Gates you can see
 

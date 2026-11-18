@@ -44,6 +44,21 @@ func setup(ents: Node2D) -> void:
 		ents.add_child(Drawer.make(_draw_hoa_gate, HOA_GATE.y + 0.95, true, Rect2(HOA_GATE.x - 4, HOA_GATE.y - 2, 8, 4)))
 		ents.add_child(Drawer.make(_draw_park_gate, PARK_GATE.y + 0.95, true, Rect2(PARK_GATE.x - 3, PARK_GATE.y - 2, 6, 4)))
 
+## Test hook (--guards=seconds): move everyone on a route along it, as if that much time had passed.
+func walk_ahead(secs: float) -> void:
+	for w in watchers:
+		if not w.has("path") or w.kind == "cam": continue
+		var left := secs * float(w.speed)
+		while left > 0.0:
+			var tp := Vector2(w.path[w.wp][0], w.path[w.wp][1])
+			var to: Vector2 = tp - w.pos
+			if to.length() <= left:
+				left -= to.length(); w.pos = tp; w.wp = (w.wp + 1) % w.path.size()
+			else:
+				w.pos += to.normalized() * left; w.dir = to.angle(); left = 0.0
+		w.node.position.y = w.pos.y
+		w.node.get_child(0).position.y = -w.pos.y
+
 func zone_at(p: Vector2) -> int:
 	var x := floori(p.x)
 	var y := floori(p.y)
@@ -124,7 +139,11 @@ func update(dt: float) -> void:
 			w.dir = lerpf(w.sweep[0], w.sweep[1], k)
 		elif w.has("path"):
 			if not on:
-				if w.has("home"): w.pos = Vector2(w.home[0], w.home[1]); w.dir = -PI / 2
+				if w.has("home"): w.pos = Vector2(w.home[0], w.home[1]); w.dir = -PI / 2; w.off = true
+			elif w.get("off", false):
+				# back on duty: start the route again, rather than walk a straight line from home
+				# (that line can cut across water or through buildings)
+				w.off = false; w.pos = Vector2(w.path[0][0], w.path[0][1]); w.wp = 1 % w.path.size()
 			elif w.alert < 0.25:
 				var tp := Vector2(w.path[w.wp][0], w.path[w.wp][1])
 				var to: Vector2 = tp - w.pos
