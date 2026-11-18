@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.28 | Nov 18, 2026 | Cars and boats you can't walk or paddle through, cars that honk and then knock you down, and marina boats that head out and can roll your kayak |
 | v0.9.27 | Nov 18, 2026 | Bridges you paddle under: hide in the shade, and fish under big bridges, where snook wait under the lights at night |
 | v0.9.26 | Nov 18, 2026 | The whole town is open from day one: places are kept from you by gear or guards, not by progress |
 | v0.9.25 | Nov 18, 2026 | Lou's bait chart the first time you walk into Lou's, and place names that fade after 5 seconds |
@@ -51,6 +52,18 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.28 · Watch for traffic
+
+_Nov 18, 2026 · Builds: `UrbanFishing-v0.9.28-windows.zip`, `UrbanFishing-v0.9.28-godot-project.zip`, screenshots in `screenshots/v0.9.28/`_
+
+- **Solid cars and boats:** you can't walk through cars any more, parked in a driveway or a lot or driving down the street, and you can't paddle or motor through the boats at the marina. Walk into one and you slide along its side instead of stopping dead, so you can get around it. Your kayak or skiff counts its whole length, not just where you sit.
+- **Cars run you over:** stand in a car's lane and it honks, with sound lines in front of the bumper so you see it too. A few drivers stop and wait for you (about 3 in 10), but most slow down a little and keep coming. Still in the lane about a second after the horn and you get knocked down: you wake up on your couch at home two hours later with a bruise, and the ER bill is $25 (or whatever you have on you). Your cooler is safe. Step onto the sidewalk when you hear a horn.
+- **It's always fair:** a car never hits you without honking first, and every car stops and waits while you have a line out, while a card is open and while the game is paused.
+- **Boats come and go:** between about 6:30 AM and 7:30 PM, one of the three marina boats now and then backs out of its slip, turns and heads out, across Mullet Bay to the east or west or straight out offshore, with a wake behind it. A minute or two later it comes back the same way and ties up again.
+- **Boats run you over too:** a boat under way blows its horn when your kayak or skiff is in its path, slows a little and keeps coming. Still in its way a moment after the horn and it rolls you over. You swim your boat to the nearest bank and drag it out, it takes about 45 minutes to dry off, and the last fish you caught slips out of the cooler (legends never do). Paddle out of its path when you hear the horn.
+- Boats wait for you while they ease in and out of their slips, and while you're fishing. Sit in a boat's way long enough and it swings out around you.
+- New sounds for a car horn, a boat horn and getting knocked down.
 
 ## v0.9.27 · Under the bridge
 

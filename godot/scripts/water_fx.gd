@@ -13,6 +13,7 @@ var mode := "over"
 var player: Player
 var fishing: Fishing
 var jump_t := 3.0
+var last_stern := Vector2(-99, -99)   # where your boat last laid down wake (the marina boats lay their own)
 
 ## A ring of ripples spreading out from p. size 1 is a lure landing.
 static func ripple(p: Vector2, size := 1.0, life := 1.4) -> void:
@@ -42,7 +43,8 @@ func _process(dt: float) -> void:
 	if player.in_boat() and player.moving:
 		var kind := player.boat_kind()
 		var stern := player.position - Vector2.from_angle(player.face) * (1.1 if kind == "skiff" else 0.9) + Vector2(0, 0.1)
-		if trail.is_empty() or trail[-1].p.distance_to(stern) > 0.18:
+		if last_stern.distance_to(stern) > 0.18:
+			last_stern = stern
 			trail.append({ "p": stern, "a": player.face, "t": 0.0, "kind": kind })
 	# fish jumping
 	for j in jumps: j.t += dt / 0.85
@@ -170,8 +172,10 @@ func _draw_reflections(view: Rect2) -> void:
 				elif b.kind == "sky" and dk <= 0.3:
 					draw_rect(Rect2(tx + 0.15 + wob * 2.0, ty + 0.4, 0.7, 0.05), Color(1, 1, 1, 0.08 * (1.0 - dd)))
 	# moored boats: a soft, wobbling white blur just below each hull
-	for mb in [93.5, 103.5, 108.5]:
-		var mp := Vector2(mb, 160.4)
+	for hb in (Obstacles.harbor.boats if Obstacles.harbor != null else []):
+		if hb.state != "moored": continue
+		var mp: Vector2 = hb.slip
+		var mb: float = mp.x
 		if not view.has_point(mp): continue
 		for k in 5:
 			var wob := sin(now * 2.0 + k * 1.7 + mb) * 0.08

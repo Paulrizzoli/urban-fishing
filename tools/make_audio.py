@@ -237,6 +237,23 @@ def sfx_bus():
 def sfx_door():
     n = secs(0.3); return lp(noise(n), 600) * env_exp(n, 0.002, 0.08, 0.6) + osc("sine", 90, n) * env_exp(n, 0.002, 0.1, 0.4)
 
+def sfx_horn():   # a car horn: two detuned reedy tones, two short beeps
+    n = secs(0.62); t = np.arange(n) / SR; s = np.zeros(n)
+    for a, b in [(0.0, 0.2), (0.27, 0.6)]:
+        i, j = secs(a), secs(b); m = j - i; tt = np.arange(m) / SR
+        tone = osc("sawtooth", 415, m) + osc("sawtooth", 495, m) * 0.9 + osc("square", 830, m) * 0.15
+        e = np.minimum(1, tt / 0.012) * np.clip((tt[-1] - tt) / 0.03, 0, 1)
+        s[i:j] += lp(tone, 2600) * e * 0.4
+    return s
+def sfx_boathorn():   # a boat's air horn: one long low blast
+    n = secs(1.5); t = np.arange(n) / SR
+    tone = osc("sawtooth", 147, n) + osc("sawtooth", 148.5, n) * 0.8 + osc("sawtooth", 294, n) * 0.25
+    e = np.minimum(1, t / 0.06) * np.clip((1.5 - t) / 0.3, 0, 1)
+    return lp(tone, 1100) * e * 0.45 + lp(noise(n), 500) * e * 0.04
+def sfx_thump():   # a soft bump, like landing on your backside
+    n = secs(0.45); t = np.arange(n) / SR; f = 140 * (55 / 140) ** np.minimum(1, t / 0.12)
+    return np.sin(2 * np.pi * np.cumsum(f) / SR) * env_exp(n, 0.003, 0.22, 0.8) + lp(noise(n), 900) * env_exp(n, 0.002, 0.08, 0.4)
+
 # ---------- ambience loops ----------
 def loopify(x, xf=SR // 2):
     a = x[: xf].copy(); out = x[xf:].copy(); out[-xf:] = out[-xf:] * np.linspace(1, 0, xf) + a * np.linspace(0, 1, xf); return out
@@ -286,5 +303,7 @@ if __name__ == "__main__":
     # the music comes from the browser version's own code: tools/render_web_music.js
     if "--music" in sys.argv:
         for k in STYLES: write("music_" + k, music(k))
+    # name some sounds to render just those, e.g. python3 tools/make_audio.py sfx_horn
+    only = [a for a in sys.argv[1:] if not a.startswith("--")]
     for k, fn in list(globals().items()):
-        if k.startswith("sfx_") or k.startswith("amb_"): write(k, fn())
+        if (k.startswith("sfx_") or k.startswith("amb_")) and (not only or k in only): write(k, fn())

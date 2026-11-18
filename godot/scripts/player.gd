@@ -84,6 +84,27 @@ func collides(p: Vector2) -> bool:
 	var r := 0.3
 	return solid_at(p + Vector2(-r, -r)) or solid_at(p + Vector2(r, -r)) or solid_at(p + Vector2(-r, r)) or solid_at(p + Vector2(r, r))
 
+## The circles that stand for you when bumping into cars and boats: you on foot, or your kayak or skiff
+## (two circles along its length) pointing along f.
+func _body(p: Vector2, f: float) -> Array:
+	if not in_boat(): return [[p, 0.3]]
+	var skiff := boat_kind() == "skiff"
+	var ax := Vector2.from_angle(f) * (0.85 if skiff else 0.7)
+	var r := 0.5 if skiff else 0.32
+	return [[p + ax, r], [p - ax, r], [p, r]]
+
+## How far you, standing (or floating) at p facing f, sink into a car (on foot) or a boat (on the water).
+func sink(p: Vector2, f: float) -> float:
+	var d := 0.0
+	for c in _body(p, f): d = maxf(d, Obstacles.depth(c[0], c[1], in_boat()))
+	return d
+
+## Is this marina boat touching your kayak or skiff right now?
+func bumps_boat(b) -> bool:
+	for c in _body(position, face):
+		if Obstacles.box_hit(c[0], c[1] + 0.05, b.centre, b.heading, Harbor.HL, Harbor.HW): return true
+	return false
+
 func _grid_now() -> AStarGrid2D:
 	if not in_boat(): return walk_grid
 	var k := boat_kind()
@@ -147,12 +168,25 @@ func step(dt: float, input_dir: Vector2) -> void:
 		dir = dir.normalized()
 		var before := position
 		var sp := speed()
+		var f := dir.angle()
+		# already pressed into a car or a boat (it drove up to you, or you loaded in beside one): you can
+		# always step clear, but not further in
+		var sunk := sink(position, f)
+		var free := func(p: Vector2) -> bool: return not collides(p) and sink(p, f) <= maxf(sunk - 0.0001, 0.0)
 		var nx := position + Vector2(dir.x * sp * dt, 0)
-		if not collides(nx): position = nx
+		var hit_thing := false
+		if free.call(nx): position = nx
+		elif not collides(nx): hit_thing = true
 		elif dir.y == 0.0: _ease_into_gap(Vector2(signf(dir.x), 0), sp * dt)
 		var ny := position + Vector2(0, dir.y * sp * dt)
-		if not collides(ny): position = ny
+		if free.call(ny): position = ny
+		elif not collides(ny): hit_thing = true
 		elif dir.x == 0.0: _ease_into_gap(Vector2(0, signf(dir.y)), sp * dt)
+		# walked into a car or a boat: slide along it instead of stopping dead
+		if hit_thing and before.distance_to(position) < sp * dt * 0.3:
+			for turn in [0.8, -0.8, 1.4, -1.4]:
+				var p2 := before + dir.rotated(turn) * sp * dt * 0.8
+				if free.call(p2): position = p2; break
 		if before.distance_to(position) < 0.0005: path.clear()
 		face = dir.angle(); moving = true; bob += dt * 10
 	else: moving = false

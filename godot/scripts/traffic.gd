@@ -1,12 +1,21 @@
 class_name Traffic
 extends Node
 ## Cars driving around Port Mullet. Each car keeps to the right-hand lane of its street, picks a way
-## at each crossing, slows behind other cars and stops for you when you step out in front of it.
+## at each crossing and slows behind other cars. Step out in front of one and it honks. A few drivers
+## stop and wait for you; most slow a little and keep coming, and if you're still in the lane a moment
+## after the horn they knock you down (main handles that). A car never hits you without honking first,
+## and every car stops for you while you have a line in the water.
 ## Cars leave at the map edge or a dead end and a new one pulls in somewhere you can't see.
+
+signal hit_player(car)
+
+const WARN := 0.9          # seconds between the horn and a car being able to hit you
+const HIT_SPEED := 1.2     # slower than this, a car just nudges you
 
 const COUNT := 34
 
 var player: Player
+var test_hold := false          # test hook: the first car stands still where it was put
 var holder: Node2D              # the y-sorted node the cars are drawn in
 var cars: Array = []            # Car nodes
 
@@ -27,10 +36,15 @@ class Car extends Node2D:
 	var braking := false
 	var stuck := 0.0           # seconds stopped behind other cars
 	var squeeze := 0.0         # after a long wait it ignores other cars for a moment and squeezes through
+	var careful := false       # stops for you instead of driving on
+	var horn_age := -1.0       # seconds since it honked at you, -1 if it hasn't
+	var horn_cd := 0.0
+	var horn_fx := 0.0        # the horn lines in front of it fade out over this
 
 	func along() -> float: return position.dot(Vector2(d))
 
-	func _process(_dt: float) -> void:
+	func _process(dt: float) -> void:
+		horn_fx = maxf(horn_fx - dt / 0.7, 0.0)
 		if Drawer.view.grow(2).has_point(position): queue_redraw()
 
 	func _draw() -> void:
@@ -40,6 +54,7 @@ class Car extends Node2D:
 			draw_set_transform(Vector2.ZERO, ang, Vector2.ONE)
 			for sy in [-1, 1]: draw_rect(Rect2(-L / 2 - 0.02, sy * W * 0.3 - 0.08, 0.08, 0.16), Color("#ff3b2e"))
 			draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+		if horn_fx > 0.0: Art.horn_lines(self, Vector2.from_angle(ang) * (L * 0.5 + 0.1), ang, horn_fx)
 
 static func _road(x: int, y: int) -> bool: return Town.t_at(x, y) == Town.T.ROAD
 
@@ -99,6 +114,8 @@ func _spawn(c: Car, hidden := true) -> void:
 		c.speed = c.cruise
 		c.turn_at = INF; c.skip_to = -INF; c.last_cell = Vector2i(-99, -99)
 		c.leaving = false
+		c.careful = randf() < 0.3
+		c.horn_age = -1.0
 		c.fade = 0.0 if hidden else 1.0
 		return
 
@@ -119,6 +136,7 @@ func _process(dt: float) -> void:
 			if c.visible: c.visible = false; c.leaving = true; c.fade = 0.0
 			continue
 		if not c.visible: c.visible = true; _spawn(c)
+		if test_hold and i == 0: continue
 		_drive(c, dt)
 
 func _drive(c: Car, dt: float) -> void:
@@ -141,11 +159,26 @@ func _drive(c: Car, dt: float) -> void:
 	c.squeeze = maxf(c.squeeze - dt, 0.0)
 	c.stuck = c.stuck + dt if (front_gap < 0.5 and c.speed < 0.1) else 0.0
 	if c.stuck > 6.0: c.stuck = 0.0; c.squeeze = 1.5
+	# you, in the street in front of it: honk, then stop (careful drivers, or you're fishing, or there
+	# hasn't been time to warn you) or slow a little and keep coming
+	c.horn_cd = maxf(c.horn_cd - dt, 0.0)
+	var in_lane := false
 	if player != null and not player.in_boat():
 		var rel := player.position - c.position
 		var ahead := rel.dot(fw)
-		if ahead > 0.0 and absf(rel.dot(side)) < 0.85: front_gap = minf(front_gap, ahead - c.L * 0.5 - 0.3)
-	if front_gap < 2.5: target = c.cruise * clampf((front_gap - 0.4) / 2.1, 0.0, 1.0)
+		in_lane = ahead > 0.0 and ahead < 8.0 and absf(rel.dot(side)) < 0.9
+		if in_lane:
+			var gap := ahead - c.L * 0.5 - 0.3
+			if c.horn_cd <= 0.0 and c.fade > 0.8:
+				c.horn_cd = 2.2
+				c.horn_fx = 1.0
+				if c.horn_age < 0.0: c.horn_age = 0.0
+				Sound.play("horn", clampf(-1.0 - ahead * 1.2, -12.0, -1.0), 0.06)
+			if c.careful or player.fishing_pose or Obstacles.player_busy or c.horn_age < WARN: front_gap = minf(front_gap, gap)
+			else: target = minf(target, c.cruise * 0.75)
+	if c.horn_age >= 0.0: c.horn_age += dt
+	if not in_lane and c.horn_age > 3.0: c.horn_age = -1.0
+	if front_gap < 2.5: target = minf(target, c.cruise * clampf((front_gap - 0.4) / 2.1, 0.0, 1.0))
 	# slow for a turn
 	var to_turn := c.turn_at - c.along()
 	if to_turn < 2.5: target = minf(target, 1.8)
@@ -153,6 +186,11 @@ func _drive(c: Car, dt: float) -> void:
 	c.speed = move_toward(c.speed, target, (9.0 if c.braking else 2.5) * dt)
 	c.position += fw * c.speed * dt
 	c.ang = lerp_angle(c.ang, fw.angle(), minf(1.0, dt * 7.0))
+	# drove into you
+	if player != null and not player.in_boat() and c.speed >= HIT_SPEED and c.horn_age >= WARN and not c.careful and not Obstacles.player_busy \
+			and Obstacles.box_hit(player.position, 0.32, c.position, c.ang, c.L * 0.5, c.W * 0.5):
+		c.speed *= 0.4
+		hit_player.emit(c)
 	# turn when we reach the lane of the cross street
 	if c.along() >= c.turn_at:
 		var over := c.along() - c.turn_at

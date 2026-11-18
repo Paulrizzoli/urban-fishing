@@ -683,10 +683,11 @@ static func lamp_post(ci: CanvasItem, p: Vector2) -> void:
 	ellipse(ci, top + Vector2(0.34, -0.02), 0.16, 0.07, Color("#3d4a52"))
 	ellipse(ci, top + Vector2(0.34, 0.01), 0.11, 0.04, Color("#fff2c8"))
 
-## A boat tied up in a slip, bow to the north. t bobs it on the water.
-static func moored_boat(ci: CanvasItem, p: Vector2, t: float, col: Color, sail := false) -> void:
+## A boat tied up in a slip, bow to the north, or turned by `turn` (radians) when it's under way.
+## t bobs it on the water.
+static func moored_boat(ci: CanvasItem, p: Vector2, t: float, col: Color, sail := false, turn := 0.0) -> void:
 	var bob := sin(t * 1.3 + p.x) * 0.04
-	var rot := sin(t * 0.9 + p.x * 2.0) * 0.03
+	var rot := sin(t * 0.9 + p.x * 2.0) * 0.03 + turn
 	var L := 3.0
 	var W := 1.15
 	ci.draw_set_transform(p + Vector2(0.18, 0.22), rot, Vector2.ONE)
@@ -721,6 +722,15 @@ static func _hull(L: float, W: float) -> PackedVector2Array:
 		pts.append(Vector2(cos(a) * W / 2, -L * 0.2 + sin(a) * L * 0.3))
 	pts.append(Vector2(W / 2, L * 0.48)); pts.append(Vector2(-W / 2, L * 0.48))
 	return pts
+
+## Sound lines in front of a car or boat that's honking at you, so you see the horn too.
+## p is the front bumper or bow, dir the way it faces, k goes from 1 (just honked) to 0.
+static func horn_lines(ci: CanvasItem, p: Vector2, dir: float, k: float, big := false) -> void:
+	var s := 1.5 if big else 1.0
+	k = minf(k, 1.0)
+	for i in 3:
+		var r := (0.35 + i * 0.32 + (1.0 - k) * 0.35) * s
+		ci.draw_arc(p, r, dir - 0.6, dir + 0.6, 10, Color(1, 0.95, 0.6, 0.85 * k * (1.0 - i * 0.22)), 0.07 * s)
 
 ## A gull seen from above: flap goes from -1 (wings down) to 1 (up).
 static func gull(ci: CanvasItem, p: Vector2, dir: float, flap: float, s := 1.0) -> void:
