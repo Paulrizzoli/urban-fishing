@@ -203,6 +203,7 @@ func launch_spot() -> Variant:
 
 func beach_spot() -> Variant:
 	if not in_boat(): return null
+	if Bridges.covered(position) >= 0: return null   # no climbing out under a bridge
 	var best = null
 	var bd := 1.7
 	for dy in range(-2, 3):

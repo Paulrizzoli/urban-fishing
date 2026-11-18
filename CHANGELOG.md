@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.27 | Nov 18, 2026 | Bridges you paddle under: hide in the shade, and fish under big bridges, where snook wait under the lights at night |
 | v0.9.26 | Nov 18, 2026 | The whole town is open from day one: places are kept from you by gear or guards, not by progress |
 | v0.9.25 | Nov 18, 2026 | Lou's bait chart the first time you walk into Lou's, and place names that fade after 5 seconds |
 | v0.9.24 | Nov 18, 2026 | The storm drain tells you what you still need to get in, and the grate is easier to walk through |
@@ -50,6 +51,18 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.27 · Under the bridge
+
+_Nov 18, 2026 · Builds: `UrbanFishing-v0.9.27-windows.zip`, `UrbanFishing-v0.9.27-godot-project.zip`, screenshots in `screenshots/v0.9.27/`_
+
+- **Bridges you go under:** paddle your kayak or skiff through a road crossing and you slide under the bridge instead of riding across the top of the road. The deck covers you, and anything only partly under is cut off at the bridge's edge. Fish swim under bridges too, and the wake and ripples disappear under the deck.
+- **You can still see yourself:** once you're under, the deck fades a little so you can see your boat, dimmed in the shade. People and cars keep crossing on top.
+- **Fish under the bridge:** you can stop and cast from under a bridge, out into the open water. You can't climb out onto the bank while you're under one.
+- **Shade and darker water:** the water under and beside every bridge is darker, with a shadow that fades out a couple of tiles each side. Railings with posts along the edges make the bridges look like bridges.
+- **Fish like the shade:** more fish gather around bridges. A bait in the shade gets noticed from further away and bites come sooner. By day you see more mangrove snapper, sheepshead and snook there. At night the road bridges have lights, and snook and tarpon wait under them, along with the Bridge Troll.
+- At night the bridge lamps throw warm light and broken glints onto the water at both ends of the shadow.
+- The first time you go under a bridge, a tip pops up about fishing the shade.
 
 ## v0.9.26 · The whole town, from day one
 

@@ -77,6 +77,7 @@ func _ready() -> void:
 			var v := a.substr(5).split(",")
 			Game.S.x = float(v[0]); Game.S.y = float(v[1]); Game.S.min = float(v[2]) * 60.0; Game.S.started = true
 		if a.begins_with("--shot="): test_shot = a.substr(7)
+		if a.begins_with("--face="): Game.S.face = deg_to_rad(float(a.substr(7)))
 		if a.begins_with("--shot-frame="): test_shot_frame = int(a.substr(13))
 		if a.begins_with("--boat="): Game.S.boat = true; Game.S.boat_kind = a.substr(7); Game.S.gear.kayak = 1; Game.S.gear.skiff = 1
 		if a == "--lesson": Game.S.sneak_lesson = false   # see Lou's sneaking lesson on the next guarded ground
@@ -102,6 +103,7 @@ func _ready() -> void:
 		if a.begins_with("--act2="): Game.S.saga.finished = true; Game.S.saga.ch = 7; Game.S.act2.ch = int(a.substr(7)) - 1; Game.S.act2.done = int(a.substr(7)) > 1; Game.S.day = maxi(int(Game.S.day), 9)
 	Game.wx = Weather.compute(int(Game.S.day), Game.hour())
 	RenderingServer.set_default_clear_color(Color("#0b1a3a"))
+	Bridges.setup()
 	world = Node2D.new()
 	world.scale = Vector2(TS, TS)
 	add_child(world)
@@ -135,6 +137,10 @@ func _ready() -> void:
 			var statics := Drawer.make(func(ci): _draw_statics(ci, reg))
 			statics.z_index = -8
 			world.add_child(statics)
+	# dark, shaded water under and beside the bridges, below the fish and boats
+	var under_br := Drawer.make(func(ci): Bridges.draw_under(ci, _view_tiles().grow(2)), 0, true)
+	under_br.z_index = -6
+	world.add_child(under_br)
 	var part_glints := Drawer.make(func(ci): Crafting.draw_spots(ci), 0.0, true)
 	part_glints.z_index = -6
 	world.add_child(part_glints)
@@ -193,6 +199,10 @@ func _ready() -> void:
 	ents.add_child(player)
 	for k in ["kayak", "skiff"]: ents.add_child(ParkedBoat.new(k))
 	fishing.player = player
+	# bridge decks over the boats, fish and wake, so things on the water go under them
+	var decks := Drawer.make(func(ci): Bridges.draw_decks(ci, _view_tiles().grow(2)), 0, true)
+	decks.z_index = -4
+	world.add_child(decks)
 	water_fx = WaterFx.new()
 	water_fx.z_index = -4
 	water_fx.player = player
@@ -528,6 +538,7 @@ func _process(dt: float) -> void:
 		m.set_shader_parameter("strength", b.see)
 		m.set_shader_parameter("hole", player.position + Vector2(0, -0.3))
 		b.hole = player.position + Vector2(0, -0.3)
+	_bridges(dt)
 	hud.refresh(near)
 	if _test_shot(): return
 	save_t += dt
@@ -722,6 +733,7 @@ func _draw_bloom(ci: CanvasItem) -> void:
 					var wob := sin(tt * 2.2 + j * 1.9 + lp.x) * 0.12
 					ci.draw_rect(Rect2(wp.x - 0.18 + wob, wp.y - 0.4 + j * 0.25, 0.36 - j * 0.05, 0.07), Color(warm, 0.35 * a * (1.0 - j * 0.2) / k))
 	_draw_headlights(ci, view, a)
+	Bridges.draw_glow(ci, view, a, _glow)
 	if Game.quality == 0: return   # low graphics: just the lamps and headlights
 	# windows in houses and low buildings: lots lit in the evening, a few late at night
 	var lit := 0.7 if (h >= 18 and h < 23) else 0.15 if (h >= 23 or h < 5) else 0.35
@@ -1261,24 +1273,6 @@ func _rod_bench(parts: Array) -> void:
 
 # ---------- static drawings ----------
 func _draw_statics(ci: CanvasItem, reg: Rect2) -> void:
-	# bridges
-	for b in Town.bridges:
-		if not reg.has_point(Vector2(b.x0, b.y0)): continue
-		var w: float = b.x1 - b.x0 + 1
-		if b.get("h", false):
-			if b.get("foot", false): ci.draw_rect(Rect2(b.x0, b.y0, w, b.y1 - b.y0 + 1), Color("#d8d1c1"))
-			elif b.get("road", false): ci.draw_rect(Rect2(b.x0, b.y0, w, b.y1 - b.y0 + 1), Color("#4b5058"))
-			else:
-				ci.draw_rect(Rect2(b.x0, b.y0, w, 1), Color("#d8d1c1")); ci.draw_rect(Rect2(b.x0, b.y1, w, 1), Color("#d8d1c1"))
-				ci.draw_rect(Rect2(b.x0, b.y0 + 1, w, b.y1 - b.y0 - 1), Color("#4b5058"))
-			ci.draw_rect(Rect2(b.x0, b.y0, w, 0.12), Color("#8b8f96")); ci.draw_rect(Rect2(b.x0, b.y1 + 0.88, w, 0.12), Color("#8b8f96"))
-			ci.draw_rect(Rect2(b.x0, b.y1 + 1, w, 0.3), Color(0, 0, 0, 0.25))
-			continue
-		var hh: float = b.y1 - b.y0 + 1
-		ci.draw_rect(Rect2(b.x0 + 1, b.y0, b.x1 - b.x0 - 1, hh), Color("#4b5058"))
-		ci.draw_rect(Rect2(b.x0, b.y0, 1, hh), Color("#d8d2c4")); ci.draw_rect(Rect2(b.x1, b.y0, 1, hh), Color("#d8d2c4"))
-		ci.draw_rect(Rect2(b.x0, b.y0, 0.14, hh), Color("#8b8f96")); ci.draw_rect(Rect2(b.x1 + 0.86, b.y0, 0.14, hh), Color("#8b8f96"))
-		ci.draw_rect(Rect2(b.x1 + 1, b.y0, 0.35, hh), Color(0, 0, 0, 0.25))
 	# driveways from the houses to the street, some with a car in them
 	for dw in Town.driveways:
 		var r: Rect2 = dw.r
@@ -1436,6 +1430,23 @@ func ellipse_glow(ci: CanvasItem, p: Vector2, a: float) -> void:
 
 func _view_tiles() -> Rect2:
 	return Rect2(cam.get_screen_center_position() / TS - get_viewport_rect().size / cam.zoom / TS / 2, get_viewport_rect().size / cam.zoom / TS).grow(2)
+
+## Paddle under a bridge and you go under its deck: the deck fades so you can still see yourself,
+## dimmed in the shade. The first time, a tip about fishing the shade.
+func _bridges(dt: float) -> void:
+	var boat := player.in_boat()
+	var half := 1.2 if player.boat_kind() == "skiff" else 0.95
+	var under := boat and Bridges.hull_under(player.position, player.face, half)
+	player.z_index = -5 if under else 0
+	var over := Bridges.covered(player.position + Vector2(0, 0.1)) if boat else -1
+	for i in Bridges.list.size():
+		var e: Dictionary = Bridges.list[i]
+		e.see = move_toward(e.see, 1.0 if i == over else 0.0, dt * 3.0)
+	var sh := Bridges.shade_at(player.position) if boat else 0.0
+	player.modulate = Color.WHITE.lerp(Color(0.58, 0.62, 0.72), sh * (0.6 + 0.4 * (Bridges.list[over].see if over >= 0 else 0.0)))
+	if over >= 0 and not Game.S.get("bridge_tip", false):
+		Game.S.bridge_tip = true
+		Game.toast.emit("Fish love the shade under a bridge. Cast along the shadow line. At night, snook wait under the bridge lights.", "UNDER THE BRIDGE")
 
 # ---------- the Mullet Bay Slam ----------
 func _slam_sign() -> void:

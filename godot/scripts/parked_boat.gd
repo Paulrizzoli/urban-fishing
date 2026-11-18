@@ -16,6 +16,9 @@ func _process(dt: float) -> void:
 	if not visible: return
 	var v: Array = pk[kind]
 	position = Vector2(v[0], v[1])
+	# left under a bridge: it sits under the deck, in the shade
+	z_index = -5 if Bridges.hull_under(position, float(v[2]), 1.2 if kind == "skiff" else 0.95) else 0
+	modulate = Color.WHITE.lerp(Color(0.58, 0.62, 0.72), Bridges.shade_at(position) * 0.6)
 	t += dt
 	queue_redraw()
 

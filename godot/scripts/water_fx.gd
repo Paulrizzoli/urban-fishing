@@ -91,7 +91,7 @@ func _draw() -> void:
 	var now := Time.get_ticks_msec() / 1000.0
 	# wake: a widening V of foam behind the boat, and churned water right behind the motor
 	for w in trail:
-		if not view.has_point(w.p): continue
+		if not view.has_point(w.p) or Bridges.covered(w.p) >= 0: continue   # under a bridge deck
 		var k: float = w.t / 2.2
 		var fw := Vector2.from_angle(w.a)
 		var side := Vector2(-fw.y, fw.x)
@@ -103,7 +103,7 @@ func _draw() -> void:
 			draw_line(c - fw * 0.12, c + fw * 0.12 + side * sd * 0.06, Color(1, 1, 1, a), 0.07 * (1.0 - k * 0.5))
 		if skiff and k < 0.35:
 			draw_circle(w.p + side * sin(w.t * 20.0 + w.p.x) * 0.12, 0.2 * (1.0 - k * 2.0), Color(1, 1, 1, 0.4 * (1.0 - k / 0.35)))
-	if player.in_boat() and player.moving:
+	if player.in_boat() and player.moving and Bridges.covered(player.position + Vector2.from_angle(player.face) * 1.1) < 0:
 		# a bow wave curling off the front
 		var fw := Vector2.from_angle(player.face)
 		var bow := player.position + fw * (1.5 if player.boat_kind() == "skiff" else 1.1) + Vector2(0, 0.1)
@@ -112,7 +112,7 @@ func _draw() -> void:
 			draw_polyline(PackedVector2Array([bow, bow + sdv * 0.25 - fw * 0.3, bow + sdv * 0.45 - fw * 0.8]), Color(1, 1, 1, 0.5), 0.06)
 	# rings
 	for r in rings:
-		if not view.has_point(r.p): continue
+		if not view.has_point(r.p) or Bridges.covered(r.p) >= 0: continue
 		var k: float = r.t / r.life
 		for i in 2:
 			var kk := k - i * 0.18
