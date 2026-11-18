@@ -155,7 +155,7 @@ func speed() -> float:
 	if in_boat(): return 6.5 if boat_kind() == "skiff" else 3.4
 	var fl := Town.floodable[Town.idx(floori(position.x), floori(position.y))] and Game.flooded()
 	if fl or zone_of(position) == 4: return 2.6
-	return 4.4
+	return 5.6 if Fintastic.buzzing() else 4.4
 
 func step(dt: float, input_dir: Vector2) -> void:
 	var dir := input_dir
