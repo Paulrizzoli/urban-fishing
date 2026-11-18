@@ -1582,6 +1582,7 @@ func open_journal() -> void:
 			for n in S.news: parts.append(["item", n.text, "Day %d" % int(n.day), "", func(): pass, false])
 		_:
 			parts.append(["h2", "%d of %d legends" % [Story.legends_got(), Story.legends_all()]]); parts.append(["tabs", tabs])
+			parts.append(["sub", "Each fish shows the bait it bites best on. You have %s on (B to switch)." % Game.bait_name().to_lower()])
 			var keys := Game.spots.keys(); keys.sort()
 			for k in keys:
 				var s: Dictionary = Game.spots[k]
@@ -1590,10 +1591,18 @@ func open_journal() -> void:
 				parts.append(["chips", s.fish.map(func(f):
 					var j: Variant = S.journal.get(f.n)
 					var leg: bool = f.get("legend", false)
-					var txt: String = (f.n if j != null or not leg else "???") + (" · %s lb" % str(j.w) if j != null else "")
+					var txt: String = (f.n if j != null or not leg else "???") + (" · %s lb" % str(j.w) if j != null else "") + journal_bait(f)
 					return [txt, "got" if j != null else "leg" if leg else ""])])
 	parts.append(["row", [["Close", func(): hud.close(), true, "hot"], ["Map (M)", open_map]]])
 	hud.open(parts)
+
+## The bait a fish bites best on, for its journal tag: " · on bread", " · on worms or bread".
+## Shown for every fish, legends too, so new players know what to put on before they go.
+const JOURNAL_BAIT := { "worms": "worms", "shrimp": "shrimp", "lure": "lure", "hotdog": "hot dogs", "bread": "bread", "squid": "squid" }
+func journal_bait(f: Dictionary) -> String:
+	var pref: Variant = Game.baitpref.get(f.n)
+	if f.get("junk", false) or pref == null or pref.is_empty(): return ""
+	return " · on " + " or ".join(pref.map(func(b): return JOURNAL_BAIT.get(b, b)))
 
 # ---------- the map ----------
 var map_view: MapView

@@ -18,7 +18,7 @@ const SIZES := [Vector2i(1280, 720), Vector2i(1600, 900), Vector2i(1920, 1080)]
 const CONTROLS := [
 	["WASD / arrows", "Walk. Or click where you want to go"],
 	["F / Space", "Cast, hook the fish, hold to reel"],
-	["◀ ▶ (A / D)", "Aim a cast, twitch the lure left or right, pull against a running fish"],
+	["◀ ▶ (A / D)", "Aim a cast, twitch the lure in to the left or right, pull against a running fish"],
 	["Click the water", "Cast right at that spot"],
 	["E", "Talk, go through doors, ride the bus"],
 	["B", "Switch bait"],

@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.30 | Nov 18, 2026 | Twitching pulls the lure in, finer line on better rods, and the journal shows each fish's bait |
 | v0.9.29 | Nov 18, 2026 | Street lights spaced out: no more posts doubled up outside Lou's, at the Plant Rd corner or on the marina dock |
 | v0.9.28 | Nov 18, 2026 | Cars and boats you can't walk or paddle through, cars that honk and then knock you down, and marina boats that head out and can roll your kayak |
 | v0.9.27 | Nov 18, 2026 | Bridges you paddle under: hide in the shade, and fish under big bridges, where snook wait under the lights at night |
@@ -53,6 +54,15 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.30 · Twitch it in
+
+_Nov 18, 2026 · Builds: `UrbanFishing-v0.9.30-windows.zip`, `UrbanFishing-v0.9.30-godot-project.zip`, screenshots in `screenshots/v0.9.30/`_
+
+- **Twitch retrieve:** every ◀ / ▶ twitch now pulls the lure in toward you a little as well as darting it to the side, the same distance as a tap of F / Space, like a real twitch retrieve. Keep twitching and the lure works its way back to you. If there's no room to the side (a wall or the edge of the spot), the twitch just pulls it straight in, and twitching it all the way back ends the cast like reeling in does.
+- **Finer line on better gear:** the fishing line gets thinner as your rod gets better. The garage-sale rod has a heavy cord, the bait-shop special and graphite pro are finer, and the big-game rod has a hair-thin line. Home-built rods count too: graphite is finer than fiberglass, and the foam grip trims it a touch more.
+- **Bait in the journal:** in the journal's Fishing spots tab, every fish now says what it bites best on, like "Bluegill · on worms or bread". It's shown for every fish from the start, legends too (as "??? · on hot dogs"), so new players know what to put on before they head out. It's the same as Lou's bait chart, just fish by fish. A line at the top says which bait you have on.
+- The hint while you wait and the Controls list say the arrows twitch the lure in.
 
 ## v0.9.29 · Street lights spaced out
 
