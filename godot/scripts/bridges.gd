@@ -42,7 +42,7 @@ static func _add_lamps(e: Dictionary) -> void:
 	for p in spots:
 		var taken := false
 		for lp in Town.lamps:
-			if lp.distance_to(p) < 1.6: taken = true
+			if lp.distance_to(p) < 2.5: taken = true
 		if not taken: Town.lamps.append(p)
 
 ## The bridge over the water at p, or -1.

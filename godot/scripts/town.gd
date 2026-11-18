@@ -173,10 +173,14 @@ static func build() -> void:
 	signs.append_array([Vector2(61.5, 64.6), Vector2(90.5, 61.6), Vector2(94.5, 55.4)])
 	labels.append({ "t": "MULLET CANAL", "x": 22.0, "y": 52.6 }); labels.append({ "t": "MANGROVES", "x": 109.5, "y": 63.0 })
 	for x in range(4, MW, 9):
-		lamps.append(Vector2(x + 0.5, 33.5)); lamps.append(Vector2(x + 4.5, 37.5))
+		# by Lou's, one post on the Canal Rd corner and one by the bus stop instead of two side by side
+		if x == 49: lamps.append_array([Vector2(43.5, 33.4), Vector2(55.0, 33.4)])
+		else: lamps.append(Vector2(x + 0.5, 33.5))
+		lamps.append(Vector2(x + 4.5, 37.5))
 	for y in range(3, MH - 70, 8):
-		lamps.append(Vector2(39.5, y + 0.5)); lamps.append(Vector2(61.5, max(38, y) + 0.5))
-	lamps.append_array([Vector2(49, 33.2), Vector2(18, 40), Vector2(18, 47), Vector2(85, 58), Vector2(104, 73), Vector2(64, 58)])
+		lamps.append(Vector2(39.5, y + 0.5))
+		if y > 37: lamps.append(Vector2(61.5, y + 0.5))   # Plant Rd starts at US-1, where the corner already has a post
+	lamps.append_array([Vector2(18, 40), Vector2(18, 47), Vector2(85, 58), Vector2(104, 73), Vector2(64, 58)])
 	# south side: Back Canal, Airport Blvd, Sunsplash Jungle, Heron Lakes, the airport
 	rect(110, 55, 111, 77, T.WATER, 2)
 	rect(93, 55, 96, 55, T.WATER, 2); rect(93, 56, 96, 56, T.WARM, 6)
@@ -300,7 +304,8 @@ static func _build_downtown() -> void:
 	bld(100, 140, 11, 6, "#dfe3e6", "flat", "DRY STACK")
 	decor.append({ "k": "parking", "x0": 83, "y0": 147, "x1": 93, "y1": 152 }); decor.append({ "k": "parking", "x0": 100, "y0": 148, "x1": 110, "y1": 152 })
 	for x in range(3, MW, 8):
-		lamps.append_array([Vector2(x + 0.5, 116.5), Vector2(x + 4.5, 119.5), Vector2(x + 0.5, 135.5), Vector2(x + 4.5, 138.5), Vector2(x + 0.5, 154.5), Vector2(x + 2.5, 157.4)])
+		lamps.append_array([Vector2(x + 0.5, 116.5), Vector2(x + 4.5, 119.5), Vector2(x + 0.5, 135.5), Vector2(x + 4.5, 138.5), Vector2(x + 0.5, 154.5)])
+		if x < 80: lamps.append(Vector2(x + 2.5, 157.4))   # the marina dock has its own posts
 	lamps.append_array([Vector2(30.5, 160), Vector2(30.5, 163), Vector2(26.6, 165.5), Vector2(35.4, 165.5), Vector2(47, 128.4), Vector2(75, 128.4), Vector2(47, 133.4), Vector2(75, 133.4)])
 	for x in range(86, 107, 5): lamps.append(Vector2(x + 0.5, 158.5))
 	for y in [111, 126, 145]: lamps.append(Vector2(81.5, y))

@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.29 | Nov 18, 2026 | Street lights spaced out: no more posts doubled up outside Lou's, at the Plant Rd corner or on the marina dock |
 | v0.9.28 | Nov 18, 2026 | Cars and boats you can't walk or paddle through, cars that honk and then knock you down, and marina boats that head out and can roll your kayak |
 | v0.9.27 | Nov 18, 2026 | Bridges you paddle under: hide in the shade, and fish under big bridges, where snook wait under the lights at night |
 | v0.9.26 | Nov 18, 2026 | The whole town is open from day one: places are kept from you by gear or guards, not by progress |
@@ -52,6 +53,15 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.29 · Street lights spaced out
+
+_Nov 18, 2026 · Builds: `UrbanFishing-v0.9.29-windows.zip`, `UrbanFishing-v0.9.29-godot-project.zip`, screenshots in `screenshots/v0.9.29/`_
+
+- **Lou's:** the two light posts that stood side by side in front of the shop are now one on the Canal Rd corner and one next to the bus stop, on the far side of the BUS sign.
+- **Plant Rd and US-1:** six light posts were stacked on the same spot at this corner, which made a blinding white glow there at night. Now one post stands there.
+- **Marina:** the sidewalk posts along the marina dock stood right beside the dock's own posts, so the dock now keeps just its own.
+- Bridge lamps no longer go up when a street light already stands close by, so the Back Canal and marina bridges don't get a second post squeezed in next to the first.
 
 ## v0.9.28 · Watch for traffic
 
