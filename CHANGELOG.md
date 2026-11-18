@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.25 | Nov 18, 2026 | Lou's bait chart the first time you walk into Lou's, and place names that fade after 5 seconds |
 | v0.9.24 | Nov 18, 2026 | The storm drain tells you what you still need to get in, and the grate is easier to walk through |
 | v0.9.23 | Nov 18, 2026 | A detailed town map: street names, building roofs, real shorelines, fishing spot and shop icons, a legend |
 | v0.9.22 | Nov 18, 2026 | A bigger, more detailed living room, and Chum reacts when you pet him |
@@ -48,6 +49,14 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.25 · Lou's bait chart up front, and place names that fade
+
+_Nov 18, 2026 · Builds: `UrbanFishing-v0.9.25-windows.zip`, `UrbanFishing-v0.9.25-godot-project.zip`, screenshots in `screenshots/v0.9.25/`_
+
+- **Lou's bait chart, right away:** the first time you walk into Lou's, before the shop opens, Lou tells you which bait catches what: "Worms catch a bit of everything. Bread for mullet, tilapia and koi. Hot dogs for catfish. Lures for bass. Live shrimp for snook, tarpon and redfish. Press B to switch." Before, you only heard this once the map opened up, after five kinds of fish and an order. Saves that are already going get it on their next visit to Lou's.
+- The same bait chart is now at the top of Lou's **Gear** tab, so you can look it up any time.
+- **Place names fade out:** the prompt that pops up when you walk up to Lou's, your house, the marina or a bus stop (like "Lou's Bait & Tackle. Press E or F to go in.") fades away after 5 seconds. Walk off and come back and it shows again. The button to go in stays.
 
 ## v0.9.24 · Getting into the storm drain
 
