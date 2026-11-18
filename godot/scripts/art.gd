@@ -227,6 +227,18 @@ static func flat(ci: CanvasItem, b: Dictionary) -> void:
 		hvac(ci, x + w * 0.62, y + 0.05, 0.55)
 	var ink := Color("#22313a")
 	match kind:
+		"shop" when b.label != "LOU'S BAIT & TACKLE":
+			# the other towns' tackle shops: their own name on the sign, a striped awning and a door
+			ci.draw_rect(Rect2(x + 0.6, y + 1.2, w - 1.2, 1.5), Color("#fbf3e2"))
+			var words: PackedStringArray = b.label.split(" ", false)
+			var cut := ceili(words.size() / 2.0)
+			text(ci, Vector2(x + w / 2, y + 1.95), " ".join(words.slice(0, cut)), 0.42, ink)
+			text(ci, Vector2(x + w / 2, y + 2.5), " ".join(words.slice(cut)) + " · LIVE BAIT", 0.26, ink)
+			for i in int(w): ci.draw_rect(Rect2(x + i, fy - 0.12, 1, 0.34), Color("#fbf3e2") if i % 2 else c.lightened(0.15))
+			var dx := x + w / 2 - 0.35
+			for xx in range(int(x), int(x + w)):
+				if Town.t_at(xx, int(y + h - 1)) == Town.T.DOOR: dx = xx + 0.15
+			ci.draw_rect(Rect2(dx, fy + 0.22, 0.7, fh - 0.22), Color(0.08, 0.16, 0.24, 0.85))
 		"shop":
 			ci.draw_rect(Rect2(x + 0.6, y + 1.45, w - 1.2, 1.6), Color("#fbf3e2"))
 			text(ci, Vector2(x + w / 2, y + 2.25), "LOU'S BAIT", 0.5, ink)
@@ -477,7 +489,7 @@ static func tree(ci: CanvasItem, x: int, y: int, t: float) -> void:
 			ci.draw_colored_polygon(PackedVector2Array([Vector2(x + 0.5 - w, by), Vector2(x + 0.5 + w, by), tip]), Color("#24502e") if k % 2 == 0 else Color("#2d5f36"))
 			ci.draw_line(tip, Vector2(x + 0.5 - w * 0.8, by - 0.02), Color(1, 1, 1, 0.06), 0.04)
 		return
-	if Town.level == 1 or (y < 33 and h < 0.5) or (Town.zone[Town.idx(x, y)] == 1 and h < 0.35):
+	if Town.level >= 1 or (y < 33 and h < 0.5) or (Town.zone[Town.idx(x, y)] == 1 and h < 0.35):
 		# a leafy tree: the crown leans and its clumps rustle with the wind
 		var wd := TownLife.wind()
 		var lean := Vector2(sin(t * 0.8 + x * 0.6 + y) * 0.025 * wd + (wd - 1.0) * 0.04, 0)

@@ -34,7 +34,7 @@ func setup() -> void:
 			if t == T.SAND:
 				for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1), Vector2i(2, 0), Vector2i(0, 2), Vector2i(-2, 0), Vector2i(0, -2)]:
 					if Town.is_water_t(Town.t_at(x + d.x, y + d.y)): surf_pts.append(Vector2(x + 0.5, y + 0.5)); break
-	var big := [13, 14, 15] if Town.level == 0 else [Ironwater.RES]
+	var big: Array = [[13, 14, 15], [Ironwater.RES], [Gannet.HARBOR, Gannet.MARKET, Gannet.OUTER]][Town.level]
 	for y in range(0, Town.MH, 4):
 		for x in range(0, Town.MW, 4):
 			if Town.inb(x, y) and Town.is_water_t(Town.t_at(x, y)) and int(Town.region[Town.idx(x, y)]) in big: gull_pts.append(Vector2(x + 0.5, y + 0.5))
@@ -42,6 +42,11 @@ func setup() -> void:
 		areas.append({ "k": "hum", "stream": "hum", "r": Rect2(63, 57, 43, 18), "reach": 8.0, "gain": 0.7 })
 		for fo in [[Vector2(60.5, 130.7), 1.0], [Vector2(30.5, 127.6), 0.7]]:
 			areas.append({ "k": "fountain%d" % areas.size(), "stream": "fountain", "r": Rect2(fo[0] - Vector2(0.5, 0.5), Vector2(1, 1)), "reach": 7.0 * fo[1], "gain": 0.8 * fo[1] })
+	elif Town.level == 2:
+		# Gannet Harbor: the container port's cranes and reefers, the outfall pouring out, the market floor at dawn
+		areas.append({ "k": "hum", "stream": "hum", "r": Rect2(42, 136, 36, 28), "reach": 10.0, "gain": 0.8 })
+		areas.append({ "k": "outfall", "stream": "spillway", "r": Rect2(Gannet.PIPE - Vector2(1, 1), Vector2(2, 2)), "reach": 9.0, "gain": 0.55 })
+		areas.append({ "k": "market", "stream": "crowd", "r": Rect2(42, 32, 45, 12), "reach": 10.0, "gain": 0.45, "when": func(): return Game.hour() >= 3 and Game.hour() < 11 })
 	else:
 		areas.append({ "k": "spill", "stream": "spillway", "r": Rect2(44, 29, 24, 20), "reach": 38.0, "gain": 1.0 })
 		areas.append({ "k": "mill", "stream": "mill", "r": Rect2(16, 39, 22, 15), "reach": 14.0, "gain": 0.9, "when": func(): return Game.hour() >= 6 and Game.hour() < 21 })

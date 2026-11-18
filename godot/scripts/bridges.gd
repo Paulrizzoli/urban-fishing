@@ -29,7 +29,7 @@ static func setup() -> void:
 				if Town.region[Town.idx(x, y)] > 0: wet = true
 		var foot: bool = b.get("foot", false)
 		var high: bool = b.get("high", false)
-		var e := { "r": r, "h": b.get("h", false), "wet": wet, "foot": foot, "road": b.get("road", false), "lit": wet and not foot, "see": 0.0, "high": high,
+		var e := { "r": r, "h": b.get("h", false), "wet": wet, "foot": foot, "road": b.get("road", false), "lit": wet and not foot, "see": 0.0, "high": high, "susp": b.get("susp", false),
 			"gx0": float(b.get("gx0", b.x0)), "gx1": float(b.get("gx1", b.x1 + 1)) }
 		list.append(e)
 		if high: continue
@@ -52,7 +52,7 @@ static func _add_lamps(e: Dictionary) -> void:
 			if lp.distance_to(p) < 2.5: taken = true
 		if not taken: Town.lamps.append(p)
 
-## The high bridge (Ironwater's viaduct) over p, on land or water, or -1.
+## The high bridge (Ironwater's viaduct, Gannet Harbor's suspension bridge) over p, on land or water, or -1.
 static func high_at(p: Vector2) -> int:
 	for i in list.size():
 		var e: Dictionary = list[i]
@@ -104,6 +104,10 @@ static func lit_at(p: Vector2) -> bool:
 ## Fish that like the shade under a bridge, and how much more often they turn up there.
 ## At night, snook and tarpon wait under the bridge lights for bait swept past in the light.
 static func boosts(night: bool) -> Dictionary:
+	if Town.level == 2:
+		# under the Gannet Narrows Bridge: big stripers and blues in the lights at night, tautog and sea bass on the tower rocks by day
+		if night: return { "Striped Bass": 3.2, "Bluefish": 2.2, "Conger Eel": 1.6, "The Toll Taker": 1.5 }
+		return { "Tautog": 2.2, "Black Sea Bass": 2.0, "Scup": 1.5, "Striped Bass": 1.3 }
 	if Town.level == 1:
 		# under the Ironwater bridges: walleye and sauger in the lights at night, smallmouth and drum in the shade by day
 		if night: return { "Walleye": 3.0, "Sauger": 2.5, "Flathead Catfish": 1.8, "The Viaduct Ghost": 1.5 }
@@ -183,6 +187,7 @@ static func _high_under(ci: CanvasItem, e: Dictionary, view: Rect2, _now: float)
 		PackedColorArray([sh, sh, Color(sh, 0.0), Color(sh, 0.0)]))
 
 static func _high_deck(ci: CanvasItem, e: Dictionary, view: Rect2) -> void:
+	if e.susp: _susp_deck(ci, e, view); return
 	var r: Rect2 = e.r
 	var A: float = 1.0 - 0.6 * e.see
 	var x0 := maxf(r.position.x, view.position.x - 2)
@@ -317,3 +322,138 @@ static func draw_glow(ci: CanvasItem, view: Rect2, a: float, glow: Callable) -> 
 				var c := Color(warm, 0.2 * a * lit)
 				if e.h: ci.draw_rect(Rect2(e.gx0 + f * L - 0.15 + wob * 0.5, p.y + wob, 0.3, 0.05), c)
 				else: ci.draw_rect(Rect2(p.x + wob, r.position.y + f * L - 0.15 + wob * 0.5, 0.05, 0.3), c)
+
+## Gannet Harbor's suspension bridge: the deck on its stiffening truss, two towers rising high above it,
+## the main cables sweeping down from the tower tops between them and out to the anchorages, with the
+## hangers dropping to the deck. After dark the cables are strung with lights.
+const SUSP_H := 13.0         # how high the tower tops stand above the deck, drawn straight up
+const SUSP_ANCHOR := [52.0, 109.0]   # where the main cables come down to the anchorages
+static func _susp_deck(ci: CanvasItem, e: Dictionary, view: Rect2) -> void:
+	var r: Rect2 = e.r
+	var A: float = 1.0 - 0.6 * e.see
+	var x0 := maxf(r.position.x, view.position.x - 2)
+	var x1 := minf(r.end.x, view.end.x + 2)
+	var w := x1 - x0
+	var y0 := r.position.y
+	var y1 := r.end.y
+	var now := Time.get_ticks_msec() / 1000.0
+	var steel := Color("#7d949c", A)
+	var steel_dk := Color("#56707a", A)
+	var asphalt := Color("#474c54", A)
+	var dark := Game.darkness() > 0.3
+	# the stiffening truss along the south face
+	ci.draw_rect(Rect2(x0, y1 - 0.15, w, 0.75), steel_dk)
+	ci.draw_rect(Rect2(x0, y1 - 0.15, w, 0.12), steel)
+	var k := floorf(x0)
+	while k < x1:
+		ci.draw_line(Vector2(k, y1 - 0.05), Vector2(k + 0.5, y1 + 0.55), steel, 0.06)
+		ci.draw_line(Vector2(k + 0.5, y1 + 0.55), Vector2(k + 1.0, y1 - 0.05), steel, 0.06)
+		k += 1.0
+	ci.draw_rect(Rect2(x0, y1 + 0.55, w, 0.08), steel)
+	# the approach piers on land
+	for px in Gannet.PIERS:
+		if px + 2 < x0 or px > x1: continue
+		ci.draw_rect(Rect2(px + 0.1, y1 + 0.63, 1.8, 1.0), Color("#a9a59c", A))
+		ci.draw_rect(Rect2(px + 1.4, y1 + 0.63, 0.5, 1.0), Color("#86827a", A))
+	# the deck: shoulders, two lanes each way, a barrier down the middle
+	ci.draw_rect(Rect2(x0, y0 - 0.3, w, r.size.y + 0.3), asphalt)
+	ci.draw_rect(Rect2(x0, y0 - 0.3, w, 0.3), Color("#9a9ea4", A))
+	ci.draw_rect(Rect2(x0, y1 - 0.45, w, 0.3), Color("#9a9ea4", A))
+	var mid := (y0 + y1 - 0.45) / 2.0
+	ci.draw_rect(Rect2(x0, mid - 0.12, w, 0.24), Color("#c9ccd0", A))
+	for ly in [y0 + 0.9, mid + 1.0]:
+		var dx := floorf(x0)
+		while dx < x1:
+			ci.draw_rect(Rect2(dx + 0.2, ly, 0.6, 0.07), Color(1, 1, 1, 0.55 * A)); dx += 1.6
+	ci.draw_rect(Rect2(x0, y0 + 0.05, w, 0.05), Color("#e3b23c", 0.8 * A)); ci.draw_rect(Rect2(x0, y1 - 0.6, w, 0.05), Color("#e3b23c", 0.8 * A))
+	var lanes := [[y0 + 0.5, 1.0, 6.0], [y0 + 1.4, 1.0, 7.5], [mid + 0.6, -1.0, 6.5], [mid + 1.45, -1.0, 8.0]]
+	for li in lanes.size():
+		var L: Array = lanes[li]
+		for j in 6:
+			var span := float(Town.MW) + 24.0
+			var cx := fposmod(now * L[2] * L[1] + j * span / 6.0 + li * 7.3, span) - 12.0
+			if cx < x0 - 3 or cx > x1 + 3: continue
+			var big := (j + li) % 5 == 0
+			Art.car(ci, Vector2(cx, L[0]), 0.0 if L[1] > 0 else PI, Color(Art.CAR_COLORS[(j * 3 + li) % Art.CAR_COLORS.size()], A), 2.6 if big else 1.7, 0.8 if big else 0.72)
+	# the anchorages, where the cables come down: big concrete blocks on both sides of the deck
+	for ax in SUSP_ANCHOR:
+		if ax + 3 < x0 or ax - 3 > x1: continue
+		for ay in [y0 - 0.9, y1 - 0.2]:
+			ci.draw_rect(Rect2(ax - 1.6, ay, 3.2, 1.1), Color("#b9b4a8", A))
+			ci.draw_rect(Rect2(ax - 1.6, ay, 3.2, 0.2), Color("#d6d1c4", A))
+			ci.draw_rect(Rect2(ax + 0.9, ay, 0.7, 1.1), Color("#9a958a", A))
+	# the cables and hangers on the north side, then the towers, then the south side in front
+	_susp_cable(ci, x0, x1, y0 + 0.1, A, dark, now)
+	for tx in Gannet.TOWERS: _susp_tower(ci, float(tx) + 1.0, y0, y1, A, dark, now)
+	_susp_cable(ci, x0, x1, y1 - 0.25, A, dark, now)
+
+## How high the main cable is over the deck at x: up at the tower tops, sagging to just over the deck in
+## the middle of the main span, and down to the deck at the anchorages.
+static func _cable_h(x: float) -> float:
+	var t0: float = Gannet.TOWERS[0] + 1.0
+	var t1: float = Gannet.TOWERS[1] + 1.0
+	if x <= SUSP_ANCHOR[0] or x >= SUSP_ANCHOR[1]: return -1.0
+	if x < t0:
+		var u := (x - SUSP_ANCHOR[0]) / (t0 - SUSP_ANCHOR[0])
+		return SUSP_H * u * (0.55 + 0.45 * u)
+	if x > t1:
+		var u := (SUSP_ANCHOR[1] - x) / (SUSP_ANCHOR[1] - t1)
+		return SUSP_H * u * (0.55 + 0.45 * u)
+	var m := (x - (t0 + t1) / 2.0) / ((t1 - t0) / 2.0)
+	return 0.9 + (SUSP_H - 0.9) * m * m
+
+static func _susp_cable(ci: CanvasItem, x0: float, x1: float, deck_y: float, A: float, dark: bool, now: float) -> void:
+	var a0 := maxf(x0, SUSP_ANCHOR[0])
+	var a1 := minf(x1, SUSP_ANCHOR[1])
+	if a1 <= a0: return
+	var col := Color("#c9d2d6", A)
+	var hang := Color(0.8, 0.84, 0.86, 0.75 * A)
+	# hangers, one every tile
+	var hx := ceilf(a0)
+	while hx < a1:
+		var h := _cable_h(hx)
+		if h > 0.25: ci.draw_line(Vector2(hx, deck_y - h), Vector2(hx, deck_y), hang, 0.035)
+		hx += 1.0
+	var pts := PackedVector2Array()
+	var x := a0
+	while x <= a1:
+		pts.append(Vector2(x, deck_y - maxf(0.0, _cable_h(x)))); x += 0.5
+	pts.append(Vector2(a1, deck_y - maxf(0.0, _cable_h(a1))))
+	if pts.size() > 1:
+		ci.draw_polyline(pts, Color(0.2, 0.26, 0.3, 0.5 * A), 0.22)
+		ci.draw_polyline(pts, col, 0.14)
+	# the necklace lights along the cables after dark
+	if dark:
+		var lx := ceilf(a0 * 0.5) * 2.0
+		while lx < a1:
+			var tw := 0.75 + 0.25 * sin(now * 2.0 + lx)
+			ci.draw_circle(Vector2(lx, deck_y - maxf(0.0, _cable_h(lx))), 0.09, Color(1.0, 0.93, 0.7, tw * A))
+			lx += 2.0
+
+## One tower: two tall legs seen one behind the other, with the portal struts between them, a cap with the
+## cable saddles and a red light on top.
+static func _susp_tower(ci: CanvasItem, cx: float, y0: float, y1: float, A: float, dark: bool, now: float) -> void:
+	var top := y0 + 0.1 - SUSP_H
+	var face := Color("#8ea3aa", A)
+	var side := Color("#6a818a", A)
+	var lit := Color("#b3c4c9", A)
+	# the base on the water (or the rocks) below the south edge of the deck
+	ci.draw_rect(Rect2(cx - 1.1, y1 - 0.2, 2.2, 1.2), Color("#a9a59c", A))
+	ci.draw_rect(Rect2(cx - 1.1, y1 + 0.8, 2.2, 0.15), Color(0, 0, 0, 0.25 * A))
+	# the legs, tapering a little toward the top
+	ci.draw_colored_polygon(PackedVector2Array([Vector2(cx - 0.75, y1 + 0.2), Vector2(cx + 0.75, y1 + 0.2), Vector2(cx + 0.55, top), Vector2(cx - 0.55, top)]), face)
+	ci.draw_colored_polygon(PackedVector2Array([Vector2(cx + 0.35, y1 + 0.2), Vector2(cx + 0.75, y1 + 0.2), Vector2(cx + 0.55, top), Vector2(cx + 0.3, top)]), side)
+	ci.draw_line(Vector2(cx - 0.72, y1 + 0.2), Vector2(cx - 0.53, top), lit, 0.08)
+	# the recessed panels and the portal struts
+	for k in 4:
+		var py := lerpf(y1 - 1.0, top + 1.2, k / 3.0)
+		ci.draw_rect(Rect2(cx - 0.62, py - 0.25, 1.24, 0.42), side)
+		ci.draw_rect(Rect2(cx - 0.62, py - 0.25, 1.24, 0.08), lit)
+	for k in 3:
+		var py := lerpf(y1 - 1.8, top + 2.4, k / 2.0)
+		ci.draw_rect(Rect2(cx - 0.3, py - 1.3, 0.35, 1.0), Color(0.05, 0.1, 0.14, 0.35 * A))
+	# the cap and saddles
+	ci.draw_rect(Rect2(cx - 0.7, top - 0.35, 1.4, 0.45), lit)
+	ci.draw_rect(Rect2(cx - 0.7, top + 0.0, 1.4, 0.1), side)
+	var blink := 0.5 + 0.5 * sin(now * 2.6 + cx)
+	ci.draw_circle(Vector2(cx, top - 0.5), 0.13, Color(1, 0.2, 0.15, (0.55 + 0.45 * blink if dark else 0.8) * A))

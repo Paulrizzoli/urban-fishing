@@ -34,7 +34,13 @@ const STREETS2 := [
 	["Mill St", Vector2(0, 59), Vector2(112, 59), 2], ["Market St", Vector2(0, 125), Vector2(112, 125), 2], ["Front St", Vector2(0, 161), Vector2(112, 161), 2],
 	["I-90 Viaduct", Vector2(0, 94.5), Vector2(112, 94.5), 4],
 ]
-static func streets() -> Array: return STREETS2 if Town.level == 1 else STREETS
+const STREETS3 := [
+	["Kestrel Ave", Vector2(17, 0), Vector2(17, 184), 2], ["Commercial St", Vector2(39, 0), Vector2(39, 184), 2], ["Harbor Ave", Vector2(60, 0), Vector2(60, 136), 2],
+	["Pilot St", Vector2(0, 29), Vector2(62, 29), 2], ["Ferry St", Vector2(0, 59), Vector2(62, 59), 2], ["Wharf St", Vector2(0, 81), Vector2(62, 81), 2],
+	["Tanner St", Vector2(0, 113), Vector2(62, 113), 2], ["Port Rd", Vector2(0, 134), Vector2(62, 134), 2], ["Union St", Vector2(0, 166), Vector2(62, 166), 2],
+	["Gannet Narrows Bridge", Vector2(0, 98.5), Vector2(112, 98.5), 4],
+]
+static func streets() -> Array: return [STREETS, STREETS2, STREETS3][Town.level]
 
 const C_GRASS := Color("#c3e3a3")
 const C_FAIR_A := Color("#a7d888")

@@ -2353,5 +2353,885 @@
     "note": "A carp nobody can remember being small. The plaque on the bench says the park was founded in 1851. Some say the carp was too."
    }
   ]
+ },
+ "30": {
+  "name": "Inner Harbor",
+  "access": "Public: the Harbor Walk along the seawall, the piers by the subway stations, and the open harbor if you've brought a boat. Stripers and bluefish run here all season.",
+  "fish": [
+   {
+    "n": "Striped Bass",
+    "w": [
+     3,
+     30
+    ],
+    "pp": 5,
+    "pull": 0.8,
+    "r": 18
+   },
+   {
+    "n": "Bluefish",
+    "w": [
+     2,
+     16
+    ],
+    "pp": 3,
+    "pull": 0.78,
+    "r": 20,
+    "note": "All teeth and bad temper. It bites through cheap line just to make a point."
+   },
+   {
+    "n": "Black Sea Bass",
+    "w": [
+     0.8,
+     5
+    ],
+    "pp": 7,
+    "pull": 0.5,
+    "r": 15
+   },
+   {
+    "n": "Scup",
+    "w": [
+     0.4,
+     2.5
+    ],
+    "pp": 5,
+    "pull": 0.35,
+    "r": 22
+   },
+   {
+    "n": "Atlantic Mackerel",
+    "w": [
+     0.5,
+     2.5
+    ],
+    "pp": 4,
+    "pull": 0.55,
+    "r": 14,
+    "t": [
+     "day",
+     "low"
+    ]
+   },
+   {
+    "n": "Winter Flounder",
+    "w": [
+     0.5,
+     4
+    ],
+    "pp": 7,
+    "pull": 0.4,
+    "r": 10
+   },
+   {
+    "n": "Subway Token",
+    "w": [
+     0.02,
+     0.02
+    ],
+    "flat": 3,
+    "pull": 0.1,
+    "r": 4,
+    "junk": true,
+    "note": "Good for one ride in 1987."
+   },
+   {
+    "n": "Pizza Box",
+    "w": [
+     0.4,
+     0.6
+    ],
+    "flat": 0,
+    "pull": 0.15,
+    "r": 5,
+    "junk": true
+   },
+   {
+    "n": "Lost Earbud",
+    "w": [
+     0.01,
+     0.01
+    ],
+    "flat": 4,
+    "pull": 0.1,
+    "r": 3,
+    "junk": true,
+    "note": "Still playing something. Faintly."
+   },
+   {
+    "n": "The Harbormaster",
+    "w": [
+     52,
+     70
+    ],
+    "pp": 4,
+    "pull": 1,
+    "r": 2,
+    "t": [
+     "night"
+    ],
+    "legend": true,
+    "note": "A striped bass as long as a dinghy that has patrolled the Harbor Walk since the seawall went in. She takes one lure a season, and it's never yours."
+   }
+  ]
+ },
+ "31": {
+  "name": "The Narrows",
+  "access": "Public: Narrows Park and its pier. The tide rips through under the Gannet Narrows Bridge, and the big stripers wait in the bridge lights at night. The tower yard by the west tower is restricted: a bridge officer by day and a camera all night.",
+  "fish": [
+   {
+    "n": "Striped Bass",
+    "w": [
+     4,
+     38
+    ],
+    "pp": 5,
+    "pull": 0.82,
+    "r": 20
+   },
+   {
+    "n": "Bluefish",
+    "w": [
+     3,
+     18
+    ],
+    "pp": 3,
+    "pull": 0.8,
+    "r": 18
+   },
+   {
+    "n": "Tautog",
+    "w": [
+     1,
+     10
+    ],
+    "pp": 6,
+    "pull": 0.65,
+    "r": 14,
+    "note": "Teeth like a horse, lives in the rocks, fights like it's personal."
+   },
+   {
+    "n": "Black Sea Bass",
+    "w": [
+     1,
+     5.5
+    ],
+    "pp": 7,
+    "pull": 0.5,
+    "r": 10
+   },
+   {
+    "n": "Summer Flounder",
+    "w": [
+     1,
+     8
+    ],
+    "pp": 6,
+    "pull": 0.5,
+    "r": 10,
+    "t": [
+     "day",
+     "low"
+    ]
+   },
+   {
+    "n": "Spiny Dogfish",
+    "w": [
+     3,
+     12
+    ],
+    "pp": 1,
+    "pull": 0.6,
+    "r": 8,
+    "note": "A little shark everyone throws back and then complains about."
+   },
+   {
+    "n": "Atlantic Sturgeon",
+    "w": [
+     40,
+     160
+    ],
+    "pp": 0,
+    "pull": 0.92,
+    "r": 2,
+    "release": true,
+    "rep": 8,
+    "note": "Protected, and older than the bridge. Back it goes, gently."
+   },
+   {
+    "n": "Toll Transponder",
+    "w": [
+     0.2,
+     0.2
+    ],
+    "flat": 6,
+    "pull": 0.1,
+    "r": 3,
+    "junk": true,
+    "note": "Somebody's been paying double for months."
+   },
+   {
+    "n": "Hubcap",
+    "w": [
+     3,
+     4
+    ],
+    "flat": 3,
+    "pull": 0.25,
+    "r": 4,
+    "junk": true
+   },
+   {
+    "n": "The Toll Taker",
+    "w": [
+     60,
+     78
+    ],
+    "pp": 4,
+    "pull": 1,
+    "r": 2,
+    "t": [
+     "night"
+    ],
+    "near": "tower",
+    "legend": true,
+    "note": "A striper that waits in the shadow of the west tower and takes a cut of everything that swims through the Narrows."
+   }
+  ]
+ },
+ "32": {
+  "name": "Fish Market Wharf",
+  "access": "The Gannet Fish Pier. The market runs 3 to 11 AM and the dockmaster runs off anyone who isn't buying; a lanyard passes for a buyer's badge. Afternoons and nights the wharf is quiet and anyone can fish it. Scraps off the cutting tables keep the fish coming.",
+  "fish": [
+   {
+    "n": "Bluefish",
+    "w": [
+     2,
+     16
+    ],
+    "pp": 3,
+    "pull": 0.78,
+    "r": 18
+   },
+   {
+    "n": "Striped Bass",
+    "w": [
+     3,
+     30
+    ],
+    "pp": 5,
+    "pull": 0.8,
+    "r": 14
+   },
+   {
+    "n": "Northern Searobin",
+    "w": [
+     0.4,
+     2
+    ],
+    "pp": 2,
+    "pull": 0.4,
+    "r": 18,
+    "note": "It has legs. Little walking fins. It croaks when you pick it up."
+   },
+   {
+    "n": "Spiny Dogfish",
+    "w": [
+     3,
+     12
+    ],
+    "pp": 1,
+    "pull": 0.6,
+    "r": 12
+   },
+   {
+    "n": "Conger Eel",
+    "w": [
+     3,
+     25
+    ],
+    "pp": 2,
+    "pull": 0.7,
+    "r": 8,
+    "t": [
+     "night",
+     "low"
+    ]
+   },
+   {
+    "n": "Atlantic Cod",
+    "w": [
+     2,
+     18
+    ],
+    "pp": 6,
+    "pull": 0.6,
+    "r": 6
+   },
+   {
+    "n": "Fish Crate",
+    "w": [
+     4,
+     6
+    ],
+    "flat": 4,
+    "pull": 0.3,
+    "r": 5,
+    "junk": true,
+    "note": "GANNET FISH PIER, stenciled on the side. It smells exactly like you'd think."
+   },
+   {
+    "n": "Rubber Glove",
+    "w": [
+     0.2,
+     0.2
+    ],
+    "flat": 1,
+    "pull": 0.1,
+    "r": 5,
+    "junk": true
+   },
+   {
+    "n": "The Fishmonger",
+    "w": [
+     38,
+     55
+    ],
+    "pp": 6,
+    "pull": 0.96,
+    "r": 2,
+    "t": [
+     "low",
+     "night"
+    ],
+    "legend": true,
+    "note": "A goosefish with a mouth like a mailbox that lives under the cutting tables. The fishmongers feed it heads and swear it knows their names."
+   }
+  ]
+ },
+ "33": {
+  "name": "Container Port",
+  "access": "Gannet Marine Terminal. Port police drive the quay around the clock, cameras ride the cranes, and floodlights come on after dark. A lanyard passes for a port pass 7 AM to 7 PM. There's a cut in the fence on Commercial St.",
+  "fish": [
+   {
+    "n": "Bluefish",
+    "w": [
+     3,
+     18
+    ],
+    "pp": 3,
+    "pull": 0.8,
+    "r": 18
+   },
+   {
+    "n": "Striped Bass",
+    "w": [
+     4,
+     32
+    ],
+    "pp": 5,
+    "pull": 0.82,
+    "r": 12
+   },
+   {
+    "n": "False Albacore",
+    "w": [
+     5,
+     16
+    ],
+    "pp": 3,
+    "pull": 0.88,
+    "r": 8,
+    "t": [
+     "day",
+     "low"
+    ],
+    "note": "Little tunny. Fast as a torpedo, tastes like one too."
+   },
+   {
+    "n": "Atlantic Bonito",
+    "w": [
+     3,
+     12
+    ],
+    "pp": 5,
+    "pull": 0.82,
+    "r": 8
+   },
+   {
+    "n": "Pollock",
+    "w": [
+     3,
+     20
+    ],
+    "pp": 4,
+    "pull": 0.7,
+    "r": 8
+   },
+   {
+    "n": "Black Sea Bass",
+    "w": [
+     1,
+     5
+    ],
+    "pp": 7,
+    "pull": 0.5,
+    "r": 10
+   },
+   {
+    "n": "Container Twistlock",
+    "w": [
+     8,
+     9
+    ],
+    "flat": 8,
+    "pull": 0.3,
+    "r": 4,
+    "junk": true,
+    "note": "The steel lock that holds a container to the ship. One container is now very loose."
+   },
+   {
+    "n": "Box of Left Sneakers",
+    "w": [
+     6,
+     7
+    ],
+    "flat": 10,
+    "pull": 0.3,
+    "r": 3,
+    "junk": true,
+    "note": "Forty pairs' worth, all left feet. There's a box of right ones somewhere off Portugal."
+   },
+   {
+    "n": "The Stowaway",
+    "w": [
+     180,
+     320
+    ],
+    "pp": 2,
+    "pull": 1,
+    "r": 2,
+    "near": "ship",
+    "legend": true,
+    "note": "A bluefin tuna that followed a freighter in from the Grand Banks, swam into the berth and never left. The crane operators toss it their lunch."
+   }
+  ]
+ },
+ "34": {
+  "name": "The Outfall",
+  "access": "Combined sewer outfall CSO 017, under the Harbor Walk by the pump house. Public, smelly and full of life. Fish it from the walk, upwind if you can.",
+  "fish": [
+   {
+    "n": "American Eel",
+    "w": [
+     0.5,
+     5
+    ],
+    "pp": 6,
+    "pull": 0.6,
+    "r": 18
+   },
+   {
+    "n": "White Perch",
+    "w": [
+     0.3,
+     2
+    ],
+    "pp": 4,
+    "pull": 0.35,
+    "r": 22
+   },
+   {
+    "n": "Striped Bass",
+    "w": [
+     3,
+     28
+    ],
+    "pp": 5,
+    "pull": 0.8,
+    "r": 12
+   },
+   {
+    "n": "Common Carp",
+    "w": [
+     3,
+     20
+    ],
+    "pp": 1,
+    "pull": 0.66,
+    "r": 10
+   },
+   {
+    "n": "Mummichog",
+    "w": [
+     0.05,
+     0.2
+    ],
+    "pp": 10,
+    "pull": 0.15,
+    "r": 14,
+    "note": "A killifish. It lives happily in water that would kill a goldfish."
+   },
+   {
+    "n": "Sewer Rat",
+    "w": [
+     0.5,
+     1.2
+    ],
+    "pp": 0,
+    "pull": 0.35,
+    "r": 3,
+    "t": [
+     "night",
+     "low"
+    ],
+    "release": true,
+    "rep": 1,
+    "note": "A harbor rat. It was holding the line, not biting it. Respect."
+   },
+   {
+    "n": "Toilet Seat",
+    "w": [
+     2,
+     3
+    ],
+    "flat": 1,
+    "pull": 0.25,
+    "r": 4,
+    "junk": true
+   },
+   {
+    "n": "Lost Dentures",
+    "w": [
+     0.1,
+     0.1
+    ],
+    "flat": 6,
+    "pull": 0.1,
+    "r": 2,
+    "junk": true,
+    "note": "Somebody's smiling a lot less this week."
+   },
+   {
+    "n": "The Big Flush",
+    "w": [
+     38,
+     60
+    ],
+    "pp": 3,
+    "pull": 0.98,
+    "r": 2,
+    "t": [
+     "night"
+    ],
+    "near": "pipe",
+    "legend": true,
+    "note": "A conger eel as thick as your leg that lives inside the outfall pipe. The water authority divers have a name for it they won't say on the radio."
+   }
+  ]
+ },
+ "35": {
+  "name": "Ferry Slip",
+  "access": "Between the two ferry piers at the terminal. Public. The ferry pulls in on the hour and churns the slip, so keep your line clear of it.",
+  "fish": [
+   {
+    "n": "Scup",
+    "w": [
+     0.4,
+     2.5
+    ],
+    "pp": 5,
+    "pull": 0.35,
+    "r": 24
+   },
+   {
+    "n": "Cunner",
+    "w": [
+     0.2,
+     1.5
+    ],
+    "pp": 3,
+    "pull": 0.3,
+    "r": 22,
+    "note": "The best bait thief on the waterfront. It's been eating your worms all morning."
+   },
+   {
+    "n": "Tautog",
+    "w": [
+     1,
+     9
+    ],
+    "pp": 6,
+    "pull": 0.65,
+    "r": 14
+   },
+   {
+    "n": "Black Sea Bass",
+    "w": [
+     0.8,
+     5
+    ],
+    "pp": 7,
+    "pull": 0.5,
+    "r": 12
+   },
+   {
+    "n": "Atlantic Mackerel",
+    "w": [
+     0.5,
+     2.5
+    ],
+    "pp": 4,
+    "pull": 0.55,
+    "r": 10
+   },
+   {
+    "n": "Commuter's Coffee Mug",
+    "w": [
+     0.6,
+     0.6
+    ],
+    "flat": 2,
+    "pull": 0.15,
+    "r": 5,
+    "junk": true,
+    "note": "WORLD'S OKAYEST COMMUTER."
+   },
+   {
+    "n": "Ferry Life Ring",
+    "w": [
+     3,
+     3
+    ],
+    "flat": 6,
+    "pull": 0.3,
+    "r": 2,
+    "junk": true
+   },
+   {
+    "n": "The Commuter",
+    "w": [
+     18,
+     25
+    ],
+    "pp": 8,
+    "pull": 0.98,
+    "r": 2,
+    "t": [
+     "day",
+     "low"
+    ],
+    "legend": true,
+    "note": "A tautog the size of a briefcase that comes in on the 7:15 wake every morning and leaves on the 5:40."
+   }
+  ]
+ },
+ "36": {
+  "name": "Rooftop Garden Pond",
+  "access": "Skyline Commons, nine floors up on the Kestrel Ave garage. It's for tenants: the garden attendant waves in anyone in a suit, 8 AM to 8 PM, and security does rounds 10 PM to 6 AM. In between, the elevator's yours.",
+  "fish": [
+   {
+    "n": "Koi",
+    "w": [
+     3,
+     12
+    ],
+    "pp": 12,
+    "pull": 0.45,
+    "r": 28
+   },
+   {
+    "n": "Goldfish",
+    "w": [
+     0.2,
+     1
+    ],
+    "pp": 10,
+    "pull": 0.1,
+    "r": 22
+   },
+   {
+    "n": "Pumpkinseed",
+    "w": [
+     0.2,
+     0.8
+    ],
+    "pp": 5,
+    "pull": 0.3,
+    "r": 18
+   },
+   {
+    "n": "Golden Shiner",
+    "w": [
+     0.1,
+     0.6
+    ],
+    "pp": 4,
+    "pull": 0.2,
+    "r": 14
+   },
+   {
+    "n": "Lost Keycard",
+    "w": [
+     0.01,
+     0.01
+    ],
+    "flat": 2,
+    "pull": 0.1,
+    "r": 5,
+    "junk": true,
+    "note": "SKYLINE COMMONS · TENANT. Not anymore, it isn't."
+   },
+   {
+    "n": "Champagne Cork",
+    "w": [
+     0.02,
+     0.02
+    ],
+    "flat": 1,
+    "pull": 0.1,
+    "r": 4,
+    "junk": true
+   },
+   {
+    "n": "The Penthouse",
+    "w": [
+     24,
+     32
+    ],
+    "pp": 12,
+    "pull": 0.95,
+    "r": 2,
+    "t": [
+     "low"
+    ],
+    "legend": true,
+    "note": "A platinum koi worth more than the condo below it. The building's management lists it as an amenity."
+   }
+  ]
+ },
+ "37": {
+  "name": "Outer Harbor",
+  "access": "Open water south of the Narrows, past the container port to the harbor mouth. Kayaks are fine inside the channel buoys; past them it's skiff only. Cod, pollock and haddock sit on the deep ledges, and bluefin come in by the mouth.",
+  "fish": [
+   {
+    "n": "Bluefish",
+    "w": [
+     3,
+     18
+    ],
+    "pp": 3,
+    "pull": 0.8,
+    "r": 20
+   },
+   {
+    "n": "Striped Bass",
+    "w": [
+     4,
+     34
+    ],
+    "pp": 5,
+    "pull": 0.82,
+    "r": 14
+   },
+   {
+    "n": "Atlantic Cod",
+    "w": [
+     3,
+     30
+    ],
+    "pp": 6,
+    "pull": 0.65,
+    "r": 14
+   },
+   {
+    "n": "Pollock",
+    "w": [
+     3,
+     22
+    ],
+    "pp": 4,
+    "pull": 0.7,
+    "r": 12
+   },
+   {
+    "n": "Haddock",
+    "w": [
+     1,
+     8
+    ],
+    "pp": 6,
+    "pull": 0.5,
+    "r": 10,
+    "near": "deep"
+   },
+   {
+    "n": "Atlantic Bonito",
+    "w": [
+     3,
+     12
+    ],
+    "pp": 5,
+    "pull": 0.82,
+    "r": 8
+   },
+   {
+    "n": "Bluefin Tuna",
+    "w": [
+     80,
+     400
+    ],
+    "pp": 2,
+    "pull": 1,
+    "r": 2,
+    "t": [
+     "day",
+     "low"
+    ],
+    "near": "deep",
+    "note": "A real bluefin, in the harbor mouth. Your arms will tell this story for a week."
+   },
+   {
+    "n": "Lobster Trap",
+    "w": [
+     18,
+     22
+    ],
+    "flat": 8,
+    "pull": 0.4,
+    "r": 4,
+    "junk": true,
+    "note": "There's a lobster in it. He looks annoyed."
+   },
+   {
+    "n": "Message in a Bottle",
+    "w": [
+     0.8,
+     1
+    ],
+    "flat": 3,
+    "pull": 0.2,
+    "r": 2,
+    "junk": true,
+    "bottle": true
+   },
+   {
+    "n": "The Codfather",
+    "w": [
+     70,
+     98
+    ],
+    "pp": 5,
+    "pull": 1,
+    "r": 2,
+    "t": [
+     "night",
+     "low"
+    ],
+    "near": "deep",
+    "legend": true,
+    "note": "A cod the size of a canoe from the deep ledge at the harbor mouth. The old draggermen say he runs the harbor and takes a cut of every catch."
+   }
+  ]
  }
 }

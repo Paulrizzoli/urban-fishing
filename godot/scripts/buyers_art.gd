@@ -121,15 +121,15 @@ static func _front(ci: CanvasItem, b: Dictionary, bd: Dictionary, t: float) -> v
 			ci.draw_rect(sg, Color("#1e2a2e"))
 			ci.draw_rect(sg, Color("#c9a574"), false, 0.06)
 			var flick := 1.0 if fmod(t * 1.7, 9.0) > 0.25 else 0.4
-			Art.text(ci, Vector2(sg.get_center().x, sg.position.y + 0.62), "TAILRACE", 0.42, Color(1.0, 0.36, 0.3, flick))
-			Art.text(ci, Vector2(sg.get_center().x, sg.position.y + 0.95), "SUPPER CLUB", 0.16, Color(0.98, 0.85, 0.55))
+			Art.text(ci, Vector2(sg.get_center().x, sg.position.y + 0.62), String(bd.get("sign", "TAILRACE")), 0.42, Color(1.0, 0.36, 0.3, flick))
+			Art.text(ci, Vector2(sg.get_center().x, sg.position.y + 0.95), String(bd.get("sign2", "SUPPER CLUB")), 0.16, Color(0.98, 0.85, 0.55))
 			_neon_fish(ci, Vector2(sg.get_center().x, sg.position.y + 1.18), 0.32, Color(0.4, 0.9, 1.0, flick))
 		"hall":
 			# a green awning, the market name on the parapet, and Gus's smokehouse chimney
 			for i in int(w * 2): ci.draw_rect(Rect2(x + i * 0.5, fy - 0.12, 0.5, 0.28), Color("#e8e0cc") if i % 2 else Color("#3d6e5a"))
 			ci.draw_rect(Rect2(dt.x - 0.5, fy + 0.18, 2.0, fh_of(b) - 0.18), Color("#2a2420"))
 			ci.draw_rect(Rect2(dt.x - 0.5, fy + 0.18, 2.0, fh_of(b) - 0.18), Color("#c9a574"), false, 0.05)
-			Art.text(ci, Vector2(x + w / 2, y + 0.75), "IRONWATER PUBLIC MARKET", 0.34, PAPER, Color(0, 0, 0, 0.35))
+			Art.text(ci, Vector2(x + w / 2, y + 0.75), String(bd.get("sign", "IRONWATER PUBLIC MARKET")), 0.34, PAPER, Color(0, 0, 0, 0.35))
 			Art.text(ci, Vector2(x + w / 2, y + 1.15), "EST. 1911 · " + String(bd.get("subsign", "")), 0.14, PAPER)
 			var cp := Vector2(x + w - 1.6, y + 1.6)
 			ci.draw_rect(Rect2(cp + Vector2(0.08, 0.08), Vector2(0.7, 0.7)), Color(0, 0, 0, 0.25))

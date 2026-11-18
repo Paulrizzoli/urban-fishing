@@ -9,7 +9,10 @@ const WPAL := {
 	14: ["#74d6d4", "#2b93b6"], 15: ["#2378b0", "#0d3f78"], 16: ["#8ce6f2", "#38b6dc"], 17: ["#7fd2dc", "#3a9cbd"],
 	# Ironwater: a deep blue-green reservoir, the foamy tailwater, the green river, the cold race, the brewery's amber pond
 	20: ["#5b98a6", "#1d5068"], 21: ["#6ea4a6", "#2f6670"], 22: ["#62928a", "#2a5459"], 23: ["#74a49c", "#36625e"], 24: ["#8f9a62", "#4f6236"],
-	25: ["#86d8ec", "#2fa2cc"], 26: ["#64ac9c", "#2e7466"] }
+	25: ["#86d8ec", "#2fa2cc"], 26: ["#64ac9c", "#2e7466"],
+	# Gannet Harbor: a cold grey-green harbor, the darker rip in the Narrows, the oily market slip and the brown outfall
+	30: ["#5c8f98", "#24536a"], 31: ["#4f8492", "#1b4660"], 32: ["#6a8a84", "#2f5458"], 33: ["#557f8c", "#22485e"], 34: ["#7f8a6a", "#4a5a44"],
+	35: ["#5a8e96", "#25556a"], 36: ["#7fd2dc", "#3a9cbd"], 37: ["#4a8298", "#123e5e"] }
 
 ## Forget everything worked out from the map, after the map changes (going to the other town).
 static func reset() -> void:

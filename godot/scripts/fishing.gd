@@ -7,7 +7,8 @@ signal landed(c: Dictionary)
 signal message(text: String)
 
 const SHCOUNT := { 1: 5, 7: 7, 2: 16, 3: 6, 4: 4, 5: 5, 6: 6, 9: 12, 10: 6, 11: 6, 12: 7, 13: 10, 14: 24, 15: 18, 16: 6, 17: 5,
-	20: 24, 21: 14, 22: 34, 23: 5, 24: 6, 25: 4, 26: 5 }   # 20 and up are Ironwater
+	20: 24, 21: 14, 22: 34, 23: 5, 24: 6, 25: 4, 26: 5,   # 20 to 29 are Ironwater
+	30: 34, 31: 16, 32: 10, 33: 8, 34: 5, 35: 6, 36: 5, 37: 30 }   # 30 and up are Gannet Harbor
 const BAND := [0.22, 0.82]
 const MINR := 1.2
 const MAXR := 5.6        # how far the garage-sale rod casts; better rods reach farther (see reach())
@@ -150,6 +151,11 @@ func near_ok(f: Dictionary, x: int, y: int) -> bool:
 		"far": return y >= 177
 		"boil": return y <= 38                                  # Ironwater: right under the dam gates
 		"viaduct": return y >= Ironwater.VIA_Y0 - 2 and y <= Ironwater.VIA_Y1 + 2   # under the I-90 viaduct
+		# Gannet Harbor
+		"tower": return x >= 79 and x <= 88 and y >= Gannet.BR_Y0 - 5 and y <= Gannet.BR_Y1 + 5   # in the west tower's shadow
+		"ship": return Gannet.SHIP.grow(1.5).has_point(Vector2(x + 0.5, y + 0.5))               # alongside the container ship
+		"pipe": return Vector2(x + 0.5, y + 0.5).distance_to(Gannet.PIPE) < 5.5                # right at the outfall pipe
+		"deep": return y >= 165                                                                 # the ledges at the harbor mouth
 	if f.get("bridge", false): return (x >= 36 and x <= 46) or (x >= 54 and x <= 64)
 	return true
 

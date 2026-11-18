@@ -24,7 +24,8 @@ static var decor: Array = []
 static var bridges: Array = []
 static var driveways: Array = []   # { r: Rect2, d: Vector2i toward the street, car: bool }
 static var built := false
-## Which town the map is: 0 Port Mullet, 1 Ironwater (the second level, see ironwater.gd).
+## Which town the map is: 0 Port Mullet, 1 Ironwater (the second level, see ironwater.gd),
+## 2 Gannet Harbor (the third, see gannet.gd).
 static var level := 0
 ## Water regions you can launch the kayak / the skiff from.
 static var launch_k: Array = [2, 9, 13, 14]
@@ -117,8 +118,9 @@ static func build() -> void:
 	tile.resize(n); region.resize(n); zone.resize(n); floodable.resize(n); depth.resize(n)
 	tile.fill(T.GRASS); region.fill(0); zone.fill(0); floodable.fill(0); depth.fill(0)
 	launch_k = [2, 9, 13, 14]; launch_s = [13, 14]
-	if level == 1:
-		Ironwater.build()
+	if level >= 1:
+		if level == 1: Ironwater.build()
+		else: Gannet.build()
 		Buyers.place()
 		_join_roads()
 		_build_driveways()
@@ -427,6 +429,12 @@ static func _build_depth() -> void:
 
 ## Inside a bridge that's level with the street (the high viaduct in Ironwater doesn't count:
 ## the ground goes on underneath it).
+## The town a fishing spot is in: Port Mullet's are 1-19, Ironwater's 20-29, Gannet Harbor's 30 and up.
+static func spot_town(sid: int) -> int: return 0 if sid < 20 else 1 if sid < 30 else 2
+
+## The towns' names, by level.
+const NAMES := ["Port Mullet", "Ironwater", "Gannet Harbor"]
+
 static func in_bridge(x: int, y: int) -> bool:
 	for b in bridges:
 		if b.get("high", false): continue

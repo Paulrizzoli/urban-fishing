@@ -20,6 +20,10 @@ static func _fns() -> Dictionary:
 		"Weather Balloon": _balloon, "Lucky Penny": _penny, "Executive's Rolex": _rolex,
 		"Fintastic Stock Certificate": _certificate, "Wishing Coins": _coins,
 		"Traffic Cone": _cone, "Wooden Bobbin": _bobbin, "Empty Keg": _keg, "Home Run Ball": _baseball, "Foam Finger": _finger,
+		"Subway Token": _token, "Pizza Box": _pizza, "Lost Earbud": _earbud, "Toll Transponder": _transponder, "Hubcap": _hubcap,
+		"Fish Crate": _crate, "Rubber Glove": _glove, "Container Twistlock": _twistlock, "Box of Left Sneakers": _sneakerbox,
+		"Toilet Seat": _toilet, "Lost Dentures": _dentures, "Commuter's Coffee Mug": _mug, "Ferry Life Ring": _lifering,
+		"Lost Keycard": _keycard, "Champagne Cork": _cork, "Lobster Trap": _trap,
 	}
 
 ## Draw the junk named n into r. False if there's no picture for it.
@@ -403,3 +407,128 @@ static func _finger(ci: CanvasItem, _t: float) -> void:
 	_poly(ci, [Vector2(-20, 28), Vector2(20, 28), Vector2(22, -4), Vector2(8, -6), Vector2(8, -30), Vector2(-4, -30), Vector2(-6, -6), Vector2(-22, -2)], Color("#2b7ea6"))
 	_txt(ci, Vector2(0, 14), "#1", 14, Color("#f2c040"))
 	_txt(ci, Vector2(0, 24), "HAWKS", 6, Color.WHITE)
+
+# ---------- Gannet Harbor ----------
+
+static func _token(ci: CanvasItem, t: float) -> void:
+	_el(ci, Vector2.ZERO, 22, 22, Color("#c8a44a"))
+	_el(ci, Vector2.ZERO, 16, 16, Color("#d8b860"))
+	_poly(ci, [Vector2(-4, -6), Vector2(4, -6), Vector2(4, 6), Vector2(-4, 6)], Color("#3a3428"), 0.8)   # the cutout
+	_txt(ci, Vector2(0, -9), "GOOD FOR", 5, Color("#5a4a28"))
+	_txt(ci, Vector2(0, 15), "ONE FARE", 5, Color("#5a4a28"))
+	_sparkle(ci, Vector2(16, -16), 3 + sin(t * 4.0))
+
+static func _pizza(ci: CanvasItem, _t: float) -> void:
+	_rot(ci, -0.12)
+	_poly(ci, [Vector2(-34, -24), Vector2(34, -24), Vector2(34, 24), Vector2(-34, 24)], Color("#c8a87a"))
+	ci.draw_line(Vector2(-34, -18), Vector2(34, -18), Color("#a88a5a"), 1.4)
+	_el(ci, Vector2(0, 2), 16, 11, Color("#c0392b"))
+	_txt(ci, Vector2(0, 6), "SAL'S", 9, Color.WHITE)
+	_el(ci, Vector2(20, 14), 7, 3, Color("#8a6a40", 0.5), false)   # a grease spot
+
+static func _earbud(ci: CanvasItem, _t: float) -> void:
+	_rot(ci, 0.4)
+	_el(ci, Vector2(-8, -6), 14, 12, Color("#f4f4f2"))
+	_poly(ci, [Vector2(-2, 0), Vector2(6, 0), Vector2(8, 30), Vector2(0, 30)], Color("#f4f4f2"))
+	_el(ci, Vector2(-12, -8), 6, 5, Color("#8a9096"))
+
+static func _transponder(ci: CanvasItem, _t: float) -> void:
+	_rr(ci, Rect2(-30, -18, 60, 36), 6, Color("#f4f4f2"))
+	_rr(ci, Rect2(-26, -14, 52, 14), 3, Color("#5a2a8a"))
+	_txt(ci, Vector2(0, -3), "TOLL", 9, Color.WHITE)
+	ci.draw_line(Vector2(-20, 8), Vector2(20, 8), Color("#8a9096"), 2.0)
+	_el(ci, Vector2(22, 10), 3, 3, Color("#3d8a4a"))
+
+static func _hubcap(ci: CanvasItem, t: float) -> void:
+	_el(ci, Vector2.ZERO, 28, 24, Color("#b8bec4"))
+	_el(ci, Vector2.ZERO, 20, 17, Color("#d8dde0"))
+	for i in 6:
+		var a := i * TAU / 6
+		ci.draw_line(Vector2(cos(a), sin(a) * 0.85) * 6, Vector2(cos(a), sin(a) * 0.85) * 19, Color("#8a9096"), 3.0)
+	_el(ci, Vector2.ZERO, 6, 5, Color("#8a9096"))
+	_sparkle(ci, Vector2(-14, -14), 3 + sin(t * 4.0))
+
+static func _crate(ci: CanvasItem, _t: float) -> void:
+	_poly(ci, [Vector2(-36, -20), Vector2(36, -20), Vector2(36, 24), Vector2(-36, 24)], Color("#3d8a8a"))
+	for x in [-24.0, -12.0, 0.0, 12.0, 24.0]: ci.draw_line(Vector2(x, -14), Vector2(x, 20), Color("#2a6a6a"), 3.0)
+	_poly(ci, [Vector2(-14, -18), Vector2(14, -18), Vector2(14, -10), Vector2(-14, -10)], Color("#22313a"), 0.8)   # the handle hole
+	_txt(ci, Vector2(0, 12), "GANNET FISH PIER", 6, Color("#e8f0f0"))
+	_weed(ci, Vector2(30, 24), 10)
+
+static func _glove(ci: CanvasItem, _t: float) -> void:
+	_rot(ci, -0.3)
+	_poly(ci, [Vector2(-14, 30), Vector2(14, 30), Vector2(16, -2), Vector2(22, -14), Vector2(16, -16), Vector2(10, -6), Vector2(10, -28), Vector2(4, -28), Vector2(3, -8), Vector2(0, -30), Vector2(-6, -30), Vector2(-5, -8), Vector2(-10, -26), Vector2(-16, -24), Vector2(-14, 0)], Color("#e3a23c"))
+	ci.draw_line(Vector2(-12, 22), Vector2(12, 22), Color("#c8862a"), 2.0)
+
+static func _twistlock(ci: CanvasItem, _t: float) -> void:
+	_poly(ci, [Vector2(-28, -6), Vector2(28, -6), Vector2(28, 6), Vector2(-28, 6)], Color("#6c7178"))
+	_poly(ci, [Vector2(-12, -26), Vector2(12, -26), Vector2(8, -6), Vector2(-8, -6)], Color("#8a9096"))
+	_poly(ci, [Vector2(-10, 6), Vector2(10, 6), Vector2(14, 26), Vector2(-14, 26)], Color("#8a9096"))
+	_poly(ci, [Vector2(28, -3), Vector2(42, -3), Vector2(42, 3), Vector2(28, 3)], Color("#e3a23c"))   # the handle
+	_el(ci, Vector2(-18, 16), 6, 3, Color("#8a4a2a", 0.6), false)   # rust
+
+static func _sneakerbox(ci: CanvasItem, _t: float) -> void:
+	_poly(ci, [Vector2(-34, -10), Vector2(30, -10), Vector2(30, 24), Vector2(-34, 24)], Color("#e8e0cc"))
+	_poly(ci, [Vector2(-38, -18), Vector2(34, -18), Vector2(30, -10), Vector2(-34, -10)], Color("#d8d0bc"))
+	_txt(ci, Vector2(-2, 10), "40 × LEFT", 8, Color("#c0392b"))
+	_poly(ci, [Vector2(-20, -18), Vector2(4, -18), Vector2(10, -28), Vector2(-4, -34), Vector2(-20, -28)], Color("#2b7ea6"))   # one poking out
+	ci.draw_line(Vector2(-16, -24), Vector2(2, -24), Color.WHITE, 1.6)
+
+static func _toilet(ci: CanvasItem, _t: float) -> void:
+	_el(ci, Vector2(0, 4), 26, 22, Color("#f4f4f2"))
+	_el(ci, Vector2(0, 6), 15, 13, Color("#5a8a9a"))   # you can see the water through it
+	_poly(ci, [Vector2(-14, -22), Vector2(14, -22), Vector2(12, -16), Vector2(-12, -16)], Color("#e8e8e4"))
+	_weed(ci, Vector2(18, 24), 10)
+
+static func _dentures(ci: CanvasItem, _t: float) -> void:
+	_el(ci, Vector2(0, -4), 28, 14, Color("#e87a8a"))
+	for i in 8:
+		var x := -21 + i * 6
+		_rr(ci, Rect2(x - 2.6, -6 + absf(i - 3.5) * 0.6, 5.2, 9), 2, Color("#f8f4e8"))
+	_el(ci, Vector2(0, 14), 26, 10, Color("#e87a8a"))
+	for i in 8:
+		var x := -20 + i * 5.6
+		_rr(ci, Rect2(x - 2.4, 6 - absf(i - 3.5) * 0.4, 4.8, 8), 2, Color("#f8f4e8"))
+
+static func _mug(ci: CanvasItem, _t: float) -> void:
+	_poly(ci, [Vector2(-18, -24), Vector2(16, -24), Vector2(14, 26), Vector2(-16, 26)], Color("#2b7ea6"))
+	ci.draw_arc(Vector2(18, 0), 10, -PI / 2, PI / 2, 14, INK, 4.0)
+	ci.draw_arc(Vector2(18, 0), 10, -PI / 2, PI / 2, 14, Color("#2b7ea6"), 2.4)
+	_txt(ci, Vector2(-1, -4), "WORLD'S", 6, Color.WHITE)
+	_txt(ci, Vector2(-1, 5), "OKAYEST", 6, Color.WHITE)
+	_txt(ci, Vector2(-1, 14), "COMMUTER", 5, Color.WHITE)
+
+static func _lifering(ci: CanvasItem, _t: float) -> void:
+	_el(ci, Vector2.ZERO, 30, 26, Color("#f2742a"))
+	_el(ci, Vector2.ZERO, 14, 12, Color("#5a8a9a"))
+	for a in [0.6, 2.2, 3.8, 5.4]:
+		_poly(ci, [Vector2(cos(a - 0.2), sin(a - 0.2)) * 15, Vector2(cos(a + 0.2), sin(a + 0.2)) * 15, Vector2(cos(a + 0.16), sin(a + 0.16)) * 29, Vector2(cos(a - 0.16), sin(a - 0.16)) * 29], Color("#f4f4f2"), 0.8)
+
+static func _keycard(ci: CanvasItem, _t: float) -> void:
+	_rot(ci, 0.2)
+	_rr(ci, Rect2(-30, -19, 60, 38), 5, Color("#22313a"))
+	_rr(ci, Rect2(-24, -12, 14, 12), 2, Color("#e3b23c"))
+	_txt(ci, Vector2(8, -4), "SKYLINE", 7, Color.WHITE)
+	_txt(ci, Vector2(8, 6), "COMMONS", 7, Color.WHITE)
+	_txt(ci, Vector2(0, 15), "TENANT", 5, Color("#8fc4dc"))
+
+static func _cork(ci: CanvasItem, _t: float) -> void:
+	_poly(ci, [Vector2(-12, -10), Vector2(12, -10), Vector2(14, 22), Vector2(-14, 22)], Color("#c8a46a"))
+	_el(ci, Vector2(0, -14), 20, 8, Color("#d8b47a"))
+	for i in 3: ci.draw_line(Vector2(-12, -4 + i * 8), Vector2(12, -2 + i * 8), Color("#8a6a3a", 0.6), 1.6)
+	ci.draw_line(Vector2(-16, -14), Vector2(16, -18), Color("#b8bec4"), 2.0)   # the wire cage
+
+static func _trap(ci: CanvasItem, t: float) -> void:
+	_poly(ci, [Vector2(-38, -20), Vector2(38, -20), Vector2(38, 24), Vector2(-38, 24)], Color("#3d8a4a", 0.35))
+	for x in range(-38, 39, 7): ci.draw_line(Vector2(x, -20), Vector2(x, 24), Color("#2f6a3a"), 1.4)
+	for y in range(-20, 25, 7): ci.draw_line(Vector2(-38, y), Vector2(38, y), Color("#2f6a3a"), 1.4)
+	ci.draw_rect(Rect2(-38, -20, 76, 44), INK, false, 1.6)
+	# the lobster inside, unimpressed
+	var c := Vector2(4, 6)
+	_el(ci, c, 14, 6, Color("#a83a2a"))
+	_el(ci, c + Vector2(-14, 0), 7, 4, Color("#a83a2a"))
+	for sd in [-1.0, 1.0]:
+		ci.draw_line(c + Vector2(12, 0), c + Vector2(22, sd * 8), Color("#a83a2a"), 3.0)
+		_el(ci, c + Vector2(26, sd * 9), 6, 4, Color("#c84a3a"))
+	ci.draw_circle(c + Vector2(10, -3), 1.4, INK)
+	_weed(ci, Vector2(-30, 24), 12)
