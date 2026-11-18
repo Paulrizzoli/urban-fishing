@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.22 | Nov 18, 2026 | A bigger, more detailed living room, and Chum reacts when you pet him |
 | v0.9.21 | Nov 18, 2026 | A picture of every piece of junk, on the catch card and in Lou's Sell tab |
 | v0.9.19 | Nov 17, 2026 | Runs faster, and a Graphics quality setting (Low, Medium, High) |
 | v0.9.18 | Nov 17, 2026 | Screen polish: zoom in on a hooked fish, shake on big catches, a drawing of every fish on its catch card |
@@ -45,6 +46,23 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.22 · A more detailed living room, and a cat who reacts
+
+_Nov 18, 2026 · Builds: `UrbanFishing-v0.9.22-windows.zip`, `UrbanFishing-v0.9.22-godot-project.zip`_
+
+- The living room on the home card is bigger (the card gets wider for it) and has a lot more in it:
+  - A ceiling with crown molding and a **ceiling fan** that turns, with a light that comes on in the evening
+  - The **front door**, with a little window, a brass knob and a GONE FISHIN' doormat
+  - A **wall clock** over the door that shows the real time in the game
+  - A hook by the door with a bucket hat and a landing net. Your lanyard hangs there once you have one, and your **waders** stand by the door once you buy them (before that it's a pair of flip-flops)
+  - A **snake plant** between the tank and the couch, and a little cactus on the window sill
+  - A **coffee table** with a mug (it steams in the morning), the remote and a fishing magazine. The rug has fringe
+  - A castle and a treasure chest in the big tank
+  - **Sunlight** falls through the window across the floor by day, with dust floating in it. Clouds and rain dim it
+  - Wallpaper with a little dot pattern
+- **Pet Chum** now does something you can see. Chum wakes up for a few seconds and does one of three things: a big stretch with his paws out front, his tail up and a yawn; a roll onto his back with all four paws wiggling in the air; or a purr with his head up, eyes squeezed happy and his tail swishing. Hearts float up each time, then he curls back up and goes back to sleep
+- The tail is a smooth curve now instead of a stiff zigzag
 
 ## v0.9.21 · Pictures of the junk
 
