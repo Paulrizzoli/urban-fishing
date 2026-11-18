@@ -81,7 +81,7 @@ func manhole_near() -> int:
 	if player.in_boat(): return -1
 	for i in manholes.size():
 		var m: Vector2 = manholes[i]
-		if m.distance_to(player.position) < 1.25 and Unlocks.open_p(m): return i
+		if m.distance_to(player.position) < 1.25: return i
 	return -1
 
 func start_manhole(i: int) -> void:

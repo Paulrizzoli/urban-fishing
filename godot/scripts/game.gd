@@ -60,7 +60,7 @@ func fresh() -> Dictionary:
 	return { "day": 1, "min": 6 * 60 + 30.0, "cash": 30, "rep": 0, "x": 48.5, "y": 33.2, "face": PI / 2, "gear": {}, "cooler_cap": 5,
 		"cooler": [], "journal": {}, "bait": "worms", "started": false, "news": [],
 		"boat": false, "boat_kind": "kayak", "parked": {}, "offenses": {}, "order": {}, "park_day": 0, "swept_day": 0, "story": {}, "story_day": 0, "story_told": false,
-		"tips_heard": 0, "rosa": 0, "visited": {}, "busts": 0, "unlock": 1, "parts": {}, "lures": {}, "picked": {}, "mh": {}, "homerod": {}, "use_home": false }.merged(Story.fresh_state())
+		"tips_heard": 0, "rosa": 0, "visited": {}, "busts": 0, "sneak_lesson": false, "parts": {}, "lures": {}, "picked": {}, "mh": {}, "homerod": {}, "use_home": false }.merged(Story.fresh_state())
 
 func save_path(n := slot) -> String: return SLOT_PATHS[clampi(n, 1, SLOTS) - 1]
 
@@ -93,10 +93,11 @@ func load_game() -> void:
 		for k in d:
 			if S.has(k) and S[k] is Dictionary and d[k] is Dictionary and k in ["saga", "act2", "stats"]: S[k].merge(d[k], true)
 			else: S[k] = d[k]
-		# saves from before the map opened up in steps keep the whole town
-		if not d.has("unlock"): S.unlock = Unlocks.LAST
+		# the whole town is open now (v0.9.26). Saves that had reached the sneaking lesson
+		# in the old step-by-step map, or that never had steps, don't get it again.
+		if not d.has("sneak_lesson") and (not d.has("unlock") or int(d.unlock) >= 3): S.sneak_lesson = true
 	# JSON brings every number back as a float; keep the counters whole
-	for k in ["day", "cash", "rep", "cooler_cap", "unlock"]: S[k] = int(S[k])
+	for k in ["day", "cash", "rep", "cooler_cap"]: S[k] = int(S[k])
 	for k in ["ch", "paid_ch", "left", "fin_day"]: S.saga[k] = int(S.saga[k])
 	for k in ["ch", "since"]: S.act2[k] = int(S.act2[k])
 	for k in S.stats: S.stats[k] = int(S.stats[k])
@@ -187,15 +188,15 @@ func new_order() -> void:
 		var need: String = o.get("need", "")
 		if (need == "" or (need == "downtown" and S.visited.has("dt")) or S.gear.has(need)) and order_possible(o): pool.append(i)
 	if pool.is_empty(): pool = [0]
-	# until the first part of town opens, Lou only asks for things you can catch with what you start with
-	if Unlocks.step() == 1:
+	# while you're still learning, Lou only asks for things you can catch with what you start with
+	if Unlocks.early():
 		var easy := pool.filter(func(i): return order_easy(orders[i]))
 		if not easy.is_empty(): pool = easy
 	S.order = { "day": S.day, "i": pool.pick_random(), "done": false }
-## True if a common fish in the open part of town fills the order in daylight, on worms or bread.
+## True if a common fish on the easy public water fills the order in daylight, on worms or bread.
 func order_easy(o: Dictionary) -> bool:
 	for sid in spots:
-		if not Unlocks.spot_open(sid) or (sid == 8 and not S.gear.has("prybar")) or sid in Unlocks.GUARDED: continue
+		if not Unlocks.spot_easy(sid): continue
 		for f in spots[sid].fish:
 			if f.get("legend", false) or f.get("release", false) or float(f.r) < 10: continue
 			if f.has("t") and not ("day" in f.t): continue
@@ -203,10 +204,9 @@ func order_easy(o: Dictionary) -> bool:
 			if pref != null and not ("worms" in pref or "bread" in pref): continue
 			if order_match(o, { "n": f.n, "junk": f.get("junk", false), "w": float(f.w[1]) * 0.8, "spot": sid }): return true
 	return false
-## True if some fish in the open part of town could fill the order.
+## True if some fish somewhere in town could fill the order.
 func order_possible(o: Dictionary) -> bool:
 	for sid in spots:
-		if not Unlocks.spot_open(sid): continue
 		for f in spots[sid].fish:
 			if order_match(o, { "n": f.n, "junk": f.get("junk", false), "w": 9999.0, "spot": sid }): return true
 	return false

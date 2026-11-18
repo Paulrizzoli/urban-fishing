@@ -13,7 +13,6 @@ var center := Vector2(Town.MW / 2.0, Town.MH / 2.0)   # the tile at the middle o
 var dragging := false
 var started := false
 var zl: Label
-var locked: Texture2D          # grey over the part of town that isn't open yet
 var base: Control              # the map picture, smoothly scaled
 var over: Control              # everything drawn on top of it
 static var show_legend := true
@@ -193,7 +192,6 @@ func draw_over(ci: CanvasItem) -> void:
 	var kk := k()
 	var r := map_rect()
 	var o := r.position
-	if locked: ci.draw_texture_rect(locked, r, false)
 	# street names once there's room for them
 	if zoom >= 1.6: _street_names(ci, kk)
 	var isz := clampf(kk * 1.1, 9, 15)
@@ -204,7 +202,7 @@ func draw_over(ci: CanvasItem) -> void:
 	for pl in PLACES: place_icon(ci, o + pl[1] * kk, isz * 1.1, pl[2])
 	for sp in spots():
 		var pr := spot_progress(sp[0])
-		spot_icon(ci, o + sp[1] * kk, isz, Unlocks.open_p(sp[1]), pr.x >= pr.y)
+		spot_icon(ci, o + sp[1] * kk, isz, true, pr.x >= pr.y)
 	_home_marker(ci, hp, hsz)
 	_text_on(ci, hp + Vector2(hsz * 0.95 + 3, 5), "Home", 14 if zoom < 2 else 16, Color("#c4572f"), false)
 	var fs := int(clampf(7 + kk * 0.9, 10, 20))
@@ -215,8 +213,7 @@ func draw_over(ci: CanvasItem) -> void:
 	if zoom >= 1.6:
 		for sp in spots():
 			var pr := spot_progress(sp[0])
-			var open := Unlocks.open_p(sp[1])
-			_text_on(ci, o + sp[1] * kk + Vector2(0, isz + 13), "%s  %d/%d" % [sp[2], pr.x, pr.y], 11, SPOT_BLUE.darkened(0.25) if open else Color("#6b7378"), true)
+			_text_on(ci, o + sp[1] * kk + Vector2(0, isz + 13), "%s  %d/%d" % [sp[2], pr.x, pr.y], 11, SPOT_BLUE.darkened(0.25), true)
 	if zoom >= 2.5:
 		for bs in Story.BUS: _text_on(ci, o + bs[1] * kk + Vector2(isz + 3, 4), "Bus · " + bs[0], 11, SPOT_BLUE, false)
 	# building names up close
@@ -352,7 +349,6 @@ func _compass(ci: CanvasItem, c: Vector2) -> void:
 func _legend(ci: CanvasItem) -> void:
 	var rows := [["you", "You"], ["home", "Home"], ["spot", "Fishing spot (fish caught / all)"], ["all", "Every fish caught there"],
 		["shop", "Shop"], ["bus", "Bus stop ($2 ride)"], ["private", "Private: keep your head down"], ["road", "Street"]]
-	if locked: rows.append(["closed", "Closed for now"])
 	var fs := 12
 	var lh := 22.0
 	var w := 236.0
@@ -382,9 +378,6 @@ func _legend(ci: CanvasItem) -> void:
 				ci.draw_rect(sw, MapArt.C_ROAD)
 				ci.draw_line(sw.position + Vector2(3, 5), sw.position + Vector2(8, 5), Color.WHITE, 1.5)
 				ci.draw_line(sw.position + Vector2(12, 5), sw.position + Vector2(17, 5), Color.WHITE, 1.5)
-			"closed":
-				var sw := Rect2(ic - Vector2(10, 7), Vector2(20, 14))
-				ci.draw_rect(sw, Color(0.28, 0.3, 0.33, 0.72))
 		ci.draw_string(Game.font_bold, Vector2(r.position.x + 40, y), rows[i][1], HORIZONTAL_ALIGNMENT_LEFT, -1, fs, INK)
 
 const C_GRASS_MIX := Color("#d9e6c4")

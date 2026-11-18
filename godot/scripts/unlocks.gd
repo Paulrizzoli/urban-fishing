@@ -1,62 +1,57 @@
 class_name Unlocks
-## The town opens up in four steps, so a new player isn't dropped into the whole map at once.
-##   1. Home waters: home, Lou's, Maple Park Pond, Mullet Canal, the manholes in those streets
-##      and the Pelican Point golf course (everything north of the canal road), but not the koi plaza.
-##      The old-timer by the pond tells you about the gap in the golf course fence from day one.
-##   2. Catch 5 kinds of fish and fill one of Lou's orders: the public water opens (Back Canal,
-##      Low Street, downtown, the river, Bayfront Park, Mullet Bay and the marina).
-##   3. Catch 10 kinds of fish: Lou's sneaking lesson, and the koi pond and Heron Lakes open.
-##   4. Land a fish from a guarded spot: everything else (power station, storm drain,
-##      Sunsplash, the airport, Marlowe Tower and offshore).
-## Game.S.unlock holds the step. Saves from before this existed load fully open.
+## Every place in Port Mullet is open from day one. What keeps you out is gear or people:
+##   - gear: waders and a flashlight for the storm drain, a pry bar for the manholes,
+##     a kayak for the back channels and the skiff for offshore
+##   - people: guards, staff, cameras and floodlights, each with their own hours, so a
+##     guarded place is for when they're away, or for when you've got the right disguise.
+## This file keeps the early-game teaching: Lou's tips and easy first orders while you're
+## learning, Lou's sneaking lesson the first time you walk onto guarded ground, and a line
+## about who's watching whenever you walk into a guarded place.
+## Saves from before v0.9.26 still carry the old "unlock" step; nothing reads it any more.
 
-const LAST := 4
-const SPECIES_2 := 5
-const SPECIES_3 := 10
-const GUARDED := [3, 4, 11]              # Pelican Point, the koi pond, Heron Lakes
-## spot (region id) -> the step that opens it
-const SPOT_STEP := { 1: 1, 2: 1, 3: 1, 4: 3, 5: 4, 6: 4, 7: 2, 8: 1, 9: 2, 10: 4, 11: 3, 12: 4, 13: 2, 14: 2, 15: 4, 16: 4, 17: 2 }
-const NEWS := ["", "", "Road Crews Reopen Canal Road; Downtown 'Technically Reachable Again'",
-	"Golf Course Groundskeeper Reports 'Shadowy Figure With Tackle Box'", "Last 'Road Closed' Sign Removed; Port Mullet Fully Open, Officials Confirm"]
+## While you've caught fewer kinds of fish than this, or haven't filled an order yet,
+## Lou gives tips in the Sell tab and keeps his orders easy.
+const SPECIES_EARLY := 5
+## Public water you can fish from day one with no gear and nobody chasing you off.
+const EASY := [1, 2, 9, 13, 14, 17]
+## Zones with guards, staff or cameras (golf course, office park, power station, Sunsplash,
+## Heron Lakes, the airport, Marlowe Tower). The marina docks only count at night.
+const GUARDED_ZONES := [1, 2, 3, 5, 6, 7, 8]
 
-static var need: PackedByteArray = PackedByteArray()
+## Who's watching each guarded zone and when it's your turn. Shown when you walk in.
+const WATCH := {
+	1: "Pelican Point golf course. The groundskeeper drives his cart around 6 AM to 7 PM. Come after dark, or wear a golf polo from Lou's.",
+	2: "Sunrise Executive Park. Security walks the koi plaza day and night, but sees less after dark. A lanyard from Lou's gets you past him 8 AM to 6 PM.",
+	3: "The power station. A gate guard and cameras around the clock, and a floodlight 8 PM to 5 AM. Plant security takes his coffee break 2 to 2:30 AM. Watch the camera sweeps.",
+	5: "Sunsplash Jungle. Open 9 AM to 6 PM for $8, and staff sweep the park at closing. A night guard walks it 7 PM to 6 AM. Hide in the restroom at closing and the lagoon is yours for a while.",
+	6: "Heron Lakes. Slip in behind a resident's car, or paddle up the back channel. The HOA president walks the pond 7 AM to 9 PM.",
+	7: "The airport. A gate guard and a patrol truck around the clock, and a tower spotlight 7 PM to 6 AM. When a jet comes over, nobody's watching.",
+	8: "Marlowe Tower. A lobby guard until 10 PM, a patrol and cameras all night. A suit gets you past the patrol 8 AM to 6 PM.",
+	9: "Mullet Bay Marina. The docks are private after 9 PM: a watchman and his dog walk them until 5 AM.",
+}
 
-static func step() -> int: return int(Game.S.get("unlock", LAST))
+static func early() -> bool:
+	return Story.species_got() < SPECIES_EARLY or int(Game.S.stats.orders) < 1
 
-## The step each tile opens at, worked out once from the town's zones.
-static func _build() -> void:
-	need.resize(Town.MW * Town.MH)
-	for y in Town.MH:
-		for x in Town.MW:
-			var i := Town.idx(x, y)
-			var z: int = Town.zone[i]
-			var s := 1 if y < 58 else 2
-			if z in [2, 6]: s = 3
-			elif z in [3, 4, 5, 7, 8]: s = 4
-			if Town.tile[i] == Town.T.DEEP: s = 4
-			need[i] = s
+## True if you can fish this spot right now without gear you don't have or anyone to dodge.
+static func spot_easy(sid: int) -> bool:
+	return sid in EASY or (sid == 8 and Game.S.gear.has("prybar"))
 
-static func need_at(x: int, y: int) -> int:
-	if need.is_empty(): _build()
-	if not Town.inb(x, y): return 1
-	return need[Town.idx(x, y)]
+## The "who's watching" line for walking into a zone right now, or "".
+static func watch_note(z: int) -> String:
+	if not WATCH.has(z): return ""
+	if z == 9:
+		var h := Game.hour()
+		if h < 21 and h >= 5: return ""
+	return WATCH[z]
 
-static func open_at(x: int, y: int) -> bool: return need_at(x, y) <= step()
-static func open_p(p: Vector2) -> bool: return open_at(floori(p.x), floori(p.y))
-static func spot_open(spot: int) -> bool: return int(SPOT_STEP.get(spot, 1)) <= step()
-
-## What the player has to do to open the next part of town, or "" when it's all open.
-static func goal() -> String:
-	match step():
-		1:
-			var got := Story.species_got()
-			var parts := []
-			if got < SPECIES_2: parts.append("catch %d kinds of fish (%d/%d)" % [SPECIES_2, got, SPECIES_2])
-			if int(Game.S.stats.orders) < 1: parts.append("fill one of Lou's orders")
-			return "To open more of town: " + " and ".join(parts)
-		2: return "To open more of town: catch %d kinds of fish (%d/%d)" % [SPECIES_3, Story.species_got(), SPECIES_3]
-		3: return "To open the whole town: land a fish at the golf course, the koi pond or Heron Lakes"
-	return ""
+## Lou's sneaking lesson, the first time you walk onto guarded ground.
+static func sneak_lesson(z: int, close: Callable) -> Array:
+	return [["h3", "Lou's sneaking lesson"], ["h2", "\"Time you learned to sneak.\""],
+		["p", "You remember what Lou told you. \"The good water is behind a fence. Every guard's got a cone where he's looking. Stay out of it.\""],
+		["quote", "\"See the yellow cone in front of a guard? That's where he's looking. Walls, buildings and trees block it, and bushes hide you. A disguise from my shop gets you past most of them by day, and plenty of them go home at night.\""],
+		["sub", WATCH.get(z, "") + " Get caught and you pay a fine that goes up every time."],
+		["row", [["Got it", func(): close.call(), true, "hot"]]]]
 
 const BAIT_WORDS := { "worms": "worms", "shrimp": "live shrimp", "lure": "a spinner lure", "hotdog": "hot dogs", "bread": "bread", "squid": "squid" }
 const TIME_WORDS := { "day": "by day", "low": "at dawn and dusk", "night": "at night" }
@@ -70,12 +65,12 @@ static func how_to_catch(f: Dictionary, sid: int) -> String:
 	if f.has("t"): out += ", " + " or ".join(f.t.map(func(b): return TIME_WORDS.get(b, b)))
 	return out + "."
 
-## Lou's pointers to the fish you haven't caught yet in the part of town that's open, easiest first.
+## Lou's pointers to fish you haven't caught yet on the easy public water, easiest first.
 static func lou_tips(n := 4) -> Array:
 	var seen := {}
 	var lst := []
 	for sid in Game.spots:
-		if not spot_open(sid): continue
+		if not spot_easy(sid): continue
 		for f in Game.spots[sid].fish:
 			if f.get("junk", false) or f.get("legend", false) or Game.S.journal.has(f.n) or seen.has(f.n): continue
 			seen[f.n] = true
@@ -83,98 +78,12 @@ static func lou_tips(n := 4) -> Array:
 	lst.sort_custom(func(a, b): return a[0] > b[0])
 	return lst.slice(0, n).map(func(x): return x[1])
 
-## Where and how to catch something that fills Lou's order, or "".
+## Where and how to catch something that fills Lou's order, or "". Easy public water first.
 static func order_tip(o: Dictionary) -> String:
 	var best := []
 	for sid in Game.spots:
-		if not spot_open(sid): continue
 		for f in Game.spots[sid].fish:
 			if f.get("legend", false) or f.get("junk", false) or f.get("release", false): continue
-			if Game.order_match(o, { "n": f.n, "junk": false, "w": float(f.w[1]) * 0.8, "spot": sid }) and (best.is_empty() or float(f.r) > best[0]): best = [float(f.r), how_to_catch(f, sid)]
+			var score := float(f.r) + (1000.0 if spot_easy(sid) else 0.0)
+			if Game.order_match(o, { "n": f.n, "junk": false, "w": float(f.w[1]) * 0.8, "spot": sid }) and (best.is_empty() or score > best[0]): best = [score, how_to_catch(f, sid)]
 	return "" if best.is_empty() else best[1]
-
-## Short form for the top-left chip.
-static func chip() -> String:
-	match step():
-		1:
-			var got := Story.species_got()
-			if got < SPECIES_2: return "Map: catch %d kinds of fish (%d/%d)" % [SPECIES_2, got, SPECIES_2]
-			if int(Game.S.stats.orders) < 1: return "Map: fill one of Lou's orders"
-		2: return "Map: catch %d kinds of fish (%d/%d)" % [SPECIES_3, Story.species_got(), SPECIES_3]
-		3: return "Map: land a fish where the guards are"
-	return ""
-
-## Records a guarded catch; the step itself moves on in ready().
-## A golf course fish caught before step 3 doesn't count yet, so the koi pond and Heron Lakes get a turn.
-static func on_catch(c: Dictionary) -> void:
-	if int(c.spot) in GUARDED and step() >= 3: Game.S.guarded_catch = true
-
-## True when the player has earned the next step.
-static func ready() -> bool:
-	match step():
-		1: return Story.species_got() >= SPECIES_2 and int(Game.S.stats.orders) >= 1
-		2: return Story.species_got() >= SPECIES_3
-		3: return Game.S.get("guarded_catch", false)
-	return false
-
-## Moves to the next step and returns the card that announces it.
-static func advance(close: Callable) -> Array:
-	Game.S.unlock = step() + 1
-	var s := step()
-	Game.add_news(NEWS[s])
-	Game.save_game()
-	var ok := [["Let's go", func(): close.call(); Game.hint.emit("The map (M) shows what's open now."), true, "hot"]]
-	match s:
-		2: return [["h3", "Map unlocked · Lou's Bait & Tackle"], ["h2", "\"You know your baits now.\""],
-			["p", "Lou leans on the counter. \"Five kinds of fish and an order filled. Not bad. The road crews just pulled the barricades off Canal Road, so the rest of the public water is yours.\""],
-			["quote", "\"Worms catch a bit of everything. Bread for mullet, tilapia and koi. Hot dogs for catfish. Lures for bass. Live shrimp for snook, tarpon and redfish. Press B to switch.\""],
-			["sub", "Open now: Back Canal, Low Street at king tide, the Downtown River, Bayfront Park, Mullet Bay, the pier and the marina. Take the $2 bus out front if it's too far to walk."],
-			["row", ok]]
-		3: return [["h3", "Map unlocked · Lou's Bait & Tackle"], ["h2", "\"Time you learned to sneak.\""],
-			["p", "\"Ten kinds of fish. Now the good water is behind a fence. You've seen the golf course. The koi pond at Sunrise Executive Park and Heron Lakes are next. Every guard's got a cone where he's looking. Stay out of it.\""],
-			["quote", "\"See the yellow cone in front of a guard? That's where he's looking. Walls, buildings and trees block it, and bushes hide you. A disguise from Lou's gets you past most of them by day, and plenty of them go home at night.\""],
-			["sub", "Open now: the Sunrise koi pond and Heron Lakes. Land a fish at either one, or at the golf course, to open the rest of town. Get caught and you pay a fine that goes up every time."],
-			["row", ok]]
-		4: return [["h3", "Map unlocked · the whole town"], ["h2", "\"Nobody saw a thing.\""],
-			["p", "\"You fished a guarded pond and walked out with the fish,\" Lou says. \"Then you're ready for the rest of it.\""],
-			["quote", "\"The power station, the storm drain, the theme park, the airport, the tower downtown, and blue water offshore. Bring the right gear for each one. I sell most of it.\""],
-			["sub", "Every road is open. Waders and a flashlight for the storm drain, a Geiger counter for the outflow, the skiff for offshore."],
-			["row", ok]]
-	return []
-
-## Barricades on the edge of the closed part of town: striped sawhorses on land, a buoy line on water.
-static func draw_barriers(ci: CanvasItem, view: Rect2) -> void:
-	if step() >= LAST: return
-	var x0 := maxi(0, floori(view.position.x)); var x1 := mini(Town.MW - 1, ceili(view.end.x))
-	var y0 := maxi(0, floori(view.position.y)); var y1 := mini(Town.MH - 1, ceili(view.end.y))
-	for y in range(y0, y1 + 1):
-		for x in range(x0, x1 + 1):
-			if open_at(x, y): continue
-			var t: int = Town.tile[Town.idx(x, y)]
-			var water := Town.is_water_t(t)
-			if not water and t in Town.BLOCK: continue
-			var edge := false
-			for d in [Vector2i(0, -1), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(1, 0)]:
-				var nx: int = x + d.x; var ny: int = y + d.y
-				if not Town.inb(nx, ny) or not open_at(nx, ny): continue
-				var nt: int = Town.tile[Town.idx(nx, ny)]
-				if Town.is_water_t(nt) == water and (water or not (nt in Town.BLOCK)): edge = true
-			if not edge: continue
-			if water:
-				ci.draw_line(Vector2(x, y + 0.5), Vector2(x + 1, y + 0.5), Color(1, 1, 1, 0.8), 0.04)
-				for k in 2: ci.draw_circle(Vector2(x + 0.25 + k * 0.5, y + 0.5), 0.13, Color("#f2873a"))
-			else:
-				var r := Rect2(x + 0.06, y + 0.32, 0.88, 0.3)
-				ci.draw_rect(Rect2(x + 0.12, y + 0.55, 0.08, 0.35), Color("#5a4632"))
-				ci.draw_rect(Rect2(x + 0.8, y + 0.55, 0.08, 0.35), Color("#5a4632"))
-				ci.draw_rect(r, Color("#f4efe4"))
-				for k in 3: ci.draw_colored_polygon(PackedVector2Array([Vector2(x + 0.1 + k * 0.3, y + 0.62), Vector2(x + 0.25 + k * 0.3, y + 0.32), Vector2(x + 0.38 + k * 0.3, y + 0.32), Vector2(x + 0.23 + k * 0.3, y + 0.62)]), Color("#e2583e"))
-				ci.draw_rect(r, Color("#22313a"), false, 0.03)
-
-## The closed part of town as a grey overlay for the map.
-static func map_overlay() -> ImageTexture:
-	var img := Image.create(Town.MW, Town.MH, false, Image.FORMAT_RGBA8)
-	for y in Town.MH:
-		for x in Town.MW:
-			if not open_at(x, y): img.set_pixel(x, y, Color(0.28, 0.3, 0.33, 0.72))
-	return ImageTexture.create_from_image(img)

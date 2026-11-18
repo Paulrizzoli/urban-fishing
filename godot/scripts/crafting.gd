@@ -131,8 +131,6 @@ static func _solid(x: int, y: int) -> bool:
 	return t in Town.BLOCK or t == Town.T.GRATE or t == Town.T.PGATE or t == Town.T.HGATE or t == Town.T.DOOR
 
 static func available(i: int) -> bool:
-	var p: Vector2 = spots[i][0]
-	if not Unlocks.open_at(floori(p.x), floori(p.y)): return false
 	return int(Game.S.get("picked", {}).get(str(i), -99)) + RESPAWN_DAYS <= int(Game.S.day)
 
 ## The part spot you're standing on, or -1.
