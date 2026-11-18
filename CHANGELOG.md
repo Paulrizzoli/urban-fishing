@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.23 | Nov 18, 2026 | A detailed town map: street names, building roofs, real shorelines, fishing spot and shop icons, a legend |
 | v0.9.22 | Nov 18, 2026 | A bigger, more detailed living room, and Chum reacts when you pet him |
 | v0.9.21 | Nov 18, 2026 | A picture of every piece of junk, on the catch card and in Lou's Sell tab |
 | v0.9.19 | Nov 17, 2026 | Runs faster, and a Graphics quality setting (Low, Medium, High) |
@@ -46,6 +47,22 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.23 · A detailed town map
+
+_Nov 18, 2026 · Builds: `UrbanFishing-v0.9.23-windows.zip`, `UrbanFishing-v0.9.23-godot-project.zip`, screenshots in `screenshots/v0.9.23/`_
+
+- The map (M) is redrawn as a proper town map instead of blurry colored blocks:
+  - **Streets** with curbs and center lines (yellow on US-1, Canal Rd and Plant Rd), broken at the crossings, and their **names** once you zoom in a little: US-1, Canal Rd, Plant Rd, Maple Park Dr, Pond St, Low Street, Airport Blvd, Egret Circle, Flamingo Ave, Second St, Bayshore Dr, Ocean Ave and Marina Way.
+  - **Buildings** with their roof colors, hip roofs on the houses, flat roofs with rooftop units on the shops and offices, a helipad on One Mullet Place, rooftop pools, and shadows that get longer the taller the building is. Zoom in close and the named buildings show their names.
+  - **Water** with the same rounded shores as the game, shallow to deep color, a dark shoreline and a ripple line just offshore.
+  - Trees and bushes, golf greens with flags, sand traps, parking lots with their bays, driveways, docks with planks, bridge railings, fences and the Heron Lakes wall, the airport runway markings, footpaths and the storm drain.
+  - **Private ground** is hatched in red with a dashed red border instead of a flat red tint.
+- **Fishing spot icons** on all 16 waters you can fish (manholes are everywhere, so they don't get one). Zoom in and each shows its name and how many of its fish you've caught, like "Maple Park Pond 2/6". A gold ring means you've caught every fish there. Spots that aren't open yet are grey.
+- **Shop icons** for Lou's Bait & Tackle, Mullet Bay Marina and FINTASTIC! Outdoors, and clearer bus stop icons.
+- A **legend** in the corner (the new Legend button hides it) and a north arrow.
+- Labels no longer pile on top of each other: when two would overlap, the less important one waits until you zoom in.
+- It doesn't cost frame rate: the detailed map is drawn once, the first time you open it, into one picture. After that only the labels and your blinking dot redraw, instead of the whole map 20 times a second as before.
 
 ## v0.9.22 · A more detailed living room, and a cat who reacts
 
