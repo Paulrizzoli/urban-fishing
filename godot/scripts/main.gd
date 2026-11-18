@@ -25,7 +25,8 @@ var glow_node: Drawer
 var sky_nodes: Array = []
 var save_t := 0.0
 var near := ""
-var latch := { "shop": false, "home": false, "marina": false }
+var latch := { "shop": false, "home": false, "marina": false, "drain": false }
+const DRAIN_GRATE := Vector2(46.5, 57.5)
 var guards: Guards
 var prev_zone := 0
 var prev_pos := Vector2.ZERO
@@ -492,6 +493,7 @@ func _process(dt: float) -> void:
 			if fishing.state == "idle" and Game.S.started and Unlocks.ready():
 				Sound.play("plaque"); hud.open(Unlocks.advance(hud.close)); player.rebuild_grids()
 		if player.position.y > 115 and not Game.S.visited.has("dt"): Game.S.visited.dt = 1; hud.flash("Downtown Port Mullet. The bay is at the bottom of the street.")
+		_drain_hint()
 	near = ""
 	if fishing.state == "idle":
 		if player.in_boat(): near = "fish"
@@ -577,6 +579,16 @@ func _test_shot() -> bool:
 		get_viewport().get_texture().get_image().save_png(test_shot)
 		get_tree().quit()
 	return true
+
+## Walk up to the storm drain grate and it tells you what's stopping you: the town step it opens at, or the gear you're missing.
+func _drain_hint() -> void:
+	var d := player.position.distance_to(DRAIN_GRATE)
+	if d > 2.4: latch.drain = false
+	if d > 1.4 or latch.drain or player.in_boat() or player.position.y > DRAIN_GRATE.y: return
+	var why := Player.drain_block()
+	if why == "": return
+	latch.drain = true
+	hud.flash(why); hud.hint_t = 6.0
 
 func _doors() -> void:
 	if player.in_boat(): return

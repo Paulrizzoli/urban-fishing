@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.24 | Nov 18, 2026 | The storm drain tells you what you still need to get in, and the grate is easier to walk through |
 | v0.9.23 | Nov 18, 2026 | A detailed town map: street names, building roofs, real shorelines, fishing spot and shop icons, a legend |
 | v0.9.22 | Nov 18, 2026 | A bigger, more detailed living room, and Chum reacts when you pet him |
 | v0.9.21 | Nov 18, 2026 | A picture of every piece of junk, on the catch card and in Lou's Sell tab |
@@ -47,6 +48,14 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.24 · Getting into the storm drain
+
+_Nov 18, 2026 · Builds: `UrbanFishing-v0.9.24-windows.zip`, `UrbanFishing-v0.9.24-godot-project.zip`_
+
+- **Why you might not get in:** the storm drain needs a flashlight and waders, and it's also part of the last area of town to open. Until you land a fish at the golf course, the koi pond or Heron Lakes, the grate has a barricade on it, whatever gear you have and whatever the time. The time of day never mattered; night is just when the Sewer King bites.
+- Walk up to the grate and the game now tells you what's stopping you: "The storm drain is barricaded for now. It opens with the last part of town", with what you still have to do, or which of the flashlight and waders you're missing. Before, it just didn't let you in, and walking into it with the keyboard said nothing at all.
+- The grate is one tile wide, and walking straight at it with the keyboard used to snag on the wall beside it unless you were lined up almost exactly. Now you slide onto the opening and go through. The same help works at the other one-tile gates.
 
 ## v0.9.23 · A detailed town map
 
