@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.43 | Nov 18, 2026 | Seafood restaurants and fish markets in both towns: chefs who pay extra for today's catch, and market prices that change every morning |
 | v0.9.42 | Nov 18, 2026 | A sound polish: splashes sized to your bait and your fish, the drag and the line under strain, guards who shout, engines and motors, the sounds of each place, and footsteps |
 | v0.9.41 | Nov 18, 2026 | Gentler cars: most just bump you onto the sidewalk, and a knockout costs 30 minutes and $10 |
 | v0.9.40 | Nov 18, 2026 | Aim your cast anywhere with a cast marker, and side twitches that really reel the lure in |
@@ -66,6 +67,22 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.43 · Restaurants and fish markets
+
+_Nov 18, 2026 · Builds: `UrbanFishing-v0.9.43-windows.zip`, `UrbanFishing-v0.9.43-godot-project.zip`, screenshots in `screenshots/v0.9.43/`_
+
+Two new places to sell fish in each town. Lou and Dot still buy everything, junk too, at the same price every day.
+
+- **Restaurants pay extra for fresh fish.** The chef buys only fish you caught today, only species on today's menu, and only a few a day. The menu changes every day and is chalked on the wall, with a catch of the day that pays the most. Menu fish pay 1.5× what Lou or Dot pays, and the catch of the day pays 2.2× at Bonita's and 2× at the Tailrace. Yesterday's fish, legends and junk are turned down.
+  - **Bonita's Fish Shack** (Port Mullet): a tin-roof shack on stilts at the top of Mullet Beach, with a pelican on the ridge and picnic tables on the sand. The dishes include smoked mullet dip, mahi tacos, blue crab cakes and a seared tuna bowl. She takes 6 fish a day and is open 11 AM to 10 PM.
+  - **The Tailrace Supper Club** (Ironwater, on Bank St by the viaduct): Marge's supper club, with a neon sign and a neon fish that glow at night. The menu has a walleye basket, lake perch fry and pan-fried trout. It's open 4 PM to 11 PM. **Every Friday is the fish fry** (the day before the Slam): 7 dishes, everything pays 1.8×, and the kitchen takes 12 fish.
+- **Fish markets change their prices every morning.** The price board stands by the door: read it from the sidewalk, or inside on the Price board tab. Each day 3 species are HOT (1.6× to 2× Lou's price) and 3 are CHEAP (about half), and the rest sit close to Lou's price. Prices are shown a pound. Fish that aren't on the board pay 0.7×, and fish caught the day before pay three quarters of the board price.
+  - **Seaside Fish Market** (Port Mullet, on Bayshore Dr across from the municipal pier, where the Seaside Market was): Hector, open 5 AM to 3 PM.
+  - **Ironwater Public Market** (next to the Tailrace): Gus's fish counter and smokehouse, open 6 AM to 4 PM. He smokes carp, drum, gar and skipjack, so those never go cheap.
+- Each card has a Sell tab that lists what that buyer pays for every fish in your cooler next to Lou's or Dot's price, and why it turns any down. There's a Sell all button for everything they'll take, plus a menu or price board tab and a Talk tab with the chef's or fishmonger's lines. The best fish you sell anywhere is still the one Lou wants to hear about in Tell a story.
+- The restaurants and markets are on the map with their own icons, a fork and knife and a fish, and in the legend. Lou's and Dot's Sell tabs tell you where they are.
+- **For future maps:** every town's buyers are set in `godot/data/buyers.json`, with the building, the door, hours, menu, board, pay and the chef's lines. `scripts/buyers.gd` has the rules and `scripts/buyers_art.gd` the pictures. A new town only needs its own entries there.
 
 ## v0.9.42 · Sound polish
 

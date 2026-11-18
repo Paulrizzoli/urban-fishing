@@ -50,6 +50,7 @@ var home_tab := "rest"
 var rod_pick := ["p_glass", "p_reel", ""]   # the blank, reel and grip picked at the workbench
 var marina_tab := "boats"
 var fin_tab := "aisles"
+var buyer_tab := "sell"
 var journal_tab := "spots"
 var weather: Weather
 var ground_tex: Texture2D
@@ -116,6 +117,16 @@ func _ready() -> void:
 				for fd in Game.spots[sid].fish:
 					if fd.get("junk", false) and Game.S.cooler.size() < 8 and not Game.S.cooler.any(func(c): return c.n == fd.n):
 						Game.S.cooler.append({ "n": fd.n, "w": fd.w[0], "value": int(fd.get("flat", 1)), "spot": sid, "legend": false, "junk": true, "day": 1, "tm": 0 })
+		if a == "--cooler=fresh": # today's catch from this town's spots: some on the menus and boards, some not, one from yesterday, and a junk
+			var want := ["Mullet", "Mangrove Snapper", "Mahi-Mahi", "Snook", "Sheepshead", "Blue Crab", "Koi", "Kingfish"] if Game.S.level == 0 else ["Walleye", "Yellow Perch", "Black Crappie", "Common Carp", "Rainbow Trout", "Channel Catfish", "Sauger", "Bluegill"]
+			for n in want:
+				for sid in Game.spots:
+					var fd = Game.spots[sid].fish.filter(func(f): return f.n == n)
+					if fd.is_empty() or Game.S.cooler.any(func(c): return c.n == n): continue
+					var w: float = snappedf(lerpf(fd[0].w[0], fd[0].w[1], 0.4), 0.1)
+					var old: bool = Game.S.cooler.size() == 3
+					Game.S.cooler.append({ "n": n, "w": w, "value": maxi(1, roundi(w * fd[0].pp)), "spot": sid, "legend": false, "junk": false, "day": int(Game.S.day) - (1 if old else 0), "tm": 0 })
+			Game.S.cooler_cap = maxi(Game.S.cooler_cap, 12)
 		if a == "--cooler=sample":
 			for f in [[1, 2], [1, 4], [1, 5], [4, 1], [14, 4], [15, 0], [2, 7], [16, 7]]:
 				var fd: Dictionary = Game.spots[f[0]].fish[f[1]]
@@ -190,6 +201,7 @@ func _ready() -> void:
 			"house": n = Drawer.make(func(ci): Art.house(ci, bb), bb.y + bb.h - 0.05)
 			"tower": n = Drawer.make(func(ci): Art.cooling_tower(ci, bb, Time.get_ticks_msec() / 1000.0), bb.y + bb.h - 0.05, true, Rect2(bb.x, bb.y, bb.w, bb.h).grow(10))
 			"volcano": n = Drawer.make(func(ci): Art.volcano(ci, bb, Time.get_ticks_msec() / 1000.0), bb.y + bb.h - 0.05, true, Rect2(bb.x, bb.y, bb.w, bb.h).grow(10))
+			"shack", "fishmkt", "supper", "hall": n = Drawer.make(func(ci): BuyersArt.building(ci, bb, Time.get_ticks_msec() / 1000.0), bb.y + bb.h - 0.05, true, Rect2(bb.x, bb.y, bb.w, bb.h).grow(4))
 			_: n = Drawer.make(func(ci): Art.flat(ci, bb), bb.y + bb.h - 0.05)
 		ents.add_child(n)
 		if bb.kind == "sky":
@@ -211,6 +223,9 @@ func _ready() -> void:
 			elif t == Town.T.BUSH: ents.add_child(Drawer.make(func(ci): Art.bush(ci, xx, yy), y + 0.85))
 	var anglers := [[Vector2(3.6, 18.4), 0.2], [Vector2(16.5, 22.6), 3.4], [Vector2(29.6, 162.5), PI], [Vector2(31.4, 160.2), 0.0], [Vector2(37.4, 49.4), -0.3]]
 	if Town.level == 1: anglers = [[Vector2(47.4, 70.4), 0.0], [Vector2(64.6, 140.2), PI], [Vector2(50.5, 27.4), -PI / 2], [Vector2(21.5, 78.6), -1.2], [Vector2(66.4, 47.6), PI + 0.3]]
+	# picnic tables by the fish shack, the price boards by the fish markets
+	for bd in Buyers.here():
+		for pr in BuyersArt.props(bd): ents.add_child(Drawer.make(pr[0], pr[1], false, pr[2]))
 	for a in anglers:
 		var p: Vector2 = a[0]
 		var d: float = a[1]
@@ -416,6 +431,10 @@ func _ready() -> void:
 		if a == "--open=gear": shop_tab = "gear"; open_shop()
 		if a == "--open=order": shop_tab = "order"; open_shop()
 		if a == "--open=marina": open_marina()
+		if a.begins_with("--open=buy:"): # --open=buy:<id>[:sell|menu|board|talk]
+			var v := a.substr(11).split(":")
+			buyer_tab = v[1] if v.size() > 1 else "sell"; open_buyer(v[0])
+		if a.begins_with("--open=board:"): open_board(a.substr(13))
 		if a == "--open=fin": fin_tab = "aisles"; open_fin()
 		if a == "--open=fin-talk": fin_tab = "talk"; open_fin()
 		if a == "--fin-sing": Fintastic.sing()
@@ -614,6 +633,7 @@ func _process(dt: float) -> void:
 		elif player.position.distance_to(home_door) < 1.0: near = "home"
 		elif player.position.distance_to(marina_door) < 1.3: near = "marina"
 		elif Town.level == 0 and player.position.distance_to(Fintastic.DOOR) < 1.3: near = "fin"
+		elif _buyer_near() != "": near = _buyer_near()
 		elif player.position.distance_to(oldtimer_at) < 1.8: near = "oldtimer"
 		elif player.position.distance_to(rosa_at) < 1.6: near = "rosa"
 		elif Crafting.near(player.position) >= 0: near = "part"
@@ -771,6 +791,19 @@ func _doors() -> void:
 			elif k == "fin": Sound.play("door"); open_fin()
 			else: open_marina()
 		if d > 1.6: latch[k] = false
+	for bd in Buyers.here():
+		var key := "buy:" + String(bd.id)
+		var d := player.position.distance_to(Buyers.door(bd))
+		if d < 0.7 and not latch.get(key, false) and fishing.state == "idle":
+			latch[key] = true; player.path.clear(); Sound.play("door"); buyer_tab = "sell"; open_buyer(bd.id)
+		if d > 1.6: latch[key] = false
+
+## The restaurant or market door, or a market's price board, you're standing at: "buy:<id>", "board:<id>" or "".
+func _buyer_near() -> String:
+	for bd in Buyers.here():
+		if player.position.distance_to(Buyers.door(bd)) < 1.3: return "buy:" + String(bd.id)
+		if player.position.distance_to(Buyers.board_at(bd)) < 1.2: return "board:" + String(bd.id)
+	return ""
 
 func _lighting() -> void:
 	var dk := Game.darkness()
@@ -876,8 +909,9 @@ func _draw_bloom(ci: CanvasItem) -> void:
 					_glow(ci, r.get_center() + Vector2(0, 0.2), 0.9, Color(warm, 0.3 * a))
 				i += 1
 			if h >= 18 or h < 6: _glow(ci, Vector2(b.x + 1.06, wy + 0.2), 0.5, Color(1, 0.85, 0.55, 0.55 * a))
-		elif b.kind in ["shop", "mega", "marina", "club", "office", "plant", "flat"] and b.label != "PARKING":
+		elif b.kind in ["shop", "mega", "marina", "club", "office", "plant", "flat", "shack", "fishmkt", "supper", "hall"] and b.label != "PARKING":
 			var open_k := 0.95 if b.kind in ["shop", "mega", "marina", "club"] and h >= 17 and h < 22 else 0.3
+			if b.has("buyer"): open_k = 0.95 if Buyers.open_now(Buyers.by_id(b.buyer)) else 0.1
 			var fy: float = b.y + b.h - 0.85
 			var wx: float = b.x + 0.3
 			var i := 0
@@ -897,6 +931,17 @@ func _draw_bloom(ci: CanvasItem) -> void:
 			if Town.hash2(i, b.x * 7 + Game.S.day) < tl and b.see < 0.5: _glow(ci, r.get_center(), 0.45, Color(1, 0.75, 0.4, 0.22 * a))
 			i += 1
 	if Town.level == 0 and view.has_point(Vector2(51.4, 31.6)): _glow(ci, Vector2(51.4, 31.4), 1.4, Color(1, 0.3, 0.25, 0.4 * a))
+	# the Tailrace's neon sign and the light from Bonita's serving window, while they're open
+	for bd in Buyers.here():
+		if not Buyers.open_now(bd): continue
+		var r: Array = bd.bld
+		var c := Vector2(float(r[0]) + float(r[2]) / 2.0, float(r[1]))
+		if not view.has_point(c): continue
+		match String(bd.style):
+			"supper":
+				_glow(ci, c + Vector2(0, 0.95), 2.2, Color(1, 0.3, 0.25, 0.45 * a))
+				_glow(ci, c + Vector2(0, 1.5), 1.0, Color(0.4, 0.9, 1.0, 0.4 * a))
+			"shack": _glow(ci, Vector2(float(r[0]) + 1.7, float(r[1]) + float(r[3]) - 0.6), 1.6, Color(1, 0.8, 0.5, 0.45 * a))
 
 func _glow(ci: CanvasItem, c: Vector2, r: float, col: Color) -> void:
 	ci.draw_texture_rect(glow_tex, Rect2(c - Vector2(r, r), Vector2(r, r) * 2), false, col)
@@ -950,6 +995,8 @@ func _action_down() -> void:
 		elif near == "home": Sound.play("door"); open_home()
 		elif near == "marina": Sound.play("door"); open_marina()
 		elif near == "fin": Sound.play("door"); open_fin()
+		elif near.begins_with("buy:"): Sound.play("door"); buyer_tab = "sell"; open_buyer(near.substr(4))
+		elif near.begins_with("board:"): Sound.play("ui_click"); open_board(near.substr(6))
 		elif near == "oldtimer": talk_oldtimer()
 		elif near == "rosa": talk_rosa()
 		elif near == "part":
@@ -1063,6 +1110,7 @@ func open_shop() -> void:
 	match shop_tab:
 		"sell":
 			_sell_parts(parts, "Lou")
+			parts.append(["sub", "Lou pays the same every day. Bonita's Fish Shack on Mullet Beach pays more for fish caught today, if they're on her menu, and the Seaside Fish Market on Bayshore Dr pays by the pound at prices that change every morning."])
 			if Story.species_got() < Unlocks.SPECIES_EARLY:
 				var tips := Unlocks.lou_tips(3)
 				if not tips.is_empty():
@@ -1155,18 +1203,22 @@ func _rod_icon(ci: CanvasItem, r: Rect2) -> void:
 
 func _sell_all() -> void:
 	var total := 0
-	var best = null
-	for c in Game.S.cooler:
-		total += int(c.value)
-		if not c.junk and (best == null or c.value > best.value or (c.legend and not best.legend)): best = c
+	for c in Game.S.cooler: total += int(c.value)
 	Game.S.cash += total
 	if total > 0: Sound.play("cash")
-	if best != null and (Game.S.story.is_empty() or int(Game.S.story_day) != int(Game.S.day) or best.value > Game.S.story.value):
-		Game.S.story = best; Game.S.story_day = Game.S.day; Game.S.story_told = false
+	_note_story(Game.S.cooler)
 	Game.S.cooler = []
 	last_sale = total
 	Game.save_game()
 	open_shop()
+
+## The best fish you sold today is the one Lou wants to hear about in "Tell a story", wherever you sold it.
+func _note_story(sold: Array) -> void:
+	var best = null
+	for c in sold:
+		if not c.junk and (best == null or c.value > best.value or (c.legend and not best.legend)): best = c
+	if best != null and (Game.S.story.is_empty() or int(Game.S.story_day) != int(Game.S.day) or best.value > Game.S.story.value):
+		Game.S.story = best; Game.S.story_day = Game.S.day; Game.S.story_told = false
 
 func _fill_order() -> void:
 	var o = Game.cur_order()
@@ -1298,6 +1350,110 @@ func _fin_day(did: String, price: int, key: String) -> void:
 	Game.save_game()
 	open_fin()
 	hud.flash("REEL DEAL ENERGY. You can hear colors. You walk faster for the rest of the day." if did == "energy" else "You spray yourself, your bait and some of Brayden. Fish come quicker for the rest of the day.")
+
+## A restaurant or fish market (see buyers.gd): sell to the chef or the fishmonger, read today's
+## menu or price board, and talk. Lou and Dot still buy everything at the same price every day.
+func open_buyer(id: String) -> void:
+	var bd := Buyers.by_id(id)
+	if bd.is_empty(): return
+	var S := Game.S
+	var resto: bool = bd.kind == "restaurant"
+	var is_open := Buyers.open_now(bd)
+	var info_tab := "menu" if resto else "board"
+	if not buyer_tab in ["sell", info_tab, "talk"]: buyer_tab = "sell"
+	var parts := [["h3", "%s · %s" % [bd.name, ("open " if is_open else "closed · open ") + Buyers.hours_text(bd)]]]
+	parts.append(["h2", "\"%s\"" % (Buyers.greeting(bd) if is_open else "Closed. Back at %s." % Buyers._clock(bd.hours[0]))])
+	parts.append(["pic", func(ci): BuyersArt.inside(ci, bd), 300, true])
+	var tabs := []
+	for td in [["sell", "Sell"], [info_tab, "Today's menu" if resto else "Price board"], ["talk", "Talk to " + String(bd.who)]]:
+		var key: String = td[0]
+		tabs.append([td[1], func(): buyer_tab = key; open_buyer(id), buyer_tab == key])
+	parts.append(["tabs", tabs])
+	match buyer_tab:
+		"sell":
+			if not is_open:
+				parts.append(["p", "%s is closed. It's open %s." % [bd.name, Buyers.hours_text(bd)]])
+				parts.append(["sub", "%s buys everything, any time." % Buyers.baseline()])
+			elif S.cooler.is_empty():
+				parts.append(["sub", ("Sold for %s. " % Game.money(last_sale) if last_sale else "") + "Your cooler is empty. " + ("%s buys fish caught today, if they're on today's menu." % bd.who if resto else "%s buys any fish by the pound. Today's prices are on the board." % bd.who)])
+			else:
+				if resto:
+					var left := Buyers.room(bd)
+					parts.append(["sub", ("The kitchen is full for today. Come back tomorrow." if left == 0 else "%s takes %d more fish today, caught today and on the menu." % [bd.who, left]) + (" It's the Friday fish fry: everything on the menu pays %s×." % Buyers._x(float(bd.fry_fresh)) if Buyers.fry_day(bd) else "")])
+				# what they'll buy first, best price first
+				var rows: Array = S.cooler.map(func(c): return [c, Buyers.offer(bd, c)])
+				rows.sort_custom(func(x, y): return int(x[1][0]) > int(y[1][0]))
+				for row in rows:
+					var c: Dictionary = row[0]
+					var cc: Dictionary = c
+					var o: Array = row[1]
+					var pay: int = o[0]
+					var ok: bool = pay > 0 and Buyers.room(bd) > 0
+					var desc := "%s lb · %s pays %s · %s" % [str(c.w), Buyers.baseline(), Game.money(c.value), o[1]]
+					parts.append(["item", c.n + (" ★" if c.legend else ""), desc, ("Sell for " + Game.money(pay)) if pay > 0 else "No thanks", func(): _buyer_sell(id, [cc]), ok,
+						func(ci, r): ItemIcons.draw_catch(ci, cc, r), pay <= 0])
+				var tk := Buyers.takes(bd)
+				if not tk.is_empty():
+					var tot := 0
+					for x in tk: tot += int(x[1])
+					var lou := 0
+					for x in tk: lou += int(x[0].value)
+					parts.append(["row", [["Sell all %d %s takes for %s (%s at %s's)" % [tk.size(), bd.who, Game.money(tot), Game.money(lou), Buyers.baseline()], func(): _buyer_sell(id, tk.map(func(x): return x[0])), true, "go"]]])
+			last_sale = 0
+		"menu":
+			var fry := Buyers.fry_day(bd)
+			parts.append(["sub", ("Friday fish fry! %d dishes tonight, and everything on the menu pays %s× what %s does." % [Buyers.menu(bd).size(), Buyers._x(float(bd.fry_fresh)), Buyers.baseline()]) if fry else
+				"Today's menu. %s pays %s× what %s does for these, %s× for the catch of the day, and only if you caught it today." % [bd.who, Buyers._x(float(bd.fresh)), Buyers.baseline(), Buyers._x(float(bd.special))]])
+			var sp := Buyers.special(bd)
+			for n in Buyers.menu(bd):
+				var nn: String = n
+				var m := Buyers.pay_mult(bd, nn)
+				var have: int = S.cooler.filter(func(c): return c.n == nn and int(c.day) == int(S.day)).size()
+				parts.append(["item", String(bd.menu[nn]) + ("  · CATCH OF THE DAY" if nn == sp else ""), "%s · pays %s× · %s" % [nn, Buyers._x(m), ("%d in your cooler, caught today" % have) if have else "none in your cooler from today"],
+					"%s×" % Buyers._x(m), func(): pass, false, func(ci, r): FishArt.draw(ci, nn, r.grow(-4), Time.get_ticks_msec() / 1000.0)])
+			if bd.has("fry_day") and not fry: parts.append(["sub", "Fish fry is every Friday, the day before the Slam: %s." % ("tomorrow" if Buyers.days_to_fry(bd) == 1 else "in %d days" % Buyers.days_to_fry(bd))])
+			parts.append(["sub", "The menu changes every day."])
+		"board":
+			_board_parts(parts, bd)
+		"talk":
+			parts.append(["quote", "\"%s\"" % Buyers.talk_line(bd)])
+			parts.append(["sub", "%s, %s · %s" % [bd.who, String(bd.role).to_lower(), bd.blurb]])
+			parts.append(["row", [["Ask something else", func(): open_buyer(id), true, "go"]]])
+	parts.append(["kv", [["Cash", Game.money(S.cash)], ["Rep", str(int(S.rep))], ["Cooler", "%d/%d" % [S.cooler.size(), S.cooler_cap]]]])
+	parts.append(["row", [["Back outside", func(): hud.close(), true, "hot"]]])
+	hud.open(parts, false, 760.0)
+
+func _board_parts(parts: Array, bd: Dictionary) -> void:
+	parts.append(["pic", func(ci): BuyersArt.board_pic(ci, bd), BuyersArt.board_height(bd)])
+	var smoke := ""
+	if bd.has("smoke"):
+		var names := PackedStringArray()
+		for n in bd.smoke: names.append(String(n).to_lower())
+		smoke = " %s smokes %s, so they never go cheap." % [bd.who, ", ".join(names)]
+	parts.append(["sub", "Prices a pound, new every morning. Fish that aren't on the board pay %s× what %s does, and yesterday's catch pays %s× the board.%s" % [Buyers._x(float(bd.offlist)), Buyers.baseline(), Buyers._x(float(bd.dayold)), smoke]])
+
+## Reading a market's price board from the sidewalk.
+func open_board(id: String) -> void:
+	var bd := Buyers.by_id(id)
+	if bd.is_empty(): return
+	var parts := [["h3", "%s · %s" % [bd.name, ("open " if Buyers.open_now(bd) else "closed · open ") + Buyers.hours_text(bd)]], ["h2", "Today's prices"]]
+	_board_parts(parts, bd)
+	parts.append(["row", [["Go in", func(): buyer_tab = "sell"; open_buyer(id), true, "go"], ["Back", func(): hud.close(), true, "hot"]]])
+	hud.open(parts, false, 760.0)
+
+func _buyer_sell(id: String, cs: Array) -> void:
+	var bd := Buyers.by_id(id)
+	var sp := Buyers.special(bd) if bd.kind == "restaurant" else ""
+	var got_sp := cs.any(func(c): return c.n == sp)
+	var paid := Buyers.sell(bd, cs)
+	if paid <= 0: return
+	Sound.play("cash")
+	_note_story(cs.filter(func(c): return not Game.S.cooler.has(c)))
+	last_sale = paid
+	if got_sp and randf() < 0.4: Game.add_news(["%s Sells Out by Seven; Chef Credits 'Some Kid With a Cooler'" % String(bd.menu[sp]), "Catch of the Day Actually Caught Today, %s Insists" % bd.name].pick_random())
+	Game.save_game()
+	open_buyer(id)
+	hud.flash(("%s pays %s. " % [bd.who, Game.money(paid)]) + (["\"Now that's fresh.\"", "\"Tell your friends. Not too many.\"", "\"Back in the walk-in you go.\""] if bd.kind == "restaurant" else ["\"Pleasure doing business.\"", "\"On the ice, next.\"", "\"Check the board tomorrow.\""]).pick_random())
 
 func talk_oldtimer() -> void:
 	var avail := Game.tips.filter(func(tp): return Game.S.rep >= tp.rep)
@@ -1978,7 +2134,7 @@ func _coach_arrival() -> void:
 	hud.open([["h3", "Ironwater · pop. 41,300 · on the Calder River"], ["h2", "\"You can hear the dam from the station.\""],
 		["p", "Six hours north of Port Mullet, the Calder River comes over the Ironwater Dam and roars down the spillway, then runs straight through an old mill town under three street bridges and the high I-90 viaduct."],
 		["sub", "Fish the tailwater pier and the river walks for free. The big flatheads live in the boil right under the gates, but the wing walls are restricted. Walleye wait under the viaduct lights at night. The old mill race, the brewery pond and the ballpark splash pool all have someone watching."],
-		["sub", "Calder River Outfitters on River St buys your fish and sells the same gear as Lou. The Riverview Motor Inn has rooms. Take the coach home from any bus stop."],
+		["sub", "Calder River Outfitters on River St buys your fish and sells the same gear as Lou. The Tailrace Supper Club and the Ironwater Public Market, across the river on Bank St, pay more for the right fish. The Riverview Motor Inn has rooms. Take the coach home from any bus stop."],
 		["row", [["Let's fish", func(): hud.close(), true, "hot"]]]])
 
 ## Where things are in the town you're in. Port Mullet keeps its constants.
@@ -2009,7 +2165,7 @@ func open_outfitter() -> void:
 	var parts := [["h3", "Calder River Outfitters · bait, tackle, licenses"], ["h2", "\"%s\"" % ["Port Mullet? Long way to come for a walleye.", "Dot. Nice to meet you. What've you got?", "You fish the boil yet? Don't tell me.", "Wipe your boots, it's muddy out."].pick_random()], ["tabs", tabs]]
 	if shop_tab == "sell":
 		_sell_parts(parts, "Dot")
-		parts.append(["sub", "Dot pays the same as Lou. She'll even take your Florida fish, \"for the novelty.\""])
+		parts.append(["sub", "Dot pays the same as Lou. She'll even take your Florida fish, \"for the novelty.\" Marge at the Tailrace Supper Club pays more for today's catch, and Gus at the Ironwater Public Market posts new prices every morning. Both are on Bank St, south of the viaduct."])
 	else:
 		parts.append(_kit_part())
 		parts.append(["sub", "Dot's bait chart: worms for perch, crappie, sauger and trout. Bread for carp. Lures for smallmouth, walleye and muskie. Hot dogs for the big catfish below the dam."])
