@@ -71,6 +71,7 @@ Everything is drawn in tile units. The `World` node is scaled to 32 pixels per t
 - `scripts/menu.gd` is the title screen, pause menu, controls, settings and screen fades
 - `scripts/sound.gd` (autoload `Sound`) plays the music, ambience and effects
 - `scripts/home_art.gd` draws the living room on the home card (trophy wall, rod rack, workbench, tank, the cat)
+- `scripts/map_view.gd` is the big map (M); `scripts/map_art.gd` draws its detailed picture once, into a texture
 - `scripts/hud.gd` is the UI; `scripts/main.gd` wires it all together
 - `data/*.json` holds the fish, gear and bait tables, exported from the browser version
 
@@ -82,7 +83,7 @@ Everything is drawn in tile units. The `World` node is scaled to 32 pixels per t
 godot --path . --resolution 1280x720 -- --at=12,15.5,15 --day=5 --shot=storm.png
 ```
 
-starts at tile (12, 15.5) at 3 PM on day 5 (a thunderstorm day), saves a screenshot after 90 frames and quits. Other hooks: `--open=shop|gear|order|note|marina|marina-slam|journal|fame|news|map|bus|home|bench|rodbench`, `--legends=N` and `--slam=1,2,3` (fill the trophy wall and cup shelf at home), `--story=N` and `--act2=N` (jump to a story chapter), `--weigh` (enter and weigh in at the Slam), `--land`, `--cast`, `--busted`, `--boat=kayak|skiff`, `--bait=<id>`, `--bob=dx,dy[,state]`, `--twitch=-1|1`, `--rosa`, `--toast`, `--title`, `--pause`, `--controls`, `--settings`. Run `--import` twice on a fresh checkout so the fonts import before the scripts parse.
+starts at tile (12, 15.5) at 3 PM on day 5 (a thunderstorm day), saves a screenshot after 90 frames and quits. Other hooks: `--open=shop|gear|order|note|marina|marina-slam|journal|fame|news|map|bus|home|bench|rodbench`, `--mapview=zoom,x,y` (with `--open=map`), `--legends=N` and `--slam=1,2,3` (fill the trophy wall and cup shelf at home), `--story=N` and `--act2=N` (jump to a story chapter), `--weigh` (enter and weigh in at the Slam), `--land`, `--cast`, `--busted`, `--boat=kayak|skiff`, `--bait=<id>`, `--bob=dx,dy[,state]`, `--twitch=-1|1`, `--rosa`, `--toast`, `--title`, `--pause`, `--controls`, `--settings`. Run `--import` twice on a fresh checkout so the fonts import before the scripts parse.
 
 ## Music and sound
 

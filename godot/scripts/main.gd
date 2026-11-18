@@ -1411,20 +1411,13 @@ func open_journal() -> void:
 	hud.open(parts)
 
 # ---------- the map ----------
-var _zone_tex: ImageTexture
 var map_view: MapView
 func open_map() -> void:
-	if _zone_tex == null:
-		var img := Image.create(Town.MW, Town.MH, false, Image.FORMAT_RGBA8)
-		for y in Town.MH:
-			for x in Town.MW:
-				if Town.zone[Town.idx(x, y)] > 0: img.set_pixel(x, y, Color(0.89, 0.25, 0.2, 0.32))
-		_zone_tex = ImageTexture.create_from_image(img)
 	map_view = MapView.new(self)
 	map_view.locked = Unlocks.map_overlay() if Unlocks.step() < Unlocks.LAST else null
 	map_view.custom_minimum_size = Vector2(0, get_viewport_rect().size.y - 250)
 	hud.open([["h3", "Port Mullet · drag to move, scroll or + and − to zoom"], ["node", map_view],
-		["sub", "Orange dot: you. The little yellow house is home. Red: private, keep your head down. Blue squares: bus stops. Lou's is the red roof by the main road; downtown and the bay are way down south." + ("" if Unlocks.step() >= Unlocks.LAST else " Grey: closed for now. " + Unlocks.goal() + ".")],
+		["sub", "Zoom in for street names and how many of each spot's fish you've caught. Lou's is on US-1; downtown and the bay are way down south." + ("" if Unlocks.step() >= Unlocks.LAST else " Grey: closed for now. " + Unlocks.goal() + ".")],
 		["row", [["Close", func(): hud.close(), true, "hot"], ["Journal (J)", open_journal]]]], true)
 
 # ---------- the Route 1 bus ----------
