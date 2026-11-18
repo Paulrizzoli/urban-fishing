@@ -1,5 +1,5 @@
 extends Node2D
-## Builds Port Mullet and runs the game loop: walking, fishing, the clock, night lights, Lou's and home.
+## Builds the town (Port Mullet, or Ironwater after the coach) and runs the game loop: walking, fishing, the clock, night lights, the shops and home.
 
 const TS := Game.TS
 const LOU_DOOR := Vector2(48.5, 32.4)

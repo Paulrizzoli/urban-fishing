@@ -61,7 +61,7 @@ The current version is in `project.godot` (`config/version`) and shows on the ti
 
 Everything is drawn in tile units. The `World` node is scaled to 32 pixels per tile.
 
-- `scripts/town.gd` builds the map: tiles, water regions, private zones and buildings
+- `scripts/town.gd` builds the map: tiles, water regions, private zones and buildings. `Town.level` picks the town: 0 is Port Mullet, 1 is Ironwater, which `scripts/ironwater.gd` lays out (dam and spillway, river, the high viaduct, mill, brewery, ballpark), with its guards in `data/watch2.json`
 - `scripts/ground.gd` bakes the ground into one texture; `ground_chunk.gd` draws fine detail per 8×8 chunk
 - `scripts/art.gd` has the drawing code for buildings, plants, people and fish
 - `scripts/fishing.gd` runs the fish shadows and the fishing minigame; `lure_art.gd` draws the bait or lure on the end of your line
