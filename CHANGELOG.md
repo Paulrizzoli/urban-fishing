@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.39 | Nov 18, 2026 | The black box at the top of the Mill Race is now a sluice gate, and the Lakeside Park dock reaches the water |
 | v0.9.38 | Nov 18, 2026 | Fence corners that close up, holes you can see, and guards that take twice as long to bust you |
 | v0.9.37 | Nov 18, 2026 | Fish in Ironwater: its spots fill with fish shadows you can cast at, like Port Mullet's |
 | v0.9.36 | Nov 18, 2026 | Guards and patrols stay on land: no more walking across ponds, channels and the mill race |
@@ -62,6 +63,13 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.39 · The sluice gate on the reservoir
+
+_Nov 18, 2026 · Builds: `UrbanFishing-v0.9.39-windows.zip`, `UrbanFishing-v0.9.39-godot-project.zip`_
+
+- **The black box over the water is a sluice gate now.** In Ironwater, where the Mill Race leaves Calder Reservoir (just east of Lakeside Park), the gate that lets water into the race was only a plain wall tile, so it showed up as a flat black rectangle sticking out over the water, worst at night. It's now drawn as a concrete headwall with a steel gate raised on its hoist, a red hoist wheel on top, and white water sheeting out under it into the race. You still can't walk across it.
+- **The Lakeside Park dock reaches the water.** The little wooden dock in Lakeside Park sat in the middle of the lawn, a few tiles from the shore. It now runs from the bank out over the reservoir, so you can walk out to the end and fish off it.
 
 ## v0.9.38 · Closed fence corners, and more time to run
 
