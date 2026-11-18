@@ -27,7 +27,7 @@ var glow_node: Drawer
 var sky_nodes: Array = []
 var save_t := 0.0
 var near := ""
-var latch := { "shop": false, "home": false, "marina": false, "drain": false, "boat": false }
+var latch := { "shop": false, "home": false, "marina": false, "fin": false, "drain": false, "boat": false }
 var watch_zone := -1
 var watch_seen := {}   # zone -> when its "who's watching" line last showed (seconds)
 const DRAIN_GRATE := Vector2(46.5, 57.5)
@@ -40,6 +40,7 @@ var shop_tab := "sell"
 var home_tab := "rest"
 var rod_pick := ["p_glass", "p_reel", ""]   # the blank, reel and grip picked at the workbench
 var marina_tab := "boats"
+var fin_tab := "aisles"
 var journal_tab := "spots"
 var weather: Weather
 var ground_tex: Texture2D
@@ -368,6 +369,16 @@ func _ready() -> void:
 		if a == "--open=gear": shop_tab = "gear"; open_shop()
 		if a == "--open=order": shop_tab = "order"; open_shop()
 		if a == "--open=marina": open_marina()
+		if a == "--open=fin": fin_tab = "aisles"; open_fin()
+		if a == "--open=fin-talk": fin_tab = "talk"; open_fin()
+		if a == "--fin-sing": Fintastic.sing()
+		if a == "--fin-closed": Game.S.act2.finished = true
+		if a.begins_with("--fin-buy="): # --fin-buy=finclub+turbo+energy: buy these at FINTASTIC! with $2000 on you
+			Game.S.cash = 2000
+			for gid in a.substr(10).split("+"):
+				var d := Fintastic.DAY_ITEMS.filter(func(x): return x[0] == gid)
+				if d.is_empty(): _fin_buy(gid, Fintastic.price(int(Game.gear.filter(func(g): return g.id == gid)[0].price), gid))
+				else: _fin_day(gid, Fintastic.price(int(d[0][3]), gid), d[0][4])
 		if a == "--junk-gallery": # every junk picture on one screen: big ones as on the catch card, small as in the Sell tab
 			var jl := CanvasLayer.new(); jl.layer = 20; add_child(jl)
 			var jc := Control.new(); jc.set_anchors_preset(Control.PRESET_FULL_RECT); jl.add_child(jc)
@@ -441,7 +452,7 @@ func _ready() -> void:
 			Player.parked()[pv[0]] = [float(pv[1]), float(pv[2]), 0.0, float(pv[1]), float(pv[2])]
 		if a == "--open=map": open_map()
 		if a == "--open=icons": # every item picture, big, for checking the art
-			var ids := ["p_spoon", "p_caps", "p_beads", "p_feather", "p_wire", "p_glow", "p_glass", "p_graphite", "p_reel", "p_bigreel", "p_cork", "p_foam", "p_tape", "spoon", "popper", "jig", "glowlure", "rod0", "rod1", "rod2", "rod3", "rod4", "worms", "bait", "lure", "hotdog", "bread", "squid", "cooler", "mcooler", "camera", "polo", "lanyard", "flashlight", "waders", "geiger", "prybar", "kayak", "bigtank", "suit", "skiff", "shades", "junk"]
+			var ids := ["p_spoon", "p_caps", "p_beads", "p_feather", "p_wire", "p_glow", "p_glass", "p_graphite", "p_reel", "p_bigreel", "p_cork", "p_foam", "p_tape", "spoon", "popper", "jig", "glowlure", "rod0", "rod1", "rod2", "rod3", "rod4", "worms", "bait", "lure", "hotdog", "bread", "squid", "cooler", "mcooler", "camera", "polo", "lanyard", "flashlight", "waders", "geiger", "prybar", "kayak", "bigtank", "suit", "skiff", "shades", "turbo", "harness", "megacooler", "finclub", "energy", "magnet", "sigrod", "junk"]
 			var sheet := Control.new(); sheet.custom_minimum_size = Vector2(1180, 600)
 			sheet.draw.connect(func():
 				for i in ids.size():
@@ -546,6 +557,7 @@ func _process(dt: float) -> void:
 		elif player.position.distance_to(LOU_DOOR) < 1.3: near = "shop"
 		elif player.position.distance_to(HOME_DOOR) < 1.0: near = "home"
 		elif player.position.distance_to(MARINA_DOOR) < 1.3: near = "marina"
+		elif player.position.distance_to(Fintastic.DOOR) < 1.3: near = "fin"
 		elif player.position.distance_to(OLDTIMER) < 1.8: near = "oldtimer"
 		elif player.position.distance_to(ROSA) < 1.6: near = "rosa"
 		elif Crafting.near(player.position) >= 0: near = "part"
@@ -672,13 +684,14 @@ func _drain_hint() -> void:
 
 func _doors() -> void:
 	if player.in_boat(): return
-	for k in ["shop", "home", "marina"]:
-		var door: Vector2 = { "shop": LOU_DOOR, "home": HOME_DOOR, "marina": MARINA_DOOR }[k]
+	for k in ["shop", "home", "marina", "fin"]:
+		var door: Vector2 = { "shop": LOU_DOOR, "home": HOME_DOOR, "marina": MARINA_DOOR, "fin": Fintastic.DOOR }[k]
 		var d := player.position.distance_to(door)
 		if d < 0.7 and not latch[k] and fishing.state == "idle":
 			latch[k] = true; player.path.clear()
 			if k == "shop": Sound.play("bell"); open_shop()
 			elif k == "home": Sound.play("door"); open_home()
+			elif k == "fin": Sound.play("door"); open_fin()
 			else: open_marina()
 		if d > 1.6: latch[k] = false
 
@@ -859,6 +872,7 @@ func _action_down() -> void:
 		if near == "shop": Sound.play("bell"); open_shop()
 		elif near == "home": Sound.play("door"); open_home()
 		elif near == "marina": Sound.play("door"); open_marina()
+		elif near == "fin": Sound.play("door"); open_fin()
 		elif near == "oldtimer": talk_oldtimer()
 		elif near == "rosa": talk_rosa()
 		elif near == "part":
@@ -1025,7 +1039,7 @@ func open_shop() -> void:
 
 func _gear_list(parts: Array, list: Array) -> void:
 	var S := Game.S
-	var cmax := 20 + (10 if S.gear.has("mcooler") else 0)
+	var cmax := Game.cooler_max()
 	for g in list:
 		var gid: String = g.id
 		var owned: bool = S.cooler_cap >= cmax if gid == "cooler" else S.gear.has(gid)
@@ -1103,8 +1117,8 @@ func _tell_story(lv: int) -> void:
 func _buy(gid: String, price: int, at_marina := false) -> void:
 	if Game.S.cash < price: return
 	Game.S.cash -= price
-	if gid == "cooler": Game.S.cooler_cap = mini(20 + (10 if Game.S.gear.has("mcooler") else 0), Game.S.cooler_cap + 5)
-	elif gid == "mcooler": Game.S.gear.mcooler = 1; Game.S.cooler_cap += 10
+	if gid == "cooler": Game.S.cooler_cap = mini(Game.cooler_max(), Game.S.cooler_cap + 5)
+	elif gid in ["mcooler", "megacooler"]: Game.S.gear[gid] = 1; Game.S.cooler_cap += 10
 	else: Game.S.gear[gid] = 1
 	for b in Game.baits:
 		if b.get("gear", "") == gid: Game.S.bait = b.id
@@ -1132,6 +1146,75 @@ func open_marina() -> void:
 	parts.append(["kv", [["Cash", Game.money(S.cash)], ["Rep", str(int(S.rep))], ["Cooler", "%d/%d" % [S.cooler.size(), S.cooler_cap]]]])
 	parts.append(["row", [["Back outside", func(): hud.close(), true, "hot"]]])
 	hud.open(parts)
+
+## FINTASTIC! Outdoor Megastore: the aisles (Trent's flashy extras, nothing Lou sells) and Brayden at the register.
+## After Act II the store is closed, and the card just shows it through the papered-over glass.
+func open_fin() -> void:
+	var S := Game.S
+	var parts := [["h3", "FINTASTIC! Outdoor Megastore · downtown"]]
+	if Fintastic.closed():
+		parts += [["h2", "CLOSED FOR REBRANDING"], ["pic", FintasticArt.store, 330, true],
+			["p", "The doors are chained. Through a gap in the paper over the glass you can see the cardboard Trent face down on the floor, and the robot fish on the counter, still singing to nobody."],
+			["sub", "A note from Brayden is taped to the glass: \"Moved to the marina. They let me drive the forklift. Lou says hi. —B\""],
+			["row", [["Back outside", func(): hud.close(), true, "hot"]]]]
+		hud.open(parts, false, 820.0); return
+	parts.append(["h2", "\"%s\"" % Fintastic.greeting()])
+	parts.append(["pic", FintasticArt.store, 330, true])
+	var tabs := []
+	for td in [["aisles", "Aisles"], ["talk", "Talk to Brayden"]]:
+		var key: String = td[0]
+		tabs.append([td[1], func(): fin_tab = key; open_fin(), fin_tab == key])
+	parts.append(["tabs", tabs])
+	if fin_tab == "aisles":
+		parts.append(_kit_part())
+		parts.append(["sub", "Forty aisles of camo, a wall of rods with Trent's face on them, and a robot fish that sings. None of it is Lou's stuff. It all goes on top." + (" Fin Club: 15% off." if Fintastic.club() else "")])
+		for g in Fintastic.stock():
+			var gid: String = g.id
+			var p := Fintastic.price(int(g.price), gid)
+			var owned: bool = S.gear.has(gid)
+			parts.append(["item", g.n, g.ds, "Owned" if owned else Game.money(p), func(): _fin_buy(gid, p), not owned and S.cash >= p, func(ci, r): ItemIcons.draw(ci, gid, r, Time.get_ticks_msec() / 1000.0)])
+		for d in Fintastic.DAY_ITEMS:
+			var did: String = d[0]
+			var dp := Fintastic.price(int(d[3]), did)
+			var key: String = d[4]
+			var on := int(S.get(key, 0)) == int(S.day)
+			parts.append(["item", d[1] + (" · on today" if on else ""), d[2], ("Buzzing" if did == "energy" else "Sprayed") if on else Game.money(dp), func(): _fin_day(did, dp, key), not on and S.cash >= dp,
+				func(ci, r): ItemIcons.draw(ci, did, r, Time.get_ticks_msec() / 1000.0)])
+		parts.append(["item", "Trent Marlowe Signature Rod", "It's the bait-shop special from Lou's with a sticker on it. Glued to the wall.", "$999", func(): pass, false, func(ci, r): ItemIcons.draw(ci, "sigrod", r)])
+		parts.append(["row", [["Press the robot fish's button", func():
+			Fintastic.sing(); Sound.play("ui_click")
+			hud.flash(["The robot fish sings the FINTASTIC! jingle. Brayden closes his eyes.", "\"Fin-fin-FINTASTIC!\" Brayden mouths every word without wanting to.", "The robot fish turns its head, sings, and turns back. A child somewhere cheers."].pick_random()), true]]])
+	else:
+		parts.append(["quote", "\"%s\"" % Fintastic.brayden_line()])
+		parts.append(["sub", "Brayden, 17 · FINTASTIC! Team Member of the Month · \"Ask me about Fin Club\""])
+		parts.append(["row", [["Ask him something else", func(): open_fin(), true, "go"]]])
+	parts.append(["kv", [["Cash", Game.money(S.cash)], ["Rep", str(int(S.rep))], ["Cooler", "%d/%d" % [S.cooler.size(), S.cooler_cap]]]])
+	parts.append(["row", [["Back outside", func(): hud.close(), true, "hot"]]])
+	hud.open(parts, false, 820.0)
+
+func _fin_buy(gid: String, price: int) -> void:
+	if Game.S.cash < price or Game.S.gear.has(gid): return
+	Game.S.cash -= price
+	Game.S.gear[gid] = 1
+	if gid == "megacooler": Game.S.cooler_cap += 10
+	Sound.play("cash")
+	var news := { "turbo": "Local Angler Buys TurboReel 9000; Lou 'Not Mad, Just Disappointed'", "harness": "Angler Seen Wearing Full Fighting Harness at the Canal; Mullet Unimpressed",
+		"megacooler": "MegaCooler Spotted Rolling Down Flamingo Ave, Owner Close Behind" }
+	if news.has(gid): Game.add_news(news[gid])
+	Story.check()
+	Game.save_game()
+	open_fin()
+	hud.flash({ "turbo": "Brayden: \"FINTASTIC choice!\" He looks like it hurt to say.", "harness": "Brayden helps you buckle it. \"You look like Trent. Sorry. That's what they make me say.\"",
+		"megacooler": "It holds 10 more fish. It also has four cupholders.", "finclub": "Brayden punches the air, very small. \"Fifteen percent off. For life.\"" }.get(gid, "Bought."))
+
+func _fin_day(did: String, price: int, key: String) -> void:
+	if Game.S.cash < price: return
+	Game.S.cash -= price
+	Game.S[key] = int(Game.S.day)
+	Sound.play("cash")
+	Game.save_game()
+	open_fin()
+	hud.flash("REEL DEAL ENERGY. You can hear colors. You walk faster for the rest of the day." if did == "energy" else "You spray yourself, your bait and some of Brayden. Fish come quicker for the rest of the day.")
 
 func talk_oldtimer() -> void:
 	var avail := Game.tips.filter(func(tp): return Game.S.rep >= tp.rep)
@@ -1279,6 +1362,10 @@ func _chips() -> Array:
 	out.append(["Weather: " + Weather.label(), "ink"])
 	var tc := Story.tour_chip()
 	if tc != "": out.append([tc, "paper"])
+	var today := []
+	if Fintastic.buzzing(): today.append("REEL DEAL buzz")
+	if Fintastic.scented(): today.append("Fish Magnet")
+	if not today.is_empty(): out.append(["Today: " + " + ".join(today), "ink"])
 	return out
 
 func _draw_flood(ci: CanvasItem) -> void:

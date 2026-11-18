@@ -469,13 +469,14 @@ func update(dt: float) -> void:
 			if target == null:
 				# fish in a bridge's shade are quicker to come out for the bait
 				var sh := Bridges.shade_at(bob)
+				var scent := Fintastic.scented()
 				for s in shadows:
 					if s.reg != spot or s.wary > 0 or s.spook > 0 or s.fade < 0.6 or s.leaving: continue
-					var R := 2.3 + (0.8 if Game.bait_mul(s.fish) > 1 else 0.0) + (1.6 if twitch > 0 else 0.0) + sh * 0.9
+					var R := 2.3 + (0.8 if Game.bait_mul(s.fish) > 1 else 0.0) + (1.6 if twitch > 0 else 0.0) + sh * 0.9 + (1.0 if scent else 0.0)
 					if s.pos.distance_to(bob) > R: continue
-					var rate: float = (0.22 if s.fish.get("legend", false) else 0.45 if s.fish.pull > 0.6 else 0.85) * (2.0 if twitch > 0 and not s.fish.get("legend", false) else 1.0) * Game.bait_mul(s.fish) * (1.0 if quiet else 0.6) * (1.0 + 0.7 * Game.wx.rain) * (1.0 + 0.6 * sh)
+					var rate: float = (0.22 if s.fish.get("legend", false) else 0.45 if s.fish.pull > 0.6 else 0.85) * (2.0 if twitch > 0 and not s.fish.get("legend", false) else 1.0) * Game.bait_mul(s.fish) * (1.0 if quiet else 0.6) * (1.0 + 0.7 * Game.wx.rain) * (1.0 + 0.6 * sh) * (1.4 if scent else 1.0)
 					if randf() < rate * dt: s.go = true; target = s; break
-				if target == null and wait_t > 14 - sh * 5 and randf() < dt * 0.25:
+				if target == null and wait_t > (14 - sh * 5) * (0.7 if scent else 1.0) and randf() < dt * 0.25:
 					var f = pick_fish(spot, func(x): return x.get("junk", false) or (not x.get("legend", false) and x.pull <= 0.55), Bridges.boosts(Game.darkness() > 0.3) if sh > 0.25 else {})
 					if f != null: fish = f; fw = fish_weight(f); blind = true; state = "nibble"; t = 0.0; nib = randf_range(0.3, 0.9); Sound.play("nibble")
 			elif target.leaving or target.gone or target.spook > 0: drop_target(0)
@@ -494,7 +495,7 @@ func update(dt: float) -> void:
 				emit_signal("message", "Missed it! Hook it the moment it dips.")
 				drop_target(8); state = "wait"; wait_t = 0.0; t = 0.0; blind = false
 		"reel":
-			var fp: float = fish.pull
+			var fp: float = fish.pull * (0.8 if Game.S.gear.has("harness") and fish.pull > 0.5 else 1.0)
 			run_t -= dt
 			if run_t <= 0:
 				run = 0.0 if randf() < 0.25 else (-1.0 if randf() < 0.5 else 1.0); run_t = randf_range(0.8, 2.2) / (0.6 + fp)
@@ -503,7 +504,7 @@ func update(dt: float) -> void:
 			var side := absf(ang)
 			if holding:
 				tension += (0.45 + 0.6 * fp) * rt * dt
-				progress += (0.26 * rr * (1.2 - fp * 0.6) if tension >= BAND[0] and tension <= BAND[1] else 0.05) * (1 - minf(0.7, side * 0.75)) * dt
+				progress += (0.26 * rr * (1.15 if Game.S.gear.has("turbo") else 1.0) * (1.2 - fp * 0.6) if tension >= BAND[0] and tension <= BAND[1] else 0.05) * (1 - minf(0.7, side * 0.75)) * dt
 			else:
 				tension -= 0.75 * dt; progress -= (0.03 + 0.06 * fp) * dt
 			if side > 0.55: tension += (side - 0.55) * 1.1 * rt * dt

@@ -149,5 +149,33 @@
   "ds": "Cut the glare. In daylight you can tell what the shadows near you are.",
   "price": 55,
   "where": "marina"
+ },
+ {
+  "id": "turbo",
+  "n": "TurboReel 9000",
+  "ds": "Gold-plated, and it whirs like a sports car. You reel in 15% faster on any rod, even one you built.",
+  "price": 240,
+  "where": "fin"
+ },
+ {
+  "id": "harness",
+  "n": "Fighting belt & harness",
+  "ds": "The one Trent wears on REEL DEAL. Fish that pull hard fight 20% less hard. Made for the big-game rod.",
+  "price": 260,
+  "where": "fin"
+ },
+ {
+  "id": "megacooler",
+  "n": "Rolling MegaCooler",
+  "ds": "On wheels, with cupholders. Holds 10 more fish, on top of any other cooler.",
+  "price": 220,
+  "where": "fin"
+ },
+ {
+  "id": "finclub",
+  "n": "Fin Club card",
+  "ds": "15% off everything at FINTASTIC!, for life. Brayden gets a dollar.",
+  "price": 15,
+  "where": "fin"
  }
 ]

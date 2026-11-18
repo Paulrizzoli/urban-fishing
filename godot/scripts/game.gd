@@ -243,6 +243,10 @@ func rod() -> Dictionary:
 	var d: Dictionary = rods[lv]
 	return { "t": float(d.t), "r": float(d.r), "hook": lv * 0.1, "name": d.name, "lvl": lv, "home": false }
 
+## How big the cooler can get: 20 with Lou's upgrades, plus 10 each for the marine cooler and FINTASTIC!'s MegaCooler.
+func cooler_max() -> int:
+	return 20 + (10 if S.gear.has("mcooler") else 0) + (10 if S.gear.has("megacooler") else 0)
+
 func using_home_rod() -> bool: return S.get("use_home", false) and not S.get("homerod", {}).is_empty()
 
 func rod_level() -> int:
