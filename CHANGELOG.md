@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.32 | Nov 18, 2026 | Have your parked kayak or skiff brought to the shore you're standing on, for a small fee |
 | v0.9.31 | Nov 18, 2026 | Place names on the ground, like BACK CANAL, fade away 5 seconds after you walk up |
 | v0.9.30 | Nov 18, 2026 | Twitching pulls the lure in, finer line on better rods, and the journal shows each fish's bait |
 | v0.9.29 | Nov 18, 2026 | Street lights spaced out: no more posts doubled up outside Lou's, at the Plant Rd corner or on the marina dock |
@@ -55,6 +56,14 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.32 · Have your boat brought to you
+
+_Nov 18, 2026 · Builds: `UrbanFishing-v0.9.32-windows.zip`, `UrbanFishing-v0.9.32-godot-project.zip`, screenshots in `screenshots/v0.9.32/`_
+
+- Left your kayak on Mullet Canal and want it at Mullet Beach? Stand at the edge of any canal, the river or the bay and the button says **Have the kayak brought here, $10 (K)**. Press K, pay, and somebody from Lou's drives it over on a truck roof. You wait 20 minutes and you're sitting in it, ready to paddle.
+- The skiff works the same way for **$25**, from a marina hand, but only to the bay or the downtown river, the same places you can launch it.
+- It's offered only when your boat is more than 12 steps away. If it's nearby, walk over and launch it as usual. Not enough cash and it tells you what it costs.
 
 ## v0.9.31 · Place names on the ground fade away
 
