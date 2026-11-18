@@ -82,7 +82,7 @@ Everything is drawn in tile units. The `World` node is scaled to 32 pixels per t
 godot --path . --resolution 1280x720 -- --at=12,15.5,15 --day=5 --shot=storm.png
 ```
 
-starts at tile (12, 15.5) at 3 PM on day 5 (a thunderstorm day), saves a screenshot after 90 frames and quits. Other hooks: `--open=shop|gear|order|note|marina|marina-slam|journal|fame|news|map|bus|home|bench|rodbench`, `--legends=N` and `--slam=1,2,3` (fill the trophy wall and cup shelf at home), `--story=N` and `--act2=N` (jump to a story chapter), `--weigh` (enter and weigh in at the Slam), `--land`, `--cast`, `--busted`, `--boat=kayak|skiff`, `--bait=<id>`, `--bob=dx,dy[,state]`, `--twitch=-1|1`, `--rosa`, `--toast`, `--title`, `--pause`, `--controls`, `--settings`. Run `--import` twice on a fresh checkout so the fonts import before the scripts parse.
+starts at tile (12, 15.5) at 3 PM on day 5 (a thunderstorm day), saves a screenshot after 90 frames and quits. Other hooks: `--open=shop|gear|order|note|marina|marina-slam|journal|fame|news|map|bus|home|bench|rodbench`, `--legends=N` and `--slam=1,2,3` (fill the trophy wall and cup shelf at home), `--pet=kind,seconds` (hold Chum's reaction for a screenshot), `--story=N` and `--act2=N` (jump to a story chapter), `--weigh` (enter and weigh in at the Slam), `--land`, `--cast`, `--busted`, `--boat=kayak|skiff`, `--bait=<id>`, `--bob=dx,dy[,state]`, `--twitch=-1|1`, `--rosa`, `--toast`, `--title`, `--pause`, `--controls`, `--settings`. Run `--import` twice on a fresh checkout so the fonts import before the scripts parse.
 
 ## Music and sound
 

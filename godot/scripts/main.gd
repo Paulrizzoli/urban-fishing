@@ -382,6 +382,8 @@ func _ready() -> void:
 		if a.begins_with("--slam="):
 			for pl in a.substr(7).split(","): Game.S.trophies.append({ "day": 7, "fmt": "big", "place": int(pl), "v": 10.0 })
 		if a == "--open=home": home_tab = "rest"; open_home()
+		if a.begins_with("--pet="): # --pet=kind,seconds: hold Chum's reaction there for a screenshot
+			var pv := a.substr(6).split(","); HomeArt.pet_kind = int(pv[0]); HomeArt.test_since = float(pv[1]); HomeArt.pet_t = 0.0
 		if a == "--open=bench": home_tab = "bench"; open_home()
 		if a == "--open=rodbench": home_tab = "rod"; open_home()
 		if a.begins_with("--homerod="): Game.S.homerod = Crafting.rod_stats(Array(a.substr(10).split(","))); Game.S.use_home = true
@@ -1127,11 +1129,14 @@ func open_home() -> void:
 		tabs.append([td[1], func(): home_tab = key; open_home(), home_tab == key])
 	var parts := [["h3", "Home sweet home" if home_tab == "rest" else "The workbench"], ["h2", _home_line() if home_tab == "rest" else "\"Measure twice.\"" if home_tab == "rod" else "\"Mind the hooks.\""], ["tabs", tabs]]
 	if home_tab == "rest":
-		parts.append(["pic", HomeArt.room, 280, true])
+		parts.append(["pic", HomeArt.room, 380, true])
 		var m := HomeArt.mounts()
 		if m.is_empty(): parts.append(["sub", "The wall above the couch is waiting for your first legend. Every one you land gets mounted here."])
 		else: parts.append(["sub", "On the wall: " + ", ".join(m.slice(0, 6).map(func(x): return "%s (%s lb)" % [x.n, str(snappedf(x.w, 0.1))])) + (" and %d more" % (m.size() - 6) if m.size() > 6 else "") + "."])
-		parts.append(["row", [["Pet Chum", func(): Sound.play("ui_click"); hud.flash(["Chum purrs like an outboard motor.", "Chum rolls over. It's a trap.", "Chum stretches and goes right back to sleep.", "Chum sniffs your hands. Bait. Approved."].pick_random()), true]]])
+		parts.append(["row", [["Pet Chum", func():
+			Sound.play("ui_click")
+			var k := HomeArt.pet()
+			hud.flash([["Chum stretches, yawns, and goes right back to sleep.", "Chum does a big stretch. Every toe."], ["Chum rolls over. It's a trap.", "Chum shows you the belly. Don't fall for it."], ["Chum purrs like an outboard motor.", "Chum sniffs your hands. Bait. Approved."]][k].pick_random()), true]]])
 		parts += [["p", "Kick back until…"],
 			["item", "Dawn", "The Lunker of the 7th bites at dawn.", "Rest until 6:00 AM", func(): rest.call(6.0), true],
 			["item", "Noon", "Business hours. Lanyard time at the koi pond.", "Rest until 12:00 PM", func(): rest.call(12.0), true],
@@ -1152,7 +1157,7 @@ func open_home() -> void:
 				func(): Crafting.make(lid); Sound.play("ui_click"); hud.flash("You made a %s. It's on your line now." % ln.to_lower()); open_home(),
 				Crafting.can_make(l), func(ci, r): ItemIcons.draw(ci, lid, r), not Crafting.can_make(l)])
 	parts.append(["row", [["Back outside", func(): hud.close(), true, "hot"]]])
-	hud.open(parts)
+	hud.open(parts, false, 820.0 if home_tab == "rest" else 0.0)
 
 ## The big line on the home card: something about the room as it is right now.
 func _home_line() -> String:
