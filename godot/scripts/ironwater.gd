@@ -45,8 +45,8 @@ static func build() -> void:
 	# ---------- Calder Reservoir ----------
 	for x in Town.MW:
 		Town.rect(x, 0, x, shore(x), T.WATER, RES)
-	# a lakeside park and boat ramp on the west shore, woods on the east
-	Town.rect(16, 21, 17, 23, T.DOCK)
+	# a lakeside park and a little fishing dock on the west shore, woods on the east
+	Town.rect(16, 12, 17, 16, T.DOCK)
 	Town.trees([[3, 24], [8, 27], [2, 30], [12, 29], [26, 30], [5, 21]])
 	Town.bushes([[10, 23], [20, 27], [14, 25]])
 	Town.decor.append({ "k": "bench", "x": 7.0, "y": 22.8 }); Town.decor.append({ "k": "bench", "x": 20.5, "y": 25.0 })
@@ -251,6 +251,7 @@ static func _ballpark() -> void:
 ## The dam: a pale concrete face with the crest railings, the spillway gates between their piers, and the
 ## river pouring through them in white sheets. Drawn on the ground, under people and boats.
 static func draw_dam(ci: CanvasItem, view: Rect2, t: float) -> void:
+	if view.intersects(Rect2(22, 20, 7, 6)): _draw_sluice(ci, t)
 	if not view.intersects(Rect2(26, 26, 60, 14)): return
 	var conc := Color("#c9c3b4")
 	var conc_dk := Color("#a8a293")
@@ -352,6 +353,39 @@ static func draw_wheel(ci: CanvasItem, p: Vector2, t: float) -> void:
 	for j in 4:
 		var k := fmod(t * 1.5 + j * 0.25, 1.0)
 		ci.draw_circle(c + Vector2(0.3 + j * 0.25, 1.2 + k * 0.4), 0.07 * (1.0 - k), Color(1, 1, 1, 0.7 * (1.0 - k)))
+
+## The sluice where the mill race leaves the reservoir: a concrete headwall across the race, a steel
+## gate raised a little on its hoist, and water sheeting out under it into the race.
+static func _draw_sluice(ci: CanvasItem, t: float) -> void:
+	var x0 := 24.0
+	var y := float(shore(24) + 1)
+	var w := 3.0
+	var conc := Color("#c9c3b4")
+	var conc_dk := Color("#a8a293")
+	# the white water spilling out under the gate, fading down the race
+	ci.draw_polygon(PackedVector2Array([Vector2(x0, y + 1), Vector2(x0 + w, y + 1), Vector2(x0 + w, y + 2.2), Vector2(x0, y + 2.2)]),
+		PackedColorArray([Color(0.88, 0.94, 0.95, 0.85), Color(0.88, 0.94, 0.95, 0.85), Color(0.88, 0.94, 0.95, 0.0), Color(0.88, 0.94, 0.95, 0.0)]))
+	for j in 8:
+		var sx := x0 + 0.25 + j * 0.36
+		var ph := fmod(t * 2.2 + j * 0.41, 1.0)
+		ci.draw_line(Vector2(sx, y + 1.0 + ph * 1.1), Vector2(sx + 0.04, y + 1.25 + ph * 1.1), Color(1, 1, 1, 0.9 * (1.0 - ph)), 0.1)
+	# the headwall: concrete, lit along its top edge, with its shadow on the race below
+	ci.draw_rect(Rect2(x0 - 0.15, y, w + 0.3, 1.0), conc)
+	ci.draw_rect(Rect2(x0 - 0.15, y, w + 0.3, 0.18), Color("#ddd7c8"))
+	ci.draw_rect(Rect2(x0 - 0.15, y + 0.82, w + 0.3, 0.18), conc_dk)
+	# the steel gate in its slot between two piers, and the hoist wheel on top
+	ci.draw_rect(Rect2(x0 + 0.45, y + 0.25, w - 0.9, 0.5), Color("#3e6f7c"))
+	ci.draw_rect(Rect2(x0 + 0.45, y + 0.25, w - 0.9, 0.08), Color("#5f93a0"))
+	for k in 4: ci.draw_line(Vector2(x0 + 0.75 + k * 0.5, y + 0.33), Vector2(x0 + 0.75 + k * 0.5, y + 0.75), Color("#2b4f5a"), 0.05)
+	for px in [x0 + 0.1, x0 + w - 0.45]:
+		ci.draw_rect(Rect2(px, y + 0.05, 0.35, 0.9), conc_dk)
+		ci.draw_rect(Rect2(px, y + 0.05, 0.35, 0.1), Color("#ddd7c8"))
+	var hub := Vector2(x0 + w / 2.0, y + 0.18)
+	ci.draw_rect(Rect2(hub.x - 0.06, hub.y, 0.12, 0.3), Color("#2b4f5a"))
+	ci.draw_arc(hub, 0.28, 0, TAU, 20, Color("#c0392b"), 0.08)
+	for i in 4:
+		var d := Vector2.from_angle(i * PI / 4.0)
+		ci.draw_line(hub - d * 0.28, hub + d * 0.28, Color("#c0392b"), 0.05)
 
 ## Ground details drawn once: the ballpark diamond and the rail tracks behind the station.
 static func draw_ground(ci: CanvasItem) -> void:
