@@ -25,6 +25,11 @@ var modal: Control
 var card_box: VBoxContainer
 var fishing: Fishing
 var hint_t := 0.0
+## Place-name prompts (Lou's, home, the marina, the bus stop) fade out after PLACE_SECS.
+const PLACES := ["shop", "home", "marina", "bus"]
+const PLACE_SECS := 5.0
+var place_near := ""
+var place_t := 0.0
 var boat_text := ""
 var chips: Array = []
 var boat_btn: Button
@@ -237,7 +242,13 @@ func refresh(near: String) -> void:
 	action.add_theme_color_override("font_color", Color.WHITE if col == CORAL else INK)
 	action.add_theme_color_override("font_hover_color", Color.WHITE if col == CORAL else INK)
 	action.add_theme_color_override("font_pressed_color", Color.WHITE if col == CORAL else INK)
-	if hint_t > 0: hint_t -= get_process_delta_time()
+	var dt := get_process_delta_time()
+	if st == "idle" and near in PLACES:
+		if near != place_near: place_near = near; place_t = 0.0
+		place_t += dt
+	else: place_near = ""; place_t = 0.0
+	hint.modulate.a = 1.0
+	if hint_t > 0: hint_t -= dt
 	else:
 		var m := ""
 		match st:
@@ -248,6 +259,9 @@ func refresh(near: String) -> void:
 			"nibble": m = "It's nibbling… wait for the big dip."
 			"bite": m = "NOW!"
 			"reel": m = "Hold to reel. Keep the needle in the green. Pull ◀ ▶ against the fish."
+		if place_near != "":
+			if place_t >= PLACE_SECS: m = ""
+			else: hint.modulate.a = clampf((PLACE_SECS - place_t) / 0.6, 0.0, 1.0)
 		hint.text = m
 	hint.visible = hint.text != ""
 	meters.visible = st == "power" or st == "reel"

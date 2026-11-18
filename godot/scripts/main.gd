@@ -9,6 +9,8 @@ const OLDTIMER := Vector2(37.4, 49.4)
 const ROSA := Vector2(34.4, 165.6)
 const STORY_LINES_OK := ["Lou whistles. The regulars nod.", "Somebody buys you a soda.", "Lou writes it on the whiteboard."]
 const STORY_LINES_NO := ["Lou laughs so hard he has to sit down.", "A regular holds his hands two inches apart.", "\"Sure it was, buddy.\""]
+## Lou's bait chart: shown the first time you walk into Lou's, and in the Gear tab.
+const BAIT_TIP := "\"Worms catch a bit of everything. Bread for mullet, tilapia and koi. Hot dogs for catfish. Lures for bass. Live shrimp for snook, tarpon and redfish. Press B to switch.\""
 const GROUND_SHADER := preload("res://shaders/ground.gdshader")
 const SEE_THROUGH := preload("res://shaders/see_through.gdshader")
 
@@ -62,6 +64,7 @@ var alert_t := 0.0
 # test hook: godot --path . -- --at=x,y,hour --shot=out.png [--open=shop]
 var test_shot := ""
 var test_frames := 0
+var test_shot_frame := 90   # --shot-frame=N takes the shot later, e.g. to see a prompt fade out
 
 func _ready() -> void:
 	# the test hooks that put you somewhere or deep in the story start with the whole town open
@@ -72,6 +75,7 @@ func _ready() -> void:
 			var v := a.substr(5).split(",")
 			Game.S.x = float(v[0]); Game.S.y = float(v[1]); Game.S.min = float(v[2]) * 60.0; Game.S.started = true
 		if a.begins_with("--shot="): test_shot = a.substr(7)
+		if a.begins_with("--shot-frame="): test_shot_frame = int(a.substr(13))
 		if a.begins_with("--boat="): Game.S.boat = true; Game.S.boat_kind = a.substr(7); Game.S.gear.kayak = 1; Game.S.gear.skiff = 1
 		if a.begins_with("--day="): Game.S.day = int(a.substr(6)); Game.S.min += (Game.S.day - 1) * 1440.0
 		if a.begins_with("--story="): Game.S.saga.ch = int(a.substr(8)) - 1; Game.S.saga.done = int(a.substr(8)) > 1; Game.S.day = maxi(int(Game.S.day), Story.NOTE_DAY)
@@ -575,7 +579,7 @@ func _test_shot() -> bool:
 	_bench()
 	if test_shot == "": return false
 	test_frames += 1
-	if test_frames == 90:
+	if test_frames == test_shot_frame:
 		get_viewport().get_texture().get_image().save_png(test_shot)
 		get_tree().quit()
 	return true
@@ -870,6 +874,15 @@ func open_shop() -> void:
 	var S := Game.S
 	var sc := Story.scene()
 	if not sc.is_empty(): open_card(sc); return
+	if not S.get("bait_tip", false):
+		# the first time in, Lou tells you which bait catches what
+		S.bait_tip = true; Game.save_game()
+		hud.open([["h3", "Lou's Bait & Tackle · since 1977"], ["h2", "\"First time? Listen up.\""],
+			["p", "Lou taps the bait chart behind the counter. \"Every fish wants something different. Put the wrong thing on and you'll sit there all day.\""],
+			["quote", BAIT_TIP],
+			["sub", "You start with worms. Lou sells the rest in the Gear tab, and the bait chart is up there too."],
+			["row", [["Into the shop", func(): open_shop(), true, "hot"]]]])
+		return
 	var tabs := []
 	var story_on: bool = int(S.saga.ch) > 0
 	if shop_tab == "note" and not story_on: shop_tab = "sell"
@@ -912,6 +925,7 @@ func open_shop() -> void:
 				parts.append(["row", [["Hand it over" if have >= o.count else "Not enough yet", _fill_order, have >= o.count, "go"]]])
 		"gear":
 			parts.append(_kit_part())
+			parts.append(["sub", "Lou's bait chart: " + BAIT_TIP.trim_prefix("\"").trim_suffix("\"")])
 			_gear_list(parts, Game.gear.filter(func(g): return not g.has("where")))
 			parts.append(["sub", "Your rod: %s." % Game.rod().name + (" Boats, squid and big-game tackle are at the marina downtown." if S.visited.has("dt") else "")])
 		"note":
