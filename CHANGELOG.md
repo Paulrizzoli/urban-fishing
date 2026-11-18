@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.40 | Nov 18, 2026 | Aim your cast anywhere with a cast marker, and side twitches that really reel the lure in |
 | v0.9.39 | Nov 18, 2026 | The black box at the top of the Mill Race is now a sluice gate, and the Lakeside Park dock reaches the water |
 | v0.9.38 | Nov 18, 2026 | Fence corners that close up, holes you can see, and guards that take twice as long to bust you |
 | v0.9.37 | Nov 18, 2026 | Fish in Ironwater: its spots fill with fish shadows you can cast at, like Port Mullet's |
@@ -63,6 +64,16 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.40 · Aim anywhere, twitch it in
+
+_Nov 18, 2026 · Builds: `UrbanFishing-v0.9.40-windows.zip`, `UrbanFishing-v0.9.40-godot-project.zip`, screenshots in `screenshots/v0.9.40/`_
+
+- **A cast marker you steer:** when you start a cast, a marker appears on the water. Move it anywhere with the arrow keys (or WASD), or just move the mouse, and release in the green to land right on it. It starts on the nearest fish as before, but it no longer locks on or snaps to a fish, so you can pick the one you want, or cast at open water. It turns green when a fish is under it, white over open water and red over dry land.
+- **Your rod sets how far you can cast:** the marker stops at your rod's reach, shown as a faint arc. The garage-sale rod casts as far as before (5.6 tiles), and each better rod adds a little more, up to 7.2 tiles on the big-game rod. Home-built rods count as the shop rod they match.
+- **Side twitches reel in for real:** v0.9.30 added a pull toward you to every ◀ / ▶ twitch, but the sideways dart moved the lure away from you about as much as the pull brought it in, so twitching left and right barely gained anything (about 0.2 tiles each). Now the sideways dart keeps the lure the same distance from you and every twitch, in either direction, brings it 0.45 tiles closer. Twitch it all the way back and the cast ends, like reeling in.
+- The Controls card, the hints while you cast and the README say how aiming works now.
+- Test hook: `--mark=dx,dy` moves the cast marker (use after `--cast`).
 
 ## v0.9.39 · The sluice gate on the reservoir
 

@@ -18,7 +18,8 @@ const SIZES := [Vector2i(1280, 720), Vector2i(1600, 900), Vector2i(1920, 1080)]
 const CONTROLS := [
 	["WASD / arrows", "Walk. Or click where you want to go"],
 	["F / Space", "Cast, hook the fish, hold to reel"],
-	["◀ ▶ (A / D)", "Aim a cast, twitch the lure in to the left or right, pull against a running fish"],
+	["◀ ▶ (A / D)", "Twitch the lure in to the left or right, pull against a running fish"],
+	["Arrows (casting)", "Move the cast marker (or use the mouse), as far as your rod reaches"],
 	["Click the water", "Cast right at that spot"],
 	["E", "Talk, go through doors, ride the bus"],
 	["B", "Switch bait"],
@@ -212,7 +213,7 @@ func show_pause() -> void:
 # ---------- controls ----------
 func show_controls(from_pause := false) -> void:
 	hud.open([["h3", "How to play"], ["h2", "Controls"], ["keys", CONTROLS],
-		["sub", "Fishing: release the cast in the green to land right on a fish. When the bobber dips, hook it fast. Then hold to reel, keep the tension needle in the green, and pull against the fish when it runs."],
+		["sub", "Fishing: steer the cast marker onto a fish and release in the green to land right on it. When the bobber dips, hook it fast. Then hold to reel, keep the tension needle in the green, and pull against the fish when it runs."],
 		["row", [["Back", func(): show_pause() if from_pause else hud.close(), true, "hot"]]]])
 
 # ---------- settings ----------
