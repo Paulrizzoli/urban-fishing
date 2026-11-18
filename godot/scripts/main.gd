@@ -67,6 +67,8 @@ var alert_t := 0.0
 # test hook: godot --path . -- --at=x,y,hour --shot=out.png [--open=shop]
 var test_shot := ""
 var test_frames := 0
+const LABEL_SECS := 5.0
+var label_seen := {}   # place-name label -> seconds it has been on screen
 var test_dir := Vector2.ZERO   # --walk=dx,dy holds that direction down, for checking what you bump into
 var test_shot_frame := 90   # --shot-frame=N takes the shot later, e.g. to see a prompt fade out
 
@@ -1447,14 +1449,28 @@ func _draw_labels(ci: CanvasItem) -> void:
 		ci.draw_rect(Rect2(g.x - 0.04, g.y - 0.1, 0.08, 0.5), Color("#6b5034"))
 		ci.draw_rect(Rect2(g.x - 0.62, g.y - 0.55, 1.24, 0.5), Color("#c93b2a"))
 		Art.text(ci, Vector2(g.x, g.y - 0.2), "NO FISHING", 0.2, Color.WHITE)
-	for l in Town.labels: Art.text(ci, Vector2(l.x, l.y), l.t, 0.5, ink, paper)
+	var dt := get_process_delta_time()
+	for l in Town.labels:
+		var pos := Vector2(l.x, l.y)
+		var a := _label_alpha(l.t, pos, dt)
+		if a > 0: Art.text(ci, pos, l.t, 0.5, Color(ink, a), Color(paper, paper.a * a))
 	for b in Town.buildings:
 		if b.label == "" or b.kind == "shop": continue
 		var pos := Vector2(b.x + b.w / 2.0, b.y - 0.35)
 		if b.kind == "sky":
 			var g := Art.sky_geom(b)
 			pos = Vector2(b.x + g.y + b.w / 2.0, b.y - g.x - 0.35)
-		Art.text(ci, pos, b.label, 0.4, ink, paper)
+		var a := _label_alpha(b.label + str(pos), pos, dt)
+		if a > 0: Art.text(ci, pos, b.label, 0.4, Color(ink, a), Color(paper, paper.a * a))
+
+## Place names on the ground fade out LABEL_SECS after they come on screen, and come back
+## once you've walked far enough away that they're off screen again.
+func _label_alpha(key: String, pos: Vector2, dt: float) -> float:
+	var v := Drawer.view
+	if v.grow(-1.0).has_point(pos): label_seen[key] = float(label_seen.get(key, 0.0)) + dt
+	elif not v.grow(3.0).has_point(pos): label_seen.erase(key)
+	var t: float = label_seen.get(key, 0.0)
+	return clampf((LABEL_SECS - t) / 0.8, 0.0, 1.0)
 
 func _draw_night_glow(ci: CanvasItem) -> void:
 	var dk := Game.darkness()
