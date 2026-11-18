@@ -13,6 +13,7 @@ uniform float rain = 0.0;
 uniform vec3 sky_col = vec3(0.55, 0.75, 0.92);  // the sky the water reflects, from Main.sky_tint()
 uniform float wetness = 0.0;                        // how wet the ground still is: rises in rain, dries over a few hours
 uniform float mist = 0.0;                       // morning mist lying over the water
+uniform int quality = 2;                        // graphics setting: 0 low, 1 medium, 2 high
 
 float hash(vec2 p) {
 	p = fract(p * vec2(0.1031, 0.1030));
@@ -36,7 +37,9 @@ float noise(vec2 p) {
 float fbm(vec2 p) {
 	float v = 0.0;
 	float a = 0.5;
+	int oct = quality == 0 ? 2 : quality == 1 ? 3 : 4;
 	for (int i = 0; i < 4; i++) {
+		if (i >= oct) break;
 		v += a * noise(p);
 		p = p * 2.03 + vec2(1.7, 9.2);
 		a *= 0.5;
@@ -63,6 +66,7 @@ float cell_edge(vec2 p, float t) {
 }
 
 float waves(vec2 p, float t) {
+	if (quality == 0) return fbm(p * 0.55 + vec2(t * 0.16, t * 0.11)) * 1.2;
 	return fbm(p * 0.55 + vec2(t * 0.16, t * 0.11)) + 0.35 * fbm(p * 1.4 - vec2(t * 0.24, -t * 0.15));
 }
 
@@ -82,12 +86,18 @@ vec3 shade_water(vec3 col, vec2 p, vec4 wm, float t) {
 	c.rgb *= 1.04 + diff * 0.35;
 	// caustics: a net of light on the bottom of the shallows, bent by the surface
 	vec2 q = p * 1.25 + n.xy * 1.4;
-	float c1 = 1.0 - smoothstep(0.0, 0.16, cell_edge(q, t * 0.8));
-	float c2 = 1.0 - smoothstep(0.0, 0.12, cell_edge(q * 1.7 + vec2(3.1, 1.7), -t * 1.05));
-	float caus = c1 * c1 * 0.65 + c2 * c2 * 0.35;
+	float caus = 0.0;
+	if (quality > 0) {
+		float c1 = 1.0 - smoothstep(0.0, 0.16, cell_edge(q, t * 0.8));
+		caus = c1 * c1 * (quality > 1 ? 0.65 : 0.85);
+		if (quality > 1) {
+			float c2 = 1.0 - smoothstep(0.0, 0.12, cell_edge(q * 1.7 + vec2(3.1, 1.7), -t * 1.05));
+			caus += c2 * c2 * 0.35;
+		}
+	}
 	c.rgb += vec3(0.85, 1.0, 0.95) * caus * (0.04 + 0.13 * shallow) * (1.0 - murky * 0.85) * (0.35 + 0.65 * sun);
 	// long swells rolling across deep water
-	float sw = sin(dot(p, vec2(0.28, 0.96)) * 1.3 - t * 1.1 + fbm(p * 0.25 + t * 0.05) * 5.0);
+	float sw = sin(dot(p, vec2(0.28, 0.96)) * 1.3 - t * 1.1 + (quality > 0 ? fbm(p * 0.25 + t * 0.05) * 5.0 : 2.0));
 	c.rgb += vec3(0.8, 0.95, 1.0) * smoothstep(0.82, 1.0, sw) * 0.07 * depth;
 	c.rgb -= smoothstep(0.82, 1.0, -sw) * 0.04 * depth;
 	// sun glints on the ripple tops

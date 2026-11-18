@@ -30,7 +30,8 @@ class Car extends Node2D:
 
 	func along() -> float: return position.dot(Vector2(d))
 
-	func _process(_dt: float) -> void: queue_redraw()
+	func _process(_dt: float) -> void:
+		if Drawer.view.grow(2).has_point(position): queue_redraw()
 
 	func _draw() -> void:
 		modulate.a = fade
@@ -106,9 +107,19 @@ func _view() -> Rect2:
 	var cam_rect := vp.get_canvas_transform().affine_inverse() * vp.get_visible_rect()
 	return Rect2(cam_rect.position / Game.TS, cam_rect.size / Game.TS)
 
+## How many cars are out for each graphics setting.
+const ACTIVE := [12, 24, 34]
+
 func _process(dt: float) -> void:
 	dt = minf(dt, 0.05)
-	for c in cars: _drive(c, dt)
+	var n: int = ACTIVE[Game.quality]
+	for i in cars.size():
+		var c: Car = cars[i]
+		if i >= n:
+			if c.visible: c.visible = false; c.leaving = true; c.fade = 0.0
+			continue
+		if not c.visible: c.visible = true; _spawn(c)
+		_drive(c, dt)
 
 func _drive(c: Car, dt: float) -> void:
 	var fw := Vector2(c.d)
@@ -123,7 +134,7 @@ func _drive(c: Car, dt: float) -> void:
 	var target := c.cruise
 	var front_gap := INF
 	for o in cars:
-		if o == c or o.leaving or c.squeeze > 0.0: continue
+		if o == c or o.leaving or not o.visible or c.squeeze > 0.0: continue
 		var rel: Vector2 = o.position - c.position
 		var ahead := rel.dot(fw)
 		if ahead > 0.2 and absf(rel.dot(side)) < 0.75: front_gap = minf(front_gap, ahead - (c.L + o.L) * 0.5)

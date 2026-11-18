@@ -21,8 +21,12 @@ static func ripple(p: Vector2, size := 1.0, life := 1.4) -> void:
 var fx_test := "--fxtest" in OS.get_cmdline_user_args()   # test hook: freeze a wake, a jump and rings in view
 
 func _process(dt: float) -> void:
+	if mode == "under":
+		# reflections are off on low graphics
+		visible = Game.quality > 0
+		if visible: queue_redraw()
+		return
 	queue_redraw()
-	if mode != "over": return
 	if fx_test:
 		if trail.is_empty():
 			for i in 12: trail.append({ "p": player.position - Vector2.from_angle(player.face) * (1.1 + i * 0.3) + Vector2(0, 0.1), "a": player.face, "t": i * 0.15, "kind": player.boat_kind() })

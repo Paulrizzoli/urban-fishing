@@ -12,6 +12,7 @@ var orders: Array = []
 var tips2: Array = []
 var version: String = ProjectSettings.get_setting("application/config/version", "dev")
 var skip_title := false   # set by New game, so the reload goes straight into the game
+var quality := 2          # graphics quality (a setting): 0 low, 1 medium, 2 high
 var flashes := true       # lightning flashes (a setting)
 var wx := { "k": "sunny", "rain": 0.0, "cloud": 0.1, "storm": false }
 

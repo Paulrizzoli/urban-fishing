@@ -40,7 +40,8 @@ class Walker extends Node2D:
 	var fade := 1.0
 	var rain_k := 0.0
 
-	func _process(_dt: float) -> void: queue_redraw()
+	func _process(_dt: float) -> void:
+		if visible and Drawer.view.grow(2).has_point(position): queue_redraw()
 
 	func _draw() -> void:
 		modulate.a = fade
@@ -138,8 +139,11 @@ func _process(dt: float) -> void:
 	var h := Game.hour()
 	var late := h >= 23 or h < 5.5
 	var rain := float(Game.wx.get("rain", 0.0)) if not Game.wx.is_empty() else 0.0
+	var n: int = [14, 28, 44][Game.quality]
+	var i := 0
 	for w: Walker in walkers:
-		var out := w.owl < (0.12 if late else 0.45 if dk > 0.5 else 1.0)
+		i += 1
+		var out := w.owl < (0.12 if late else 0.45 if dk > 0.5 else 1.0) and i <= n
 		w.fade = move_toward(w.fade, 1.0 if out else 0.0, dt)
 		w.visible = w.fade > 0.01
 		w.rain_k = move_toward(w.rain_k, 1.0 if rain > 0.12 else 0.0, dt * 2.0)

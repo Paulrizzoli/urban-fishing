@@ -34,7 +34,7 @@ var title: Control
 var title_open := false
 var fade_rect: ColorRect
 var fade_layer: CanvasLayer
-var settings := { "fullscreen": false, "size": 0, "vsync": true, "flashes": true, "master": 8, "music": 6, "sfx": 8, "ambience": 6, "style": "auto" }
+var settings := { "fullscreen": false, "size": 0, "vsync": true, "flashes": true, "gfx": 2, "master": 8, "music": 6, "sfx": 8, "ambience": 6, "style": "auto" }
 
 func _ready() -> void:
 	layer = 5
@@ -229,6 +229,9 @@ func show_settings(from_pause := false) -> void:
 	var vol := func(k: String, label: String) -> Array:
 		return ["vol", label, int(settings[k]), func(v): settings[k] = clampi(v, 0, 10); apply_settings(); back.call()]
 	hud.open([["h3", "Settings"], ["h2", "Settings"],
+		["head", "Graphics quality", "lower it if the game runs slowly"],
+		["tabs", [["Low", func(): settings.gfx = 0; apply_settings(); back.call(), int(settings.gfx) == 0], ["Medium", func(): settings.gfx = 1; apply_settings(); back.call(), int(settings.gfx) == 1], ["High", func(): settings.gfx = 2; apply_settings(); back.call(), int(settings.gfx) == 2]]],
+		["sub", ["Low: simpler water, no reflections, mist or puddles, still trees, fewer cars and people.", "Medium: most of the effects, a little simpler water, a few fewer cars and people.", "High: everything on."][clampi(int(settings.gfx), 0, 2)]],
 		["head", "Sound"],
 		vol.call("master", "Master"), vol.call("music", "Music"), vol.call("sfx", "Effects"), vol.call("ambience", "Ambience"),
 		["head", "Music style", "Auto picks a tune for where you are"],
@@ -251,6 +254,8 @@ func load_settings() -> void:
 
 func apply_settings(save := true) -> void:
 	Game.flashes = settings.flashes
+	Game.quality = clampi(int(settings.gfx), 0, 2)
+	Drawer.still = Game.quality == 0
 	Sound.style = settings.style if STYLES.any(func(x): return x[0] == settings.style) else "auto"
 	Sound.set_volume("Master", settings.master / 10.0)
 	Sound.set_volume("Music", settings.music / 10.0)

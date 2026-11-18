@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.19 | Nov 17, 2026 | Runs faster, and a Graphics quality setting (Low, Medium, High) |
 | v0.9.18 | Nov 17, 2026 | Screen polish: zoom in on a hooked fish, shake on big catches, a drawing of every fish on its catch card |
 | v0.9.17 | Nov 17, 2026 | Weather: wet streets and puddles, morning mist, storm clouds |
 | v0.9.16 | Nov 17, 2026 | Town life: people out walking, trees in the wind, flags and fountains |
@@ -43,6 +44,18 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.19 · Faster, with a graphics setting
+
+_Nov 17, 2026 · Builds: `UrbanFishing-v0.9.19-windows.zip`, `UrbanFishing-v0.9.19-godot-project.zip`, screenshots in `screenshots/v0.9.19/`_
+
+- The game draws a lot less each frame. Bridges, driveways, parked cars and fences used to be drawn all at once for the whole map. They're now split into blocks, and only the blocks on screen get drawn, which cuts the number of draw calls per frame from about 2,500 to about 750.
+- Trees, towers, boats, flags, fountains, cars and people that are off screen no longer redraw every frame.
+- New **Graphics quality** setting at the top of Settings:
+  - **High:** everything on, as before.
+  - **Medium:** slightly simpler water (one layer of light on the bottom instead of two), 24 cars and 28 people.
+  - **Low:** much simpler water, no reflections, puddles, mist, storm cloud or lit-window glow, trees stand still, 12 cars and 14 people.
+- The setting is saved with your other settings.
 
 ## v0.9.18 · Screen polish
 
