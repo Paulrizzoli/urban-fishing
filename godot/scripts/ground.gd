@@ -243,7 +243,9 @@ static func make_texture() -> ImageTexture:
 
 ## A small texture that describes the water, for the water shader. One pixel per tile, sampled smoothly:
 ## red marks water, green is how far it is from shore (shallow to deep), blue marks the storm drain's murky water.
+static var _water_mask: ImageTexture
 static func make_water_mask() -> ImageTexture:
+	if _water_mask != null: return _water_mask
 	var img := Image.create(Town.MW, Town.MH, false, Image.FORMAT_RGBA8)
 	for y in Town.MH:
 		for x in Town.MW:
@@ -265,7 +267,8 @@ static func make_water_mask() -> ImageTexture:
 				var c := img.get_pixel(px, py)
 				c.r = clampf(0.5 + (0.5 - f) * 1.6, 0.0, 1.0)
 				img.set_pixel(px, py, c)
-	return ImageTexture.create_from_image(img)
+	_water_mask = ImageTexture.create_from_image(img)
+	return _water_mask
 
 ## What each tile's ground is made of, for the ground shader's surface texture. One pixel per tile, sampled sharply.
 ## 0 nothing, 1 lawn, 2 asphalt, 3 sidewalk and concrete, 4 sand, 5 water, 6 fairway, 7 dirt path, 8 plaza, 9 dock,
