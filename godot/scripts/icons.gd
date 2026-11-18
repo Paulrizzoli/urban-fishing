@@ -68,7 +68,9 @@ static func draw(ci: CanvasItem, id: String, r: Rect2, t := 0.0) -> void:
 ## A catch from the cooler: a fish tinted for its kind, gold with a star for a legend,
 ## or a soggy bit of junk.
 static func draw_catch(ci: CanvasItem, c: Dictionary, r: Rect2) -> void:
-	if c.get("junk", false): draw(ci, "junk", r); return
+	if c.get("junk", false):
+		if not JunkArt.draw(ci, str(c.get("n", "")), r.grow(-r.size.x * 0.04), Time.get_ticks_msec() / 1000.0): draw(ci, "junk", r)
+		return
 	var s := minf(r.size.x, r.size.y) / 64.0
 	ci.draw_set_transform(r.position + (r.size - Vector2(64, 64) * s) / 2.0, 0.0, Vector2(s, s))
 	if c.get("legend", false):

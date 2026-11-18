@@ -82,6 +82,11 @@ func _ready() -> void:
 		if a == "--parts=all":
 			for p in Crafting.PARTS: Game.S.parts[p] = 3 if p != "p_bigreel" else 0
 		if a.begins_with("--lure="): Game.S.lures[a.substr(7)] = 3; Game.S.bait = a.substr(7)
+		if a == "--cooler=junk": # a cooler of junk, for checking the pictures in the Sell tab
+			for sid in Game.spots:
+				for fd in Game.spots[sid].fish:
+					if fd.get("junk", false) and Game.S.cooler.size() < 8 and not Game.S.cooler.any(func(c): return c.n == fd.n):
+						Game.S.cooler.append({ "n": fd.n, "w": fd.w[0], "value": int(fd.get("flat", 1)), "spot": sid, "legend": false, "junk": true, "day": 1, "tm": 0 })
 		if a == "--cooler=sample":
 			for f in [[1, 2], [1, 4], [1, 5], [4, 1], [14, 4], [15, 0], [2, 7], [16, 7]]:
 				var fd: Dictionary = Game.spots[f[0]].fish[f[1]]
@@ -342,6 +347,20 @@ func _ready() -> void:
 		if a == "--open=gear": shop_tab = "gear"; open_shop()
 		if a == "--open=order": shop_tab = "order"; open_shop()
 		if a == "--open=marina": open_marina()
+		if a == "--junk-gallery": # every junk picture on one screen: big ones as on the catch card, small as in the Sell tab
+			var jl := CanvasLayer.new(); jl.layer = 20; add_child(jl)
+			var jc := Control.new(); jc.set_anchors_preset(Control.PRESET_FULL_RECT); jl.add_child(jc)
+			var jf := Story.all_fish().filter(func(f): return f.get("junk", false))
+			jc.draw.connect(func():
+				jc.draw_rect(Rect2(Vector2.ZERO, jc.size), Color("#eef4f2"))
+				var cols := 6
+				var cw := jc.size.x / cols
+				var ch := jc.size.y / ceili(jf.size() / float(cols))
+				for i in jf.size():
+					var r := Rect2((i % cols) * cw, floorf(i / cols) * ch, cw, ch)
+					JunkArt.draw(jc, jf[i].n, Rect2(r.position + Vector2(6, 4), Vector2(cw * 0.62, ch - 26)), 0.3)
+					ItemIcons.draw_catch(jc, { "n": jf[i].n, "junk": true }, Rect2(r.position + Vector2(cw * 0.7, ch * 0.25), Vector2(48, 48)))
+					jc.draw_string(Game.font_bold, r.position + Vector2(6, r.size.y - 5), jf[i].n, HORIZONTAL_ALIGNMENT_LEFT, cw - 8, 11, Color("#22313a")))
 		if a == "--gallery": # every fish drawing on one screen, for checking FishArt
 			var gl := CanvasLayer.new(); gl.layer = 20; add_child(gl)
 			var gc := Control.new(); gc.set_anchors_preset(Control.PRESET_FULL_RECT); gl.add_child(gc)
@@ -405,6 +424,10 @@ func _ready() -> void:
 			fishing.action_down(); fishing.action_up(); fishing.progress = 0.5
 		if a.begins_with("--twitch="): fishing.twitch_side(int(a.substr(9)))
 		if a == "--land": fishing.fish = Game.spots[1].fish[5]; fishing.fw = 44.2; fishing.spot = 1; fishing._land()
+		if a.begins_with("--land-junk="): # land the junk with this name, to see its catch card
+			for sid in Game.spots:
+				for f in Game.spots[sid].fish:
+					if f.n == a.substr(12): fishing.fish = f; fishing.fw = 1.0; fishing.spot = sid; fishing._land(); break
 
 func _fit_zoom() -> void:
 	var vs := get_viewport_rect().size
