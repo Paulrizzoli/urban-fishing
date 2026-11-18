@@ -6,7 +6,8 @@ extends Node2D
 signal landed(c: Dictionary)
 signal message(text: String)
 
-const SHCOUNT := { 1: 5, 7: 7, 2: 16, 3: 6, 4: 4, 5: 5, 6: 6, 9: 12, 10: 6, 11: 6, 12: 7, 13: 10, 14: 24, 15: 18, 16: 6, 17: 5 }
+const SHCOUNT := { 1: 5, 7: 7, 2: 16, 3: 6, 4: 4, 5: 5, 6: 6, 9: 12, 10: 6, 11: 6, 12: 7, 13: 10, 14: 24, 15: 18, 16: 6, 17: 5,
+	20: 24, 21: 14, 22: 34, 23: 5, 24: 6, 25: 4, 26: 5 }   # 20 and up are Ironwater
 const BAND := [0.22, 0.82]
 const MINR := 1.2
 const MAXR := 5.6

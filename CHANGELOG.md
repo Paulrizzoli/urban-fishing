@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.37 | Nov 18, 2026 | Fish in Ironwater: its spots fill with fish shadows you can cast at, like Port Mullet's |
 | v0.9.36 | Nov 18, 2026 | Guards and patrols stay on land: no more walking across ponds, channels and the mill race |
 | v0.9.35 | Nov 18, 2026 | A real gate at Heron Lakes that swings open for residents' cars, and a gate at Sunsplash Jungle Park that shows when it's closed |
 | v0.9.34 | Nov 18, 2026 | Ironwater, a second town: a dam and spillway, a high viaduct you fish under, a mill race, a brewery pond and a ballpark |
@@ -60,6 +61,12 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.37 · Fish in Ironwater
+
+_Nov 18, 2026 · Builds: `UrbanFishing-v0.9.37-windows.zip`, `UrbanFishing-v0.9.37-godot-project.zip`_
+
+- **Ironwater's water has fish in it now.** In v0.9.34 the game never put any fish in Ironwater's seven spots, so there were no shadows to cast at and nothing to catch there. Now the reservoir, the spillway boil, the river, the mill race, the brewery pond, the splash pool and Founders Park Pond all fill up with fish shadows, the same way Port Mullet's water does. That includes the fish under the viaduct.
 
 ## v0.9.36 · Nobody walks on water
 
