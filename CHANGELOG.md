@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.41 | Nov 18, 2026 | Gentler cars: most just bump you onto the sidewalk, and a knockout costs 30 minutes and $10 |
 | v0.9.40 | Nov 18, 2026 | Aim your cast anywhere with a cast marker, and side twitches that really reel the lure in |
 | v0.9.39 | Nov 18, 2026 | The black box at the top of the Mill Race is now a sluice gate, and the Lakeside Park dock reaches the water |
 | v0.9.38 | Nov 18, 2026 | Fence corners that close up, holes you can see, and guards that take twice as long to bust you |
@@ -64,6 +65,14 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.41 · Gentler cars
+
+_Nov 18, 2026 · Builds: `UrbanFishing-v0.9.41-windows.zip`, `UrbanFishing-v0.9.41-godot-project.zip`, screenshots in `screenshots/v0.9.41/`_
+
+- **Most cars just bump you:** when a car reaches you after honking, about 2 times in 3 it just shoves you onto the nearest sidewalk, with another honk and a shout from the driver ("Get out of the road!", "Sidewalk's right there, pal!"). There's no cost, and you can keep going.
+- **Knockouts are lighter:** about 1 time in 3 you still get knocked flat, but you come to on the sidewalk right there 30 minutes later with a $10 bill (or whatever you have on you). Before, it was 2 hours, $25 and waking up at home. Your cooler is still safe.
+- Cars still always honk first and wait while you're fishing.
 
 ## v0.9.40 · Aim anywhere, twitch it in
 
