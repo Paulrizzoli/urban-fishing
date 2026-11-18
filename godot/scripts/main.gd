@@ -79,6 +79,7 @@ var test_shot := ""
 var test_frames := 0
 const LABEL_SECS := 5.0
 var label_seen := {}   # place-name label -> seconds it has been on screen
+var test_knockout := false     # --knocked always knocks you out instead of rolling for a bump
 var test_dir := Vector2.ZERO   # --walk=dx,dy holds that direction down, for checking what you bump into
 var test_shot_frame := 90   # --shot-frame=N takes the shot later, e.g. to see a prompt fade out
 
@@ -460,7 +461,8 @@ func _ready() -> void:
 		if a.begins_with("--homerod="): Game.S.homerod = Crafting.rod_stats(Array(a.substr(10).split(","))); Game.S.use_home = true
 		if a == "--busted": _busted(guards.watchers[0])
 		if a.begins_with("--walk="): var wv := a.substr(7).split(","); test_dir = Vector2(float(wv[0]), float(wv[1]))
-		if a == "--knocked": _knocked_down(traffic.cars[0])
+		if a == "--knocked": test_knockout = true; _knocked_down(traffic.cars[0])
+		if a == "--bumped": _knocked_down(traffic.cars[0])
 		if a == "--capsize": _capsized(harbor.boats[0])
 		if a.begins_with("--harbor=go"): harbor.test_go = true; harbor.test_route = int(a.substr(12)) if a.length() > 12 else -1
 		if a.begins_with("--harbor=hold,"): # a boat under way at player + (dx, dy), heading at you, horn going
@@ -1330,28 +1332,54 @@ func _busted(w: Dictionary) -> void:
 		["sub", "Offense #%d here. Fines go up each time. Try hiding in bushes, waiting for patrols to turn, or a disguise from Lou's." % n],
 		["row", [["Walk it off", func(): hud.close(), true, "hot"]]]])
 
-## A car you didn't get out of the way of. Nobody's badly hurt: you wake up at home a couple of hours
-## later with a bruise and an ER bill. Your cooler is safe.
+const DRIVER_SHOUTS := ["\"Get out of the road!\"", "\"Sidewalk's right there, pal!\"", "\"You're gonna get yourself killed!\"", "\"Hey! I'm walkin' here! I mean, drivin'!\"", "\"Watch it, bait-for-brains!\""]
+
+## A car you didn't get out of the way of. Most of the time it just bumps you back onto the sidewalk,
+## with another honk and a shout from the driver. About 1 in 3 knocks you out: you come to on the
+## sidewalk half an hour later with a small ER bill. Nobody's badly hurt and your cooler is safe.
 func _knocked_down(car) -> void:
 	if hud.is_open() or menu.title_open: return
-	Sound.play("thump", 0.0, 0.0)
 	fishing.cancel(); player.path.clear()
+	Game.S.boat = false
+	var side := _sidewalk_near(player.position, car)
+	if randf() >= 1.0 / 3.0 and not test_knockout:
+		# a bump: shoved onto the sidewalk, no harm done
+		Sound.play("thump", -6.0)
+		Sound.play("horn", -2.0, 0.06)
+		shake = 0.2; shake_px = 3.0
+		player.position = side
+		Game.S.bumps = int(Game.S.get("bumps", 0)) + 1
+		hud.flash("The %s bumps you onto the sidewalk. %s" % [_car_colour(car.col) + (" pickup" if car.L > 2.0 else " car"), DRIVER_SHOUTS.pick_random()])
+		return
+	Sound.play("thump", 0.0, 0.0)
 	shake = 0.4; shake_px = 6.0
-	var bill := 25
+	var bill := 10
 	var paid := mini(int(Game.S.cash), bill)
 	Game.S.cash -= paid
 	Game.S.knockdowns = int(Game.S.get("knockdowns", 0)) + 1
-	Game.S.boat = false
-	Game.skip_minutes(120)
-	player.position = home_door + Vector2(0, 0.9)
-	player.face = PI / 2
+	Game.skip_minutes(30)
+	player.position = side
 	Game.save_game()
 	var what := "A " + _car_colour(car.col) + (" pickup" if car.L > 2.0 else " car")
 	hud.open([["h3", "Knocked down in the street"], ["h2", what + " didn't stop"], ["quote", "\"I honked! You heard me honk!\""],
-		["p", "You land on your backside, see stars and wake up " + ("in your motel room" if Town.level == 1 else "on your own couch") + " two hours later with a bruise the shape of a side mirror. " +
-			("The ER bill was %s." % Game.money(bill) if paid >= bill else "The ER bill was %s; they took the %s you had." % [Game.money(bill), Game.money(paid)] if paid > 0 else "The ER let you off the bill.") + " Your cooler is safe."],
-		["sub", "Cars honk when you're in their lane. A few drivers stop, most don't, so when you hear a horn, step onto the sidewalk. Cars always wait while you have a line out."],
+		["p", "You land on your backside and see stars. Half an hour later you come to on the sidewalk with a bruise the shape of a side mirror and a paramedic checking your eyes. " +
+			("The bill for the ambulance visit was %s." % Game.money(bill) if paid >= bill else "The bill was %s; they took the %s you had." % [Game.money(bill), Game.money(paid)] if paid > 0 else "They let you off the bill.") + " Your cooler is safe."],
+		["sub", "Cars honk when you're in their lane. Most just bump you out of the way, but some knock you flat, so when you hear a horn, step onto the sidewalk. Cars always wait while you have a line out."],
 		["row", [["Ouch", func(): hud.close(), true, "hot"]]]])
+
+## The nearest spot off the road you can stand on, away from the car that hit you.
+func _sidewalk_near(p: Vector2, car) -> Vector2:
+	var best := p
+	var bd := INF
+	for dy in range(-5, 6):
+		for dx in range(-5, 6):
+			var x := floori(p.x) + dx
+			var y := floori(p.y) + dy
+			if not player.walkable(x, y) or Town.t_at(x, y) == Town.T.ROAD or Town.is_water_t(Town.t_at(x, y)) or Town.in_bridge(x, y): continue
+			var w := Vector2(x + 0.5, y + 0.5)
+			var d := w.distance_to(p) + (0.5 if (w - car.position).dot(Vector2.from_angle(car.ang)) > 0.0 else 0.0)
+			if d < bd and not player.collides(w) and player.sink(w, 0.0) == 0.0: bd = d; best = w
+	return best
 
 static func _car_colour(c: Color) -> String:
 	if c.s < 0.2: return "white" if c.v > 0.8 else "silver" if c.v > 0.5 else "black"
