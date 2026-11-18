@@ -411,7 +411,9 @@ func action_down() -> void:
 func action_up() -> void: holding = false
 
 ## Left or right while waiting: twitch the lure across the water, left on screen for left and right
-## for right, with a little tug toward you. It draws fish in like a forward twitch (as in the browser game).
+## for right, and pull it in a little toward you each time, like a real twitch retrieve. It draws fish
+## in like a forward twitch (as in the browser game). Twitch enough and the lure comes all the way back.
+const TWITCH_PULL := 0.3
 func twitch_side(dir: int) -> void:
 	if state != "wait" or bob == null: return
 	twitch = 1.4; splash = 0.25; splash_big = false
@@ -419,10 +421,21 @@ func twitch_side(dir: int) -> void:
 	Sound.play("plop", -10.0)
 	if manhole >= 0: return
 	var toward: Vector2 = (player.position - bob).normalized()
-	var n: Vector2 = bob + Vector2(dir * 0.42, 0) + toward * 0.08
-	if is_water(n) and region_at(n) == spot and n.distance_to(player.position) >= 1.0:
-		slide += bob - n; bob = n
-		WaterFx.ripple(n, 0.35)
+	var pull: Vector2 = toward * TWITCH_PULL
+	# sideways and in if there's room, otherwise just in (against a wall or the edge of the spot)
+	for n: Vector2 in [bob + Vector2(dir * 0.42, 0) + pull, bob + pull]:
+		if is_water(n) and region_at(n) == spot and n.distance_to(player.position) >= 1.0:
+			slide += bob - n; bob = n
+			WaterFx.ripple(n, 0.35)
+			return
+	if not is_water(bob + pull) or (bob + pull).distance_to(player.position) < 1.0:
+		drop_target(0); state = "idle"; holding = false; emit_signal("message", "Reeled all the way in. Cast again.")
+
+## How thick the line looks: better rods (bought or home-built) have lighter, finer line, so it goes
+## from a heavy cord on the garage-sale rod to a hair-thin line on the big-game rod.
+static func line_width() -> float:
+	var k := clampf((1.0 - float(Game.rod().t)) / 0.5, 0.0, 1.0)
+	return lerpf(0.032, 0.011, k)
 
 func update(dt: float) -> void:
 	update_shadows(dt)
@@ -597,9 +610,9 @@ func draw_line_layer(ci: CanvasItem) -> void:
 	var ctrl := (r + b) / 2 + (-perp * ang * 0.4 if state == "reel" else Vector2(0, 0.4))
 	var line := PackedVector2Array()
 	for i in 13: line.append(Art._quad(r, ctrl, b + Vector2(0, dip), i / 12.0))
-	# a thin line, like the other anglers' (it was a thick white cord before)
+	# the line: thinner the better your rod (see line_width)
 	var lc := Color(1, 0.67, 0.59, 0.9) if state == "reel" and tension > BAND[1] else Color(1, 1, 1, 0.75 if state == "reel" else 0.6)
-	ci.draw_polyline(line, lc, 0.022, true)
+	ci.draw_polyline(line, lc, line_width(), true)
 	if state == "reel":
 		if target == null: Art.fish_shadow(ci, b, (b - player.position).angle() + ang * 0.8, clampf(0.34 + sqrt(maxf(fw, 1)) * 0.19, 0.32, 2.8), 0.4, false, now * 14)
 		# the fish fights at the surface: churned water and spray, more of it the harder it pulls
