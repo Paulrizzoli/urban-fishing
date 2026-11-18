@@ -1645,5 +1645,713 @@
     "note": "An albino catfish the mayor released in 1989 'as a symbol of civic renewal.' Nobody has told the mayor."
    }
   ]
+ },
+ "20": {
+  "name": "Calder Reservoir",
+  "access": "Public: Lakeside Park, the boat ramp and the top of the dam. Kayaks and skiffs welcome. Deep, cold and clear.",
+  "fish": [
+   {
+    "n": "Yellow Perch",
+    "w": [
+     0.3,
+     1.6
+    ],
+    "pp": 6,
+    "pull": 0.3,
+    "r": 30
+   },
+   {
+    "n": "Black Crappie",
+    "w": [
+     0.4,
+     2.6
+    ],
+    "pp": 6,
+    "pull": 0.35,
+    "r": 22
+   },
+   {
+    "n": "Smallmouth Bass",
+    "w": [
+     1,
+     6.5
+    ],
+    "pp": 6,
+    "pull": 0.62,
+    "r": 15
+   },
+   {
+    "n": "Walleye",
+    "w": [
+     2,
+     12
+    ],
+    "pp": 7,
+    "pull": 0.55,
+    "r": 11,
+    "t": [
+     "low",
+     "night"
+    ]
+   },
+   {
+    "n": "Muskellunge",
+    "w": [
+     10,
+     36
+    ],
+    "pp": 4,
+    "pull": 0.86,
+    "r": 3,
+    "t": [
+     "day",
+     "low"
+    ],
+    "note": "The fish of ten thousand casts. Lou won't believe this one."
+   },
+   {
+    "n": "Lost Kayak Paddle",
+    "w": [
+     2,
+     3
+    ],
+    "flat": 4,
+    "pull": 0.3,
+    "r": 4,
+    "junk": true
+   },
+   {
+    "n": "Lucky Penny",
+    "w": [
+     0.1,
+     0.1
+    ],
+    "flat": 1,
+    "pull": 0.2,
+    "r": 3,
+    "junk": true
+   },
+   {
+    "n": "The Mayor",
+    "w": [
+     48,
+     62
+    ],
+    "pp": 3,
+    "pull": 1,
+    "r": 2,
+    "t": [
+     "low"
+    ],
+    "legend": true,
+    "note": "A muskie as long as a canoe that has ruled the reservoir since the dam went in. Locals swear it once ate a mallard on live TV."
+   }
+  ]
+ },
+ "21": {
+  "name": "The Spillway",
+  "access": "The tailwater below Ironwater Dam. Fish it from the public pier and the river walk. The boil right under the gates, and the wing walls beside it, are restricted: a ranger by day and cameras all night.",
+  "fish": [
+   {
+    "n": "White Bass",
+    "w": [
+     0.8,
+     4
+    ],
+    "pp": 5,
+    "pull": 0.5,
+    "r": 24
+   },
+   {
+    "n": "Skipjack Herring",
+    "w": [
+     0.5,
+     2.6
+    ],
+    "pp": 3,
+    "pull": 0.62,
+    "r": 18,
+    "note": "Jumps like a tarpon, tastes like a gym sock. The catfish love it."
+   },
+   {
+    "n": "Freshwater Drum",
+    "w": [
+     2,
+     16
+    ],
+    "pp": 3,
+    "pull": 0.56,
+    "r": 17,
+    "note": "It grunts. Really. Locals call it a sheepshead."
+   },
+   {
+    "n": "Channel Catfish",
+    "w": [
+     2,
+     18
+    ],
+    "pp": 4,
+    "pull": 0.62,
+    "r": 16
+   },
+   {
+    "n": "Sauger",
+    "w": [
+     1,
+     4.5
+    ],
+    "pp": 7,
+    "pull": 0.5,
+    "r": 11,
+    "t": [
+     "low",
+     "night"
+    ]
+   },
+   {
+    "n": "Striped Bass",
+    "w": [
+     8,
+     36
+    ],
+    "pp": 5,
+    "pull": 0.86,
+    "r": 3,
+    "t": [
+     "low",
+     "night"
+    ],
+    "near": "boil"
+   },
+   {
+    "n": "Flathead Catfish",
+    "w": [
+     10,
+     62
+    ],
+    "pp": 3,
+    "pull": 0.86,
+    "r": 5,
+    "t": [
+     "night"
+    ],
+    "near": "boil"
+   },
+   {
+    "n": "Traffic Cone",
+    "w": [
+     3,
+     4
+    ],
+    "flat": 2,
+    "pull": 0.3,
+    "r": 4,
+    "junk": true
+   },
+   {
+    "n": "Cracked Phone",
+    "w": [
+     0.3,
+     0.4
+    ],
+    "flat": 5,
+    "pull": 0.2,
+    "r": 2,
+    "junk": true
+   },
+   {
+    "n": "Old Rivet",
+    "w": [
+     90,
+     118
+    ],
+    "pp": 3,
+    "pull": 1,
+    "r": 2,
+    "t": [
+     "night"
+    ],
+    "legend": true,
+    "near": "boil",
+    "note": "A flathead catfish older than the dam, living in the boil right under the gates. Divers who inspect the dam won't go near that corner."
+   }
+  ]
+ },
+ "22": {
+  "name": "Calder River",
+  "access": "Public river walks on both banks, all the way through town. Fish off the bridges or under the I-90 viaduct, where walleye wait in the lights at night.",
+  "fish": [
+   {
+    "n": "Smallmouth Bass",
+    "w": [
+     1,
+     6
+    ],
+    "pp": 6,
+    "pull": 0.62,
+    "r": 18
+   },
+   {
+    "n": "Channel Catfish",
+    "w": [
+     2,
+     16
+    ],
+    "pp": 4,
+    "pull": 0.62,
+    "r": 18
+   },
+   {
+    "n": "Common Carp",
+    "w": [
+     4,
+     32
+    ],
+    "pp": 1,
+    "pull": 0.66,
+    "r": 18
+   },
+   {
+    "n": "Freshwater Drum",
+    "w": [
+     2,
+     14
+    ],
+    "pp": 3,
+    "pull": 0.56,
+    "r": 12
+   },
+   {
+    "n": "Walleye",
+    "w": [
+     2,
+     11
+    ],
+    "pp": 7,
+    "pull": 0.55,
+    "r": 8,
+    "t": [
+     "low",
+     "night"
+    ]
+   },
+   {
+    "n": "Longnose Gar",
+    "w": [
+     3,
+     20
+    ],
+    "pp": 2,
+    "pull": 0.7,
+    "r": 7,
+    "t": [
+     "day",
+     "low"
+    ]
+   },
+   {
+    "n": "Paddlefish",
+    "w": [
+     15,
+     70
+    ],
+    "pp": 3,
+    "pull": 0.82,
+    "r": 2,
+    "note": "A fish with a canoe paddle for a nose. Been around since the dinosaurs."
+   },
+   {
+    "n": "Lake Sturgeon",
+    "w": [
+     25,
+     90
+    ],
+    "pp": 0,
+    "pull": 0.9,
+    "r": 2,
+    "release": true,
+    "rep": 6,
+    "note": "Protected. Older than you, maybe older than your grandfather. Back it goes."
+   },
+   {
+    "n": "Shopping Cart",
+    "w": [
+     28,
+     34
+    ],
+    "flat": 8,
+    "pull": 0.35,
+    "r": 5,
+    "junk": true
+   },
+   {
+    "n": "Bicycle",
+    "w": [
+     18,
+     24
+    ],
+    "flat": 5,
+    "pull": 0.3,
+    "r": 4,
+    "junk": true
+   },
+   {
+    "n": "Single Sneaker",
+    "w": [
+     0.8,
+     1.2
+    ],
+    "flat": 1,
+    "pull": 0.2,
+    "r": 3,
+    "junk": true
+   },
+   {
+    "n": "The Viaduct Ghost",
+    "w": [
+     140,
+     190
+    ],
+    "pp": 0,
+    "pull": 1,
+    "r": 2,
+    "t": [
+     "night"
+    ],
+    "legend": true,
+    "release": true,
+    "rep": 25,
+    "near": "viaduct",
+    "note": "A pale old lake sturgeon that cruises under the I-90 viaduct after dark. Nobody keeps the Ghost."
+   }
+  ]
+ },
+ "23": {
+  "name": "The Mill Race",
+  "access": "A stone channel that brings cold reservoir water through the old Halvorsen Woolen Mill. The mill is a condemned demolition site: a foreman by day, a watchman and his dog at night.",
+  "fish": [
+   {
+    "n": "Rainbow Trout",
+    "w": [
+     0.8,
+     5
+    ],
+    "pp": 7,
+    "pull": 0.55,
+    "r": 26
+   },
+   {
+    "n": "Creek Chub",
+    "w": [
+     0.2,
+     1
+    ],
+    "pp": 3,
+    "pull": 0.3,
+    "r": 22
+   },
+   {
+    "n": "Brown Trout",
+    "w": [
+     1,
+     9
+    ],
+    "pp": 8,
+    "pull": 0.6,
+    "r": 16
+   },
+   {
+    "n": "Brook Trout",
+    "w": [
+     0.4,
+     3
+    ],
+    "pp": 10,
+    "pull": 0.5,
+    "r": 8,
+    "t": [
+     "low"
+    ]
+   },
+   {
+    "n": "Wooden Bobbin",
+    "w": [
+     0.2,
+     0.4
+    ],
+    "flat": 6,
+    "pull": 0.2,
+    "r": 5,
+    "junk": true,
+    "note": "From the old looms. The mill made blankets for the whole state, once."
+   },
+   {
+    "n": "Somebody's Car Keys",
+    "w": [
+     0.2,
+     0.3
+    ],
+    "flat": 4,
+    "pull": 0.2,
+    "r": 2,
+    "junk": true
+   },
+   {
+    "n": "The Foreman",
+    "w": [
+     22,
+     30
+    ],
+    "pp": 4,
+    "pull": 1,
+    "r": 2,
+    "t": [
+     "night"
+    ],
+    "legend": true,
+    "note": "A brown trout as fat as a dachshund that's lived under the waterwheel since the mill shut down in 1974."
+   }
+  ]
+ },
+ "24": {
+  "name": "Brewery Cooling Pond",
+  "access": "Behind Calder Brewing Co. The carp eat the spent grain and get enormous. Security day and night; a visitor's lanyard gets you in during tour hours, 11 AM to 7 PM.",
+  "fish": [
+   {
+    "n": "Common Carp",
+    "w": [
+     6,
+     30
+    ],
+    "pp": 1,
+    "pull": 0.66,
+    "r": 26
+   },
+   {
+    "n": "Mirror Carp",
+    "w": [
+     8,
+     36
+    ],
+    "pp": 2,
+    "pull": 0.7,
+    "r": 14
+   },
+   {
+    "n": "Goldfish",
+    "w": [
+     0.4,
+     2
+    ],
+    "pp": 6,
+    "pull": 0.25,
+    "r": 12
+   },
+   {
+    "n": "Channel Catfish",
+    "w": [
+     3,
+     18
+    ],
+    "pp": 4,
+    "pull": 0.62,
+    "r": 12
+   },
+   {
+    "n": "Empty Keg",
+    "w": [
+     30,
+     30
+    ],
+    "flat": 12,
+    "pull": 0.4,
+    "r": 4,
+    "junk": true
+   },
+   {
+    "n": "Rubber Duck",
+    "w": [
+     0.2,
+     0.2
+    ],
+    "flat": 1,
+    "pull": 0.2,
+    "r": 3,
+    "junk": true
+   },
+   {
+    "n": "The Brewmaster",
+    "w": [
+     55,
+     72
+    ],
+    "pp": 3,
+    "pull": 1,
+    "r": 2,
+    "t": [
+     "day",
+     "low"
+    ],
+    "legend": true,
+    "note": "A mirror carp the size of a beer barrel. The brewery put it on a label once. It's been insufferable ever since."
+   }
+  ]
+ },
+ "25": {
+  "name": "Riverhawks Splash Pool",
+  "access": "Past the center field wall at Riverhawks Field. A groundskeeper by day and security late at night. Between 5 and 10 PM everyone is watching the game.",
+  "fish": [
+   {
+    "n": "Bluegill",
+    "w": [
+     0.2,
+     1.2
+    ],
+    "pp": 5,
+    "pull": 0.3,
+    "r": 26
+   },
+   {
+    "n": "Pumpkinseed",
+    "w": [
+     0.2,
+     0.8
+    ],
+    "pp": 5,
+    "pull": 0.3,
+    "r": 22
+   },
+   {
+    "n": "Largemouth Bass",
+    "w": [
+     1,
+     8
+    ],
+    "pp": 5,
+    "pull": 0.6,
+    "r": 14
+   },
+   {
+    "n": "Home Run Ball",
+    "w": [
+     0.3,
+     0.3
+    ],
+    "flat": 15,
+    "pull": 0.2,
+    "r": 8,
+    "junk": true,
+    "note": "Signed by somebody. You can't read who."
+   },
+   {
+    "n": "Foam Finger",
+    "w": [
+     0.4,
+     0.5
+    ],
+    "flat": 2,
+    "pull": 0.2,
+    "r": 4,
+    "junk": true
+   },
+   {
+    "n": "Home Run Henry",
+    "w": [
+     14,
+     19
+    ],
+    "pp": 10,
+    "pull": 1,
+    "r": 2,
+    "t": [
+     "low",
+     "night"
+    ],
+    "legend": true,
+    "note": "A largemouth that has eaten eleven home run balls. Probably. The groundskeeper keeps count."
+   }
+  ]
+ },
+ "26": {
+  "name": "Founders Park Pond",
+  "access": "A public park pond next to Calder River Outfitters. Ducks, joggers and kids with cane poles. Nobody minds.",
+  "fish": [
+   {
+    "n": "Bluegill",
+    "w": [
+     0.2,
+     1.1
+    ],
+    "pp": 5,
+    "pull": 0.3,
+    "r": 28
+   },
+   {
+    "n": "Pumpkinseed",
+    "w": [
+     0.2,
+     0.8
+    ],
+    "pp": 5,
+    "pull": 0.3,
+    "r": 24
+   },
+   {
+    "n": "Yellow Perch",
+    "w": [
+     0.3,
+     1.3
+    ],
+    "pp": 6,
+    "pull": 0.3,
+    "r": 18
+   },
+   {
+    "n": "Black Crappie",
+    "w": [
+     0.4,
+     2
+    ],
+    "pp": 6,
+    "pull": 0.35,
+    "r": 14
+   },
+   {
+    "n": "Common Carp",
+    "w": [
+     3,
+     18
+    ],
+    "pp": 1,
+    "pull": 0.62,
+    "r": 8
+   },
+   {
+    "n": "Soggy Flip-Flop",
+    "w": [
+     0.3,
+     0.4
+    ],
+    "flat": 1,
+    "pull": 0.2,
+    "r": 4,
+    "junk": true
+   },
+   {
+    "n": "Old Founder",
+    "w": [
+     24,
+     34
+    ],
+    "pp": 3,
+    "pull": 1,
+    "r": 2,
+    "t": [
+     "night"
+    ],
+    "legend": true,
+    "note": "A carp nobody can remember being small. The plaque on the bench says the park was founded in 1851. Some say the carp was too."
+   }
+  ]
  }
 }

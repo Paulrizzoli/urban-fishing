@@ -16,7 +16,7 @@ const SPECIES_EARLY := 5
 const EASY := [1, 2, 9, 13, 14, 17]
 ## Zones with guards, staff or cameras (golf course, office park, power station, Sunsplash,
 ## Heron Lakes, the airport, Marlowe Tower). The marina docks only count at night.
-const GUARDED_ZONES := [1, 2, 3, 5, 6, 7, 8]
+const GUARDED_ZONES := [1, 2, 3, 5, 6, 7, 8, 20, 21, 22, 23]
 
 ## Who's watching each guarded zone and when it's your turn. Shown when you walk in.
 const WATCH := {
@@ -28,6 +28,10 @@ const WATCH := {
 	7: "The airport. A gate guard and a patrol truck around the clock, and a tower spotlight 7 PM to 6 AM. When a jet comes over, nobody's watching.",
 	8: "Marlowe Tower. A lobby guard until 10 PM, a patrol and cameras all night. A suit gets you past the patrol 8 AM to 6 PM.",
 	9: "Mullet Bay Marina. The docks are private after 9 PM: a watchman and his dog walk them until 5 AM.",
+	20: "The Ironwater Dam wing walls, right over the boil. Restricted. The ranger walks the west wall 6 AM to 9 PM, and cameras sweep both walls around the clock.",
+	21: "The old Halvorsen Woolen Mill. A demolition site: the foreman walks it 7 AM to 5 PM (a lanyard gets you past him), and a watchman and his dog take over 9 PM to 5 AM.",
+	22: "Calder Brewing. Security walks the cooling pond day and night. A lanyard passes for a tour badge 11 AM to 7 PM, and a camera watches the dock at night.",
+	23: "Riverhawks Field. The groundskeeper drives the outfield 7 AM to 5 PM (a polo gets you by), and security drives it 10 PM to 6 AM. Game time, 5 to 10 PM, nobody's looking.",
 }
 
 static func early() -> bool:

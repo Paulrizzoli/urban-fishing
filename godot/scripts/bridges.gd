@@ -13,6 +13,10 @@ static var list: Array = []
 static var _under := PackedInt32Array()   # per tile: 1 + the bridge over the water there, or 0
 static var _done := false
 
+## Forget the bridges, after the map changes (going to the other town).
+static func reset() -> void:
+	list = []; _under = PackedInt32Array(); _done = false
+
 static func setup() -> void:
 	if _done: return
 	_done = true
@@ -24,8 +28,11 @@ static func setup() -> void:
 			for x in range(b.x0, b.x1 + 1):
 				if Town.region[Town.idx(x, y)] > 0: wet = true
 		var foot: bool = b.get("foot", false)
-		var e := { "r": r, "h": b.get("h", false), "wet": wet, "foot": foot, "road": b.get("road", false), "lit": wet and not foot, "see": 0.0 }
+		var high: bool = b.get("high", false)
+		var e := { "r": r, "h": b.get("h", false), "wet": wet, "foot": foot, "road": b.get("road", false), "lit": wet and not foot, "see": 0.0, "high": high,
+			"gx0": float(b.get("gx0", b.x0)), "gx1": float(b.get("gx1", b.x1 + 1)) }
 		list.append(e)
+		if high: continue
 		if wet:
 			for y in range(b.y0, b.y1 + 1):
 				for x in range(b.x0, b.x1 + 1):
@@ -45,12 +52,21 @@ static func _add_lamps(e: Dictionary) -> void:
 			if lp.distance_to(p) < 2.5: taken = true
 		if not taken: Town.lamps.append(p)
 
+## The high bridge (Ironwater's viaduct) over p, on land or water, or -1.
+static func high_at(p: Vector2) -> int:
+	for i in list.size():
+		var e: Dictionary = list[i]
+		if e.high and e.r.has_point(p): return i
+	return -1
+
 ## The bridge over the water at p, or -1.
 static func covered(p: Vector2) -> int:
 	var x := floori(p.x)
 	var y := floori(p.y)
 	if not Town.inb(x, y) or _under.is_empty(): return -1
-	return _under[Town.idx(x, y)] - 1
+	var u := _under[Town.idx(x, y)] - 1
+	if u < 0 and Town.is_water_t(Town.tile[Town.idx(x, y)]): return high_at(p)
+	return u
 
 ## Water under a bridge (the tile is road on top, but fish swim and boats paddle under it).
 static func wet_tile(x: int, y: int) -> bool: return Town.inb(x, y) and covered(Vector2(x + 0.5, y + 0.5)) >= 0
@@ -88,6 +104,10 @@ static func lit_at(p: Vector2) -> bool:
 ## Fish that like the shade under a bridge, and how much more often they turn up there.
 ## At night, snook and tarpon wait under the bridge lights for bait swept past in the light.
 static func boosts(night: bool) -> Dictionary:
+	if Town.level == 1:
+		# under the Ironwater bridges: walleye and sauger in the lights at night, smallmouth and drum in the shade by day
+		if night: return { "Walleye": 3.0, "Sauger": 2.5, "Flathead Catfish": 1.8, "The Viaduct Ghost": 1.5 }
+		return { "Smallmouth Bass": 2.0, "Freshwater Drum": 1.8, "Channel Catfish": 1.4 }
 	if night: return { "Snook": 3.5, "Tarpon": 2.5, "Mangrove Snapper": 1.6, "The Bridge Troll": 1.5 }
 	return { "Mangrove Snapper": 2.2, "Sheepshead": 2.0, "Snook": 1.6, "Redfish": 1.3 }
 
@@ -101,8 +121,10 @@ static func draw_under(ci: CanvasItem, view: Rect2) -> void:
 		if not e.wet: continue
 		var r: Rect2 = e.r
 		if not view.intersects(r.grow(REACH + 1)): continue
+		if e.high: _high_under(ci, e, view, now)
 		for y in range(int(r.position.y), int(r.end.y)):
 			for x in range(int(r.position.x), int(r.end.x)):
+				if e.high and (x < view.position.x - 1 or x > view.end.x + 1): continue
 				if Town.region[Town.idx(x, y)] == 0: continue
 				var deep := Art.shade(Color(Ground.water_pal(x, y)[1]), -0.45)
 				ci.draw_rect(Rect2(x, y, 1, 1), deep)
@@ -142,7 +164,76 @@ static func _shade_side(ci: CanvasItem, e: Dictionary, sgn: int) -> void:
 ## The decks, drawn over boats, fish and the wake. Each fades while you're under it.
 static func draw_decks(ci: CanvasItem, view: Rect2) -> void:
 	for e in list:
-		if view.intersects(e.r.grow(1)): _deck(ci, e)
+		if not e.high and view.intersects(e.r.grow(1)): _deck(ci, e)
+
+## The high deck, drawn over everything under it (people, cars, trees). It fades while you're under it.
+static func draw_high(ci: CanvasItem, view: Rect2) -> void:
+	for e in list:
+		if e.high and view.intersects(e.r.grow(3)): _high_deck(ci, e, view)
+
+## Under the viaduct on land: a soft shadow across the ground, darkest in the middle.
+static func _high_under(ci: CanvasItem, e: Dictionary, view: Rect2, _now: float) -> void:
+	var r: Rect2 = e.r
+	var x0 := maxf(r.position.x, view.position.x - 1)
+	var x1 := minf(r.end.x, view.end.x + 1)
+	var sh := Color(0.02, 0.05, 0.1, 0.34)
+	ci.draw_rect(Rect2(x0, r.position.y, x1 - x0, r.size.y), sh)
+	# the shadow spills out a little on the south side, where the sun can't reach
+	ci.draw_polygon(PackedVector2Array([Vector2(x0, r.end.y), Vector2(x1, r.end.y), Vector2(x1, r.end.y + 1.6), Vector2(x0, r.end.y + 1.6)]),
+		PackedColorArray([sh, sh, Color(sh, 0.0), Color(sh, 0.0)]))
+
+static func _high_deck(ci: CanvasItem, e: Dictionary, view: Rect2) -> void:
+	var r: Rect2 = e.r
+	var A: float = 1.0 - 0.6 * e.see
+	var x0 := maxf(r.position.x, view.position.x - 2)
+	var x1 := minf(r.end.x, view.end.x + 2)
+	var w := x1 - x0
+	var y0 := r.position.y
+	var y1 := r.end.y
+	var now := Time.get_ticks_msec() / 1000.0
+	var steel := Color("#3e6f7c", A)
+	var steel_dk := Color("#2b4f5a", A)
+	var asphalt := Color("#474c54", A)
+	# the girders seen from the south side, painted steel with a truss pattern
+	ci.draw_rect(Rect2(x0, y1 - 0.15, w, 0.7), steel_dk)
+	ci.draw_rect(Rect2(x0, y1 - 0.15, w, 0.12), steel)
+	var k := floorf(x0)
+	while k < x1:
+		ci.draw_line(Vector2(k, y1 - 0.05), Vector2(k + 0.5, y1 + 0.5), steel, 0.07)
+		ci.draw_line(Vector2(k + 0.5, y1 + 0.5), Vector2(k + 1.0, y1 - 0.05), steel, 0.07)
+		k += 1.0
+	ci.draw_rect(Rect2(x0, y1 + 0.5, w, 0.08), steel)
+	# the piers under the girders
+	for px in [6, 26, 34, 52, 59, 78, 88, 106]:
+		if px + 2 < x0 or px > x1: continue
+		ci.draw_rect(Rect2(px + 0.1, y1 + 0.58, 1.8, 1.0), Color("#a9a59c", A))
+		ci.draw_rect(Rect2(px + 1.4, y1 + 0.58, 0.5, 1.0), Color("#86827a", A))
+		ci.draw_rect(Rect2(px + 0.1, y1 + 1.5, 1.8, 0.12), Color(0, 0, 0, 0.25 * A))
+	# the deck: shoulders, two lanes each way, a concrete barrier in the middle
+	ci.draw_rect(Rect2(x0, y0 - 0.3, w, r.size.y + 0.3), asphalt)
+	ci.draw_rect(Rect2(x0, y0 - 0.3, w, 0.3), Color("#9a9ea4", A))
+	ci.draw_rect(Rect2(x0, y1 - 0.45, w, 0.3), Color("#9a9ea4", A))
+	var mid := (y0 + y1 - 0.45) / 2.0
+	ci.draw_rect(Rect2(x0, mid - 0.12, w, 0.24), Color("#c9ccd0", A))
+	for ly in [y0 + 0.9, mid + 1.0]:
+		var dx := floorf(x0)
+		while dx < x1:
+			ci.draw_rect(Rect2(dx + 0.2, ly, 0.6, 0.07), Color(1, 1, 1, 0.55 * A)); dx += 1.6
+	ci.draw_rect(Rect2(x0, y0 + 0.05, w, 0.05), Color("#e3b23c", 0.8 * A)); ci.draw_rect(Rect2(x0, y1 - 0.6, w, 0.05), Color("#e3b23c", 0.8 * A))
+	# traffic up on the interstate, both ways, never stopping
+	var lanes := [[y0 + 0.5, 1.0, 6.0], [y0 + 1.4, 1.0, 7.5], [mid + 0.6, -1.0, 6.5], [mid + 1.45, -1.0, 8.0]]
+	for li in lanes.size():
+		var L: Array = lanes[li]
+		for j in 6:
+			var span := float(Town.MW) + 24.0
+			var cx := fposmod(now * L[2] * L[1] + j * span / 6.0 + li * 7.3, span) - 12.0
+			if cx < x0 - 3 or cx > x1 + 3: continue
+			var big := (j + li) % 5 == 0
+			Art.car(ci, Vector2(cx, L[0]), 0.0 if L[1] > 0 else PI, Color(Art.CAR_COLORS[(j * 3 + li) % Art.CAR_COLORS.size()], A), 2.6 if big else 1.7, 0.8 if big else 0.72)
+	# light posts along the barrier
+	var p := ceilf(x0 / 9.0) * 9.0
+	while p < x1:
+		ci.draw_rect(Rect2(p, mid - 0.05, 0.1, 0.1), Color("#6c7178", A)); p += 9.0
 
 static func _deck(ci: CanvasItem, e: Dictionary) -> void:
 	var r: Rect2 = e.r
@@ -210,18 +301,19 @@ static func draw_glow(ci: CanvasItem, view: Rect2, a: float, glow: Callable) -> 
 	for e in list:
 		if not e.lit or not view.intersects(e.r.grow(3)): continue
 		var r: Rect2 = e.r
-		var ends: Array = [Vector2(r.get_center().x, r.position.y - 0.6), Vector2(r.get_center().x, r.end.y + 0.7)] if e.h else \
+		var gx: float = (e.gx0 + e.gx1) / 2.0
+		var ends: Array = [Vector2(gx, r.position.y - 0.6), Vector2(gx, r.end.y + 0.7)] if e.h else \
 			[Vector2(r.position.x - 0.7, r.get_center().y), Vector2(r.end.x + 0.7, r.get_center().y)]
 		for p in ends:
 			if not Town.is_water_t(Town.t_at(floori(p.x), floori(p.y))): continue
 			glow.call(ci, p, 1.5, Color(warm, 0.16 * a))
 			# broken glints of lamplight on the ripples where the shadow ends
-			var L: float = r.size.x if e.h else r.size.y
+			var L: float = (e.gx1 - e.gx0) if e.h else r.size.y
 			var n := int(L * 2.0)
 			for j in n:
 				var f := (j + 0.5) / n
 				var wob := sin(now * 2.2 + j * 1.9 + p.x + p.y) * 0.12
 				var lit := 0.5 + 0.5 * sin(now * 1.7 + j * 2.7 + p.x)
 				var c := Color(warm, 0.2 * a * lit)
-				if e.h: ci.draw_rect(Rect2(r.position.x + f * L - 0.15 + wob * 0.5, p.y + wob, 0.3, 0.05), c)
+				if e.h: ci.draw_rect(Rect2(e.gx0 + f * L - 0.15 + wob * 0.5, p.y + wob, 0.3, 0.05), c)
 				else: ci.draw_rect(Rect2(p.x + wob, r.position.y + f * L - 0.15 + wob * 0.5, 0.05, 0.3), c)

@@ -72,6 +72,7 @@ static func boatable(x: int, y: int, kind: String) -> bool:
 	if not Town.is_water_t(t): return false
 	if t == Town.T.DEEP and kind != "skiff": return false
 	if t == Town.T.WARM and kind == "skiff": return false
+	if Town.level == 1 and Town.zone[Town.idx(x, y)] == 20: return false   # the boil below the dam gates
 	return true
 
 func solid_at(p: Vector2) -> bool:
@@ -228,8 +229,8 @@ func launch_spot() -> Variant:
 			var y := floori(position.y) + dy
 			if not Town.inb(x, y) or Town.tile[Town.idx(x, y)] != Town.T.WATER: continue
 			var reg: int = Town.region[Town.idx(x, y)]
-			if not (reg in [2, 9, 13, 14]): continue
-			var kind := "skiff" if free_s and (reg == 13 or reg == 14) else "kayak" if free_k else ""
+			if not (reg in Town.launch_k or reg in Town.launch_s): continue
+			var kind := "skiff" if free_s and reg in Town.launch_s else "kayak" if free_k and reg in Town.launch_k else ""
 			if kind == "": continue
 			var d := Vector2(x + 0.5, y + 0.5).distance_to(position)
 			if d < bd: bd = d; best = [Vector2(x + 0.5, y + 0.5), kind]

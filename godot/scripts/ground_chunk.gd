@@ -124,7 +124,7 @@ func _detail(x: int, y: int) -> void:
 			if h > 0.6: draw_arc(Vector2(x + h, y + 0.8), 0.5, PI * 1.15, PI * 1.85, 8, Color(1, 1, 1, 0.07), 0.04)
 
 ## Ponds and lakes with fresh, still water get lily pads and reeds.
-const FRESH := [1, 3, 4, 10, 11, 12, 17]
+const FRESH := [1, 3, 4, 10, 11, 12, 17, 20, 24, 26]
 
 func _lily_pads(x: int, y: int, h: float) -> void:
 	if h > 0.32: return
@@ -218,6 +218,27 @@ func _wheel_wear(x: int, y: int) -> void:
 				if tx >= x and tx < x + 1: R(tx - 0.09, y, 0.18, 1, col)
 
 func _markings(X0: int, X1: int, Y0: int, Y1: int) -> void:
+	if Town.level == 0: _markings_pm(X0, X1, Y0, Y1)
+	else: _markings_any(X0, X1, Y0, Y1)
+	for d in Town.decor:
+		if d.k == "parking":
+			if d.x1 < X0 - 1 or d.x0 > X1 + 1 or d.y1 < Y0 - 1 or d.y0 > Y1 + 1: continue
+			for x in range(d.x0 + 1, d.x1 + 1):
+				if x >= X0 and x <= X1: R(x, d.y0 + 0.2, 0.06, d.y1 - d.y0 + 0.6, Color(1, 1, 1, 0.7))
+		elif d.k == "green":
+			if absf(d.x - (X0 + 4)) > 7 or absf(d.y - (Y0 + 4)) > 6: continue
+			_ellipse(Vector2(d.x, d.y), 2.55, 1.75, Color("#7fb85a"))
+			_ellipse(Vector2(d.x, d.y), 2.4, 1.6, Color("#a9dc7c"))
+			_ellipse(Vector2(d.x - 0.4, d.y - 0.3), 1.4, 0.9, Color(1, 1, 1, 0.1))
+			draw_circle(Vector2(d.x, d.y), 0.09, Color("#2a2a2a"))
+			R(d.x, d.y - 1.4, 0.07, 1.4, Color("#555555"))
+			draw_colored_polygon(PackedVector2Array([Vector2(d.x + 0.07, d.y - 1.4), Vector2(d.x + 0.8, d.y - 1.15), Vector2(d.x + 0.07, d.y - 0.9)]), Color("#e2583e"))
+		elif d.k == "bench":
+			if d.x < X0 - 1 or d.x > X1 + 2 or d.y < Y0 - 1 or d.y > Y1 + 2: continue
+			R(d.x - 0.55, d.y - 0.05, 1.2, 0.3, Color(0, 0, 0, 0.2)); R(d.x - 0.6, d.y - 0.15, 1.2, 0.3, Color("#8a5a35"))
+
+## Port Mullet's centre lines and crossings, placed by hand.
+func _markings_pm(X0: int, X1: int, Y0: int, Y1: int) -> void:
 	var yel := Color("#e8c84a")
 	for x in range(X0, X1 + 1):
 		if x % 2: continue
@@ -253,22 +274,25 @@ func _markings(X0: int, X1: int, Y0: int, Y1: int) -> void:
 	if Y0 <= 63 and Y1 >= 63:
 		for x in range(X0, X1 + 1):
 			if x % 3 == 0 and x <= 36: R(x, 63.94, 0.6, 0.1, wh)
-	for d in Town.decor:
-		if d.k == "parking":
-			if d.x1 < X0 - 1 or d.x0 > X1 + 1 or d.y1 < Y0 - 1 or d.y0 > Y1 + 1: continue
-			for x in range(d.x0 + 1, d.x1 + 1):
-				if x >= X0 and x <= X1: R(x, d.y0 + 0.2, 0.06, d.y1 - d.y0 + 0.6, Color(1, 1, 1, 0.7))
-		elif d.k == "green":
-			if absf(d.x - (X0 + 4)) > 7 or absf(d.y - (Y0 + 4)) > 6: continue
-			_ellipse(Vector2(d.x, d.y), 2.55, 1.75, Color("#7fb85a"))
-			_ellipse(Vector2(d.x, d.y), 2.4, 1.6, Color("#a9dc7c"))
-			_ellipse(Vector2(d.x - 0.4, d.y - 0.3), 1.4, 0.9, Color(1, 1, 1, 0.1))
-			draw_circle(Vector2(d.x, d.y), 0.09, Color("#2a2a2a"))
-			R(d.x, d.y - 1.4, 0.07, 1.4, Color("#555555"))
-			draw_colored_polygon(PackedVector2Array([Vector2(d.x + 0.07, d.y - 1.4), Vector2(d.x + 0.8, d.y - 1.15), Vector2(d.x + 0.07, d.y - 0.9)]), Color("#e2583e"))
-		elif d.k == "bench":
-			if d.x < X0 - 1 or d.x > X1 + 2 or d.y < Y0 - 1 or d.y > Y1 + 2: continue
-			R(d.x - 0.55, d.y - 0.05, 1.2, 0.3, Color(0, 0, 0, 0.2)); R(d.x - 0.6, d.y - 0.15, 1.2, 0.3, Color("#8a5a35"))
+
+## Centre lines on any two-lane street, worked out from the tiles (Ironwater).
+func _markings_any(X0: int, X1: int, Y0: int, Y1: int) -> void:
+	var yel := Color("#e8c84a")
+	for y in range(Y0, Y1 + 1):
+		for x in range(X0, X1 + 1):
+			if not _is_rd(x, y): continue
+			if x % 2 == 0 and _is_rd(x, y + 1) and not _is_rd(x, y - 1) and not _is_rd(x, y + 2) and _is_rd(x - 2, y) and _is_rd(x + 2, y) and not _on_hbridge(x, y):
+				R(x, y + 0.94, 0.55, 0.12, yel)
+			if y % 2 == 0 and _is_rd(x + 1, y) and not _is_rd(x - 1, y) and not _is_rd(x + 2, y) and _is_rd(x, y - 2) and _is_rd(x, y + 2):
+				R(x + 0.94, y, 0.12, 0.55, yel)
+	# zebra crossings where the side streets meet the cross streets
+	var wh := Color(1, 1, 1, 0.6)
+	for y in range(Y0, Y1 + 1):
+		for x in range(X0, X1 + 1):
+			if Town.t_at(x, y) != Town.T.WALK: continue
+			if _is_rd(x - 1, y) and _is_rd(x + 1, y) and _is_rd(x - 2, y):
+				for k in 3: R(x + 0.05 + k * 0.33, y + 0.1, 0.2, 0.8, wh)
+
 
 func _on_hbridge(x: int, yy: int) -> bool:
 	for b in Town.bridges:

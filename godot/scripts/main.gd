@@ -31,6 +31,15 @@ var latch := { "shop": false, "home": false, "marina": false, "drain": false, "b
 var watch_zone := -1
 var watch_seen := {}   # zone -> when its "who's watching" line last showed (seconds)
 const DRAIN_GRATE := Vector2(46.5, 57.5)
+# where the doors and the people you talk to are in this town (Ironwater moves them, see _place_town)
+var lou_door := LOU_DOOR
+var home_door := HOME_DOOR
+var marina_door := MARINA_DOOR
+var oldtimer_at := OLDTIMER
+var rosa_at := ROSA
+const COACH_FARE := 25
+const COACH_SPECIES := 8   # kinds of fish to catch in Port Mullet before Lou sends you north
+const WALT := Vector2(46.9, 45.55)
 var guards: Guards
 var prev_zone := 0
 var prev_pos := Vector2.ZERO
@@ -73,11 +82,15 @@ var test_dir := Vector2.ZERO   # --walk=dx,dy holds that direction down, for che
 var test_shot_frame := 90   # --shot-frame=N takes the shot later, e.g. to see a prompt fade out
 
 func _ready() -> void:
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--level=") and not Game.S.get("coach_in", false): Game.S.level = int(a.substr(8))
+	Town.ensure(int(Game.S.level))
+	_place_town()
 	# the test hooks that put you somewhere or deep in the story skip Lou's sneaking lesson
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--at=") or a.begins_with("--story=") or a.begins_with("--act2=") or a.begins_with("--boat="): Game.S.sneak_lesson = true
 	for a in OS.get_cmdline_user_args():
-		if a.begins_with("--at="):
+		if a.begins_with("--at=") and not Game.S.get("coach_in", false):
 			var v := a.substr(5).split(",")
 			Game.S.x = float(v[0]); Game.S.y = float(v[1]); Game.S.min = float(v[2]) * 60.0; Game.S.started = true
 		if a.begins_with("--shot="): test_shot = a.substr(7)
@@ -193,12 +206,16 @@ func _ready() -> void:
 				(tn.get_child(0) as Drawer).sway = true
 				ents.add_child(tn)
 			elif t == Town.T.BUSH: ents.add_child(Drawer.make(func(ci): Art.bush(ci, xx, yy), y + 0.85))
-	for a in [[Vector2(3.6, 18.4), 0.2], [Vector2(16.5, 22.6), 3.4], [Vector2(29.6, 162.5), PI], [Vector2(31.4, 160.2), 0.0], [Vector2(37.4, 49.4), -0.3]]:
+	var anglers := [[Vector2(3.6, 18.4), 0.2], [Vector2(16.5, 22.6), 3.4], [Vector2(29.6, 162.5), PI], [Vector2(31.4, 160.2), 0.0], [Vector2(37.4, 49.4), -0.3]]
+	if Town.level == 1: anglers = [[Vector2(47.4, 70.4), 0.0], [Vector2(64.6, 140.2), PI], [Vector2(50.5, 27.4), -PI / 2], [Vector2(21.5, 78.6), -1.2], [Vector2(66.4, 47.6), PI + 0.3]]
+	for a in anglers:
 		var p: Vector2 = a[0]
 		var d: float = a[1]
 		ents.add_child(Drawer.make(func(ci): Art.person(ci, p, d, Color("#f2b134"), Color("#c9a574"), true), p.y))
-	ents.add_child(Drawer.make(func(ci):
-		if Game.hour() >= 7 and Game.hour() < 19: Art.person(ci, Vector2(50.6, 32.55), 0.4, Color("#13807b"), Color("#e2583e")), 32.55, true))
+	if Town.level == 0:
+		ents.add_child(Drawer.make(func(ci):
+			if Game.hour() >= 7 and Game.hour() < 19: Art.person(ci, Vector2(50.6, 32.55), 0.4, Color("#13807b"), Color("#e2583e")), 32.55, true))
+	else: _ironwater_props()
 	player = Player.new()
 	ents.add_child(player)
 	for k in ["kayak", "skiff"]: ents.add_child(ParkedBoat.new(k))
@@ -207,6 +224,14 @@ func _ready() -> void:
 	var decks := Drawer.make(func(ci): Bridges.draw_decks(ci, _view_tiles().grow(2)), 0, true)
 	decks.z_index = -4
 	world.add_child(decks)
+	if Town.level == 1:
+		# the high viaduct goes over everything under it, people and cars and trees included
+		var high := Drawer.make(func(ci): Bridges.draw_high(ci, _view_tiles().grow(3)), 0, true)
+		high.z_index = 1
+		world.add_child(high)
+		var foam := Drawer.make(func(ci): Ironwater.draw_water(ci, _view_tiles().grow(2), Time.get_ticks_msec() / 1000.0), 0, true)
+		foam.z_index = -4
+		world.add_child(foam)
 	water_fx = WaterFx.new()
 	water_fx.z_index = -4
 	water_fx.player = player
@@ -214,11 +239,18 @@ func _ready() -> void:
 	world.add_child(water_fx)
 	refl.player = player
 	refl.fishing = fishing
-	ents.add_child(Drawer.make(func(ci):
-		ci.draw_rect(Rect2(ROSA.x + 0.25, ROSA.y - 0.05, 0.36, 0.3), Color("#e9e4d8"))
-		Art.person(ci, ROSA, PI / 2 + 0.35, Color("#e2583e"), Color("#fbf3e2"), true)
-		ci.draw_circle(ROSA + Vector2(-0.42, 0.1), 0.14, Color("#9aa6ad")), ROSA.y))
-	ents.add_child(Drawer.make(func(ci): ci.draw_rect(Rect2(OLDTIMER.x - 0.5, OLDTIMER.y + 0.15, 0.3, 0.3), Color("#2c5f8a")), OLDTIMER.y + 0.01))
+	if Town.level == 0:
+		ents.add_child(Drawer.make(func(ci):
+			ci.draw_rect(Rect2(ROSA.x + 0.25, ROSA.y - 0.05, 0.36, 0.3), Color("#e9e4d8"))
+			Art.person(ci, ROSA, PI / 2 + 0.35, Color("#e2583e"), Color("#fbf3e2"), true)
+			ci.draw_circle(ROSA + Vector2(-0.42, 0.1), 0.14, Color("#9aa6ad")), ROSA.y))
+		ents.add_child(Drawer.make(func(ci): ci.draw_rect(Rect2(OLDTIMER.x - 0.5, OLDTIMER.y + 0.15, 0.3, 0.3), Color("#2c5f8a")), OLDTIMER.y + 0.01))
+	else:
+		# Walt, on his bucket at the end of the tailwater pier
+		ents.add_child(Drawer.make(func(ci):
+			ci.draw_rect(Rect2(WALT.x - 0.2, WALT.y - 0.02, 0.4, 0.34), Color("#c9603a"))
+			Art.person(ci, WALT, -PI / 2 + 0.3, Color("#3d6e5a"), Color("#c9a574"), true)
+			ci.draw_rect(Rect2(WALT.x + 0.35, WALT.y + 0.05, 0.3, 0.26), Color("#e9e4d8")), WALT.y))
 	# boats tied up at the marina, which head out now and then
 	harbor = Harbor.new()
 	harbor.player = player
@@ -231,7 +263,7 @@ func _ready() -> void:
 		if Town.is_water_t(t) or t == Town.T.BLD: continue
 		var lpp: Vector2 = lp
 		ents.add_child(Drawer.make(func(ci): Art.lamp_post(ci, lpp), lp.y))
-	for bs in Story.BUS:
+	for bs in Story.bus_list():
 		var bp: Vector2 = bs[1]
 		ents.add_child(Drawer.make(func(ci): draw_bus_stop(ci, bp), bp.y - 0.2))
 	guards = Guards.new()
@@ -250,11 +282,13 @@ func _ready() -> void:
 	town_life.player = player
 	add_child(town_life)
 	town_life.setup(ents)
-	for fl in FLAGS:
+	var flags: Array = FLAGS if Town.level == 0 else [[Vector2(81.4, 105.7), "town"], [Vector2(36.6, 88.6), "shop"], [Vector2(84.5, 85.2), "golf"]]
+	var fountains: Array = FOUNTAINS if Town.level == 0 else []
+	for fl in flags:
 		var fp: Vector2 = fl[0]
 		var fs: String = fl[1]
 		ents.add_child(Drawer.make(func(ci): TownLife.flag(ci, fp, fs, Time.get_ticks_msec() / 1000.0 + fp.x), fp.y, true, Rect2(fp - Vector2(1, 3.5), Vector2(4, 5))))
-	for fo in FOUNTAINS:
+	for fo in fountains:
 		var fop: Vector2 = fo[0]
 		var fob: float = fo[1]
 		ents.add_child(Drawer.make(func(ci): TownLife.fountain(ci, fop, Time.get_ticks_msec() / 1000.0 + fop.x, fob), fop.y + 0.1, true, Rect2(fop - Vector2(3, 3.5), Vector2(6, 5))))
@@ -358,6 +392,7 @@ func _ready() -> void:
 		if Game.skip_title: menu.fade_in(0.6)
 		Game.skip_title = false
 		if not Game.S.started: _intro()
+	_coach_arrival()
 	for a in OS.get_cmdline_user_args():
 		if a == "--title": hud.close(); menu.show_title()
 		if a == "--pause": menu.show_pause()
@@ -448,6 +483,10 @@ func _ready() -> void:
 					sheet.draw_string(Game.font_bold, r.position + Vector2(2, 100), ids[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("#22313a")))
 			hud.open([["node", sheet]], true)
 		if a == "--open=bus": open_bus(0)
+		if a.begins_with("--coach="): # ride the coach to town N (the scene reloads there; then this does nothing)
+			var to := int(a.substr(8))
+			if int(Game.S.level) != to: Game.S.cash = maxi(int(Game.S.cash), COACH_FARE); _take_coach(to)
+		if a == "--fresh-iw": Game.S.iw_seen = false
 		if a == "--weigh":
 			Story.sign_up()
 			Game.S.cooler.append({ "n": "Snook", "w": 31.4, "value": 90, "spot": 14, "legend": false, "junk": false, "day": Game.S.day, "tm": Game.S.min + 5 })
@@ -533,18 +572,18 @@ func _process(dt: float) -> void:
 		if ach_t > 1:
 			ach_t = 0
 			for a in Story.check_ach(): Game.toast.emit("%s: %s +$50, +3 rep" % [a[1], a[2]], "LOU'S WALL OF FAME")
-		if player.position.y > 115 and not Game.S.visited.has("dt"): Game.S.visited.dt = 1; hud.flash("Downtown Port Mullet. The bay is at the bottom of the street.")
-		_drain_hint()
+		if Town.level == 0 and player.position.y > 115 and not Game.S.visited.has("dt"): Game.S.visited.dt = 1; hud.flash("Downtown Port Mullet. The bay is at the bottom of the street.")
+		if Town.level == 0: _drain_hint()
 		_watch_hint()
 		_boat_hint()
 	near = ""
 	if fishing.state == "idle":
 		if player.in_boat(): near = "fish"
-		elif player.position.distance_to(LOU_DOOR) < 1.3: near = "shop"
-		elif player.position.distance_to(HOME_DOOR) < 1.0: near = "home"
-		elif player.position.distance_to(MARINA_DOOR) < 1.3: near = "marina"
-		elif player.position.distance_to(OLDTIMER) < 1.8: near = "oldtimer"
-		elif player.position.distance_to(ROSA) < 1.6: near = "rosa"
+		elif player.position.distance_to(lou_door) < 1.3: near = "shop"
+		elif player.position.distance_to(home_door) < 1.0: near = "home"
+		elif player.position.distance_to(marina_door) < 1.3: near = "marina"
+		elif player.position.distance_to(oldtimer_at) < 1.8: near = "oldtimer"
+		elif player.position.distance_to(rosa_at) < 1.6: near = "rosa"
 		elif Crafting.near(player.position) >= 0: near = "part"
 		elif Story.bus_near(player.position) >= 0: near = "bus"
 		elif fishing.manhole_near() >= 0: near = "manhole"
@@ -581,6 +620,10 @@ func _want_music() -> String:
 	if Sound.style != "auto": return Sound.style
 	if menu.title_open: return "miami" if Game.darkness() > 0.3 else "surf"
 	var z := Player.zone_of(player.position)
+	if Town.level == 1:
+		if z >= 20: return "prowl"
+		if Game.darkness() > 0.3: return "miami"
+		return "swamp" if Game.time_band() == "low" or player.position.y < 56 else "steel"
 	if z == 3: return "reactor"
 	if z in [1, 2, 5, 6, 7, 8, 9]: return "prowl"
 	if z == 4: return "swamp"
@@ -649,6 +692,7 @@ func _boat_hint() -> void:
 	var why := ""
 	if t == Town.T.DEEP and kind != "skiff": why = "Past the channel markers it's open ocean, too rough for a kayak. You need a skiff. The marina downtown sells one."
 	elif t == Town.T.WARM and kind == "skiff": why = "The outflow channel is too tight and shallow for the skiff. Bring the kayak."
+	elif Town.level == 1 and Town.is_water_t(t) and Player.zone_of(ahead) == 20: why = "That's the boil under the dam gates. It would flip you in a second. Fish it from the wing walls, if the ranger isn't looking."
 	if why == "": latch.boat = false; return
 	var now := Time.get_ticks_msec() / 1000.0
 	if latch.boat or not player.moving or now - float(watch_seen.get("boat", -999.0)) < 30.0: return
@@ -667,7 +711,7 @@ func _drain_hint() -> void:
 func _doors() -> void:
 	if player.in_boat(): return
 	for k in ["shop", "home", "marina"]:
-		var door: Vector2 = { "shop": LOU_DOOR, "home": HOME_DOOR, "marina": MARINA_DOOR }[k]
+		var door: Vector2 = { "shop": lou_door, "home": home_door, "marina": marina_door }[k]
 		var d := player.position.distance_to(door)
 		if d < 0.7 and not latch[k] and fishing.state == "idle":
 			latch[k] = true; player.path.clear()
@@ -800,7 +844,7 @@ func _draw_bloom(ci: CanvasItem) -> void:
 		for r in b.wins:
 			if Town.hash2(i, b.x * 7 + Game.S.day) < tl and b.see < 0.5: _glow(ci, r.get_center(), 0.45, Color(1, 0.75, 0.4, 0.22 * a))
 			i += 1
-	if view.has_point(Vector2(51.4, 31.6)): _glow(ci, Vector2(51.4, 31.4), 1.4, Color(1, 0.3, 0.25, 0.4 * a))
+	if Town.level == 0 and view.has_point(Vector2(51.4, 31.6)): _glow(ci, Vector2(51.4, 31.4), 1.4, Color(1, 0.3, 0.25, 0.4 * a))
 
 func _glow(ci: CanvasItem, c: Vector2, r: float, col: Color) -> void:
 	ci.draw_texture_rect(glow_tex, Rect2(c - Vector2(r, r), Vector2(r, r) * 2), false, col)
@@ -940,6 +984,7 @@ func open_card(parts: Array) -> void:
 	hud.open(out)
 
 func open_shop() -> void:
+	if Town.level == 1: open_outfitter(); return
 	var S := Game.S
 	var sc := Story.scene()
 	if not sc.is_empty(): open_card(sc); return
@@ -961,21 +1006,7 @@ func open_shop() -> void:
 	var parts := [["h3", "Lou's Bait & Tackle · since 1977"], ["h2", "\"%s\"" % ["What'd you catch?", "Wipe your feet.", "Back again?", "Don't touch the shrimp.", "Tell me it's a big one."].pick_random()], ["tabs", tabs]]
 	match shop_tab:
 		"sell":
-			if S.cooler.is_empty():
-				parts.append(["sub", ("Sold for %s. " % Game.money(last_sale) if last_sale else "") + "Your cooler is empty. Lou buys anything with fins, and some things without."])
-			else:
-				var total := 0
-				for c in S.cooler:
-					total += int(c.value)
-					var cc: Dictionary = c
-					if c.junk:
-						parts.append(["item", c.n, "%s lb · %s · Lou pays %s, or strip it for %s" % [str(c.w), Game.spots[int(c.spot)].name, Game.money(c.value), Crafting.PARTS[Crafting.salvage_part(c.n)].to_lower()],
-							"Strip for parts", func(): hud.flash(Crafting.salvage(cc)); open_shop(), true, func(ci, r): ItemIcons.draw_catch(ci, cc, r)])
-					else:
-						parts.append(["item", c.n + (" ★" if c.legend else ""), "%s lb · %s" % [str(c.w), Game.spots[int(c.spot)].name], Game.money(c.value), func(): pass, false,
-							func(ci, r): ItemIcons.draw_catch(ci, cc, r)])
-				parts.append(["row", [["Sell everything for " + Game.money(total), _sell_all, true, "go"]]])
-			last_sale = 0
+			_sell_parts(parts, "Lou")
 			if Story.species_got() < Unlocks.SPECIES_EARLY:
 				var tips := Unlocks.lou_tips(3)
 				if not tips.is_empty():
@@ -1013,6 +1044,25 @@ func open_shop() -> void:
 	parts.append(["kv", [["Cash", Game.money(S.cash)], ["Rep", str(int(S.rep))], ["Cooler", "%d/%d" % [S.cooler.size(), S.cooler_cap]]]])
 	parts.append(["row", [["Back outside", func(): hud.close(), true, "hot"]]])
 	hud.open(parts)
+
+## The Sell tab: everything in your cooler and the button to sell it all. who is buying (Lou, or Dot in Ironwater).
+func _sell_parts(parts: Array, who: String) -> void:
+	var S := Game.S
+	if S.cooler.is_empty():
+		parts.append(["sub", ("Sold for %s. " % Game.money(last_sale) if last_sale else "") + "Your cooler is empty. %s buys anything with fins, and some things without." % who + ""])
+	else:
+		var total := 0
+		for c in S.cooler:
+			total += int(c.value)
+			var cc: Dictionary = c
+			if c.junk:
+				parts.append(["item", c.n, "%s lb · %s · %s pays %s, or strip it for %s" % [str(c.w), Game.spots[int(c.spot)].name, who, Game.money(c.value), Crafting.PARTS[Crafting.salvage_part(c.n)].to_lower()],
+					"Strip for parts", func(): hud.flash(Crafting.salvage(cc)); open_shop(), true, func(ci, r): ItemIcons.draw_catch(ci, cc, r)])
+			else:
+				parts.append(["item", c.n + (" ★" if c.legend else ""), "%s lb · %s" % [str(c.w), Game.spots[int(c.spot)].name], Game.money(c.value), func(): pass, false,
+					func(ci, r): ItemIcons.draw_catch(ci, cc, r)])
+		parts.append(["row", [["Sell everything for " + Game.money(total), _sell_all, true, "go"]]])
+	last_sale = 0
 
 func _gear_list(parts: Array, list: Array) -> void:
 	var S := Game.S
@@ -1138,6 +1188,7 @@ func talk_oldtimer() -> void:
 		["row", [["Thanks, old-timer", func(): hud.close(), true, "hot"]]]])
 
 func talk_rosa() -> void:
+	if Town.level == 1: talk_walt(); return
 	var tip: String = Game.tips2[int(Game.S.rosa) % Game.tips2.size()]
 	var first: bool = int(Game.S.rosa) == 0
 	Game.S.rosa += 1; Game.save_game()
@@ -1177,12 +1228,12 @@ func _knocked_down(car) -> void:
 	Game.S.knockdowns = int(Game.S.get("knockdowns", 0)) + 1
 	Game.S.boat = false
 	Game.skip_minutes(120)
-	player.position = HOME_DOOR + Vector2(0, 0.9)
+	player.position = home_door + Vector2(0, 0.9)
 	player.face = PI / 2
 	Game.save_game()
 	var what := "A " + _car_colour(car.col) + (" pickup" if car.L > 2.0 else " car")
 	hud.open([["h3", "Knocked down in the street"], ["h2", what + " didn't stop"], ["quote", "\"I honked! You heard me honk!\""],
-		["p", "You land on your backside, see stars and wake up on your own couch two hours later with a bruise the shape of a side mirror. " +
+		["p", "You land on your backside, see stars and wake up " + ("in your motel room" if Town.level == 1 else "on your own couch") + " two hours later with a bruise the shape of a side mirror. " +
 			("The ER bill was %s." % Game.money(bill) if paid >= bill else "The ER bill was %s; they took the %s you had." % [Game.money(bill), Game.money(paid)] if paid > 0 else "The ER let you off the bill.") + " Your cooler is safe."],
 		["sub", "Cars honk when you're in their lane. A few drivers stop, most don't, so when you hear a horn, step onto the sidewalk. Cars always wait while you have a line out."],
 		["row", [["Ouch", func(): hud.close(), true, "hot"]]]])
@@ -1227,7 +1278,7 @@ func _capsized(b) -> void:
 	Game.skip_minutes(45)
 	Game.save_game()
 	var boat_name := "skiff" if kind == "skiff" else "kayak"
-	hud.open([["h3", "Capsized in Mullet Bay"], ["h2", "The " + b.what + " didn't stop"], ["quote", "\"Didn't you hear the horn?\" somebody yells from the deck."],
+	hud.open([["h3", "Capsized on the Calder River" if Town.level == 1 else "Capsized in Mullet Bay"], ["h2", "The " + b.what + " didn't stop"], ["quote", "\"Didn't you hear the horn?\" somebody yells from the deck."],
 		["p", "Your %s rolls over and you come up spluttering. You swim it to the nearest bank and drag it out, and it takes the best part of an hour to dry off. " % boat_name +
 			("Your %s slipped out of the cooler and swam away." % lost if lost != "" else "Your cooler was empty, so nothing got away.")],
 		["sub", "Boats leaving or coming back to the marina blow their horn when you're in their way. Paddle out of their path when you hear it. They wait for you while they ease in and out of their slips."],
@@ -1262,7 +1313,8 @@ func _chips() -> Array:
 	var o = Game.cur_order()
 	if o != null:
 		out.append(["Lou's order: done ✓" if Game.S.order.done else "Lou wants: %s (%d/%d)" % [o.s, mini(Game.order_matches().size(), int(o.count)), int(o.count)], "paper"])
-	if Game.tide_day():
+	if Town.level == 1: pass
+	elif Game.tide_day():
 		out.append(["King tide! Low Street is flooded" if Game.flooded() else "King tide today, 10 AM to 2 PM" if Game.hour() < 10 else "King tide is over for today", "sea"])
 	else:
 		var d := 3 - int(Game.S.day) % 4
@@ -1282,6 +1334,7 @@ func _draw_flood(ci: CanvasItem) -> void:
 		ci.draw_rect(Rect2(x, 62.3 + fmod(k * 1.37, 3.4), 0.5, 0.05), Color(1, 1, 1, 0.3 * fl))
 
 func open_home() -> void:
+	if Town.level == 1: open_motel(); return
 	var rest := func(h: float):
 		hud.close()
 		menu.fade(func(): Game.skip_to(h); hud.flash("You rest until %s." % Game.clock_text()); Game.save_game(), 0.4, 0.7)
@@ -1508,9 +1561,10 @@ func _draw_night_glow(ci: CanvasItem) -> void:
 		ci.draw_circle(hd, 0.42, Color(1, 0.85, 0.55, 0.12 * a))
 		ci.draw_circle(hd, 0.22, Color(1, 0.88, 0.6, 0.3 * a))
 		ellipse_glow(ci, hd + Vector2(0, 0.02), a)
-	if view.has_point(Vector2(51.4, 31.6)): Art.text(ci, Vector2(51.4, 31.6), "OPEN", 0.4, Color(1, 0.4, 0.33, 0.9))
+	if Town.level == 0 and view.has_point(Vector2(51.4, 31.6)): Art.text(ci, Vector2(51.4, 31.6), "OPEN", 0.4, Color(1, 0.4, 0.33, 0.9))
 
 ## Gulls wheeling over the water by day.
+const GULL_SPOTS2 := [Vector2(30, 10), Vector2(75, 8), Vector2(56, 36), Vector2(56, 70), Vector2(56, 130), Vector2(26, 72), Vector2(56, 165)]
 const GULL_SPOTS := [Vector2(95, 162), Vector2(20, 163), Vector2(32, 52), Vector2(52, 170), Vector2(30, 166), Vector2(79, 128), Vector2(61, 101), Vector2(88, 14), Vector2(70, 52), Vector2(105, 79), Vector2(60, 176)]
 
 func _draw_gulls(ci: CanvasItem) -> void:
@@ -1519,8 +1573,9 @@ func _draw_gulls(ci: CanvasItem) -> void:
 	var view := _view_tiles().grow(3)
 	var t := Time.get_ticks_msec() / 1000.0
 	var birds := []
-	for i in GULL_SPOTS.size():
-		var c: Vector2 = GULL_SPOTS[i]
+	var gs: Array = GULL_SPOTS2 if Town.level == 1 else GULL_SPOTS
+	for i in gs.size():
+		var c: Vector2 = gs[i]
 		if c.distance_to(view.get_center()) > view.size.length() / 2 + 8: continue
 		for k in 2 + i % 2:
 			var r := 3.0 + Town.hash2(i, k) * 4.0
@@ -1549,15 +1604,16 @@ func _bridges(dt: float) -> void:
 	var half := 1.2 if player.boat_kind() == "skiff" else 0.95
 	var under := boat and Bridges.hull_under(player.position, player.face, half)
 	player.z_index = -5 if under else 0
-	var over := Bridges.covered(player.position + Vector2(0, 0.1)) if boat else -1
+	var high := Bridges.high_at(player.position + Vector2(0, -0.2))
+	var over := Bridges.covered(player.position + Vector2(0, 0.1)) if boat else high
 	for i in Bridges.list.size():
 		var e: Dictionary = Bridges.list[i]
 		e.see = move_toward(e.see, 1.0 if i == over else 0.0, dt * 3.0)
-	var sh := Bridges.shade_at(player.position) if boat else 0.0
+	var sh := Bridges.shade_at(player.position) if boat else (1.0 if high >= 0 else 0.0)
 	player.modulate = Color.WHITE.lerp(Color(0.58, 0.62, 0.72), sh * (0.6 + 0.4 * (Bridges.list[over].see if over >= 0 else 0.0)))
 	if over >= 0 and not Game.S.get("bridge_tip", false):
 		Game.S.bridge_tip = true
-		Game.toast.emit("Fish love the shade under a bridge. Cast along the shadow line. At night, snook wait under the bridge lights.", "UNDER THE BRIDGE")
+		Game.toast.emit("Fish love the shade under a bridge. Cast along the shadow line. At night, " + ("walleye wait under the viaduct lights." if Town.level == 1 else "snook wait under the bridge lights."), "UNDER THE BRIDGE")
 
 # ---------- the Mullet Bay Slam ----------
 func _slam_sign() -> void:
@@ -1625,20 +1681,52 @@ var map_view: MapView
 func open_map() -> void:
 	map_view = MapView.new(self)
 	map_view.custom_minimum_size = Vector2(0, get_viewport_rect().size.y - 250)
-	hud.open([["h3", "Port Mullet · drag to move, scroll or + and − to zoom"], ["node", map_view],
-		["sub", "Zoom in for street names and how many of each spot's fish you've caught. Lou's is on US-1; downtown and the bay are way down south. Every place is open from day one. The red-striped places are private and watched, so go when the guards are away, or bring a disguise."],
+	hud.open([["h3", ("Ironwater" if Town.level == 1 else "Port Mullet") + " · drag to move, scroll or + and − to zoom"], ["node", map_view],
+		["sub", ("Zoom in for street names and how many of each spot's fish you've caught. The dam and the spillway are at the top, the I-90 viaduct crosses the middle, and the coach station is at the bottom on the west bank. The red-striped places are private and watched, so go when the guards are away, or bring a disguise." if Town.level == 1 else
+			"Zoom in for street names and how many of each spot's fish you've caught. Lou's is on US-1; downtown and the bay are way down south. Every place is open from day one. The red-striped places are private and watched, so go when the guards are away, or bring a disguise.")],
 		["row", [["Close", func(): hud.close(), true, "hot"], ["Journal (J)", open_journal]]]], true)
 
 # ---------- the Route 1 bus ----------
 func open_bus(i: int) -> void:
-	var parts := [["h3", "Route 1 bus · " + Story.BUS[i][0]], ["h2", "\"Exact change, pal.\""],
-		["p", "Two dollars to anywhere on the line. The ride takes about 25 minutes, and the driver doesn't want to hear about your fish."]]
-	for j in Story.BUS.size():
+	var stops := Story.bus_list()
+	var iw := Town.level == 1
+	var parts := [["h3", ("Calder Line bus · " if iw else "Route 1 bus · ") + stops[i][0]], ["h2", "\"Hop on, hon.\"" if iw else "\"Exact change, pal.\""],
+		["p", "Two dollars to anywhere on the line. The ride takes about 25 minutes, and the driver " + ("wants to hear all about your fish." if iw else "doesn't want to hear about your fish.")]]
+	for j in stops.size():
 		if j == i: continue
 		var jj := j
-		parts.append(["item", Story.BUS[j][0], Story.BUS[j][2], "Ride ($2)", func(): _ride_bus(jj), Game.S.cash >= 2])
+		parts.append(["item", stops[j][0], stops[j][2], "Ride ($2)", func(): _ride_bus(jj), Game.S.cash >= 2])
+	# the coach between the two towns
+	var have := _home_species()
+	var ok := iw or have >= COACH_SPECIES
+	var desc := "Six hours back down the interstate to Lou's. Your boats ride on the roof rack." if iw else \
+		("Six hours north to Ironwater, a river city with a big dam and a bigger bridge. Your boats ride on the roof rack." if ok else
+		"Lou: \"Ironwater? Catch %d kinds of fish around here first.\" You've caught %d." % [COACH_SPECIES, have])
+	parts.append(["item", "Coach home to Port Mullet" if iw else "Coach north to Ironwater", desc, "Ride (%s)" % Game.money(COACH_FARE), func(): _take_coach(0 if iw else 1),
+		ok and Game.S.cash >= COACH_FARE, _coach_icon, not ok])
 	parts.append(["row", [["Walk instead", func(): hud.close(), true, "hot"]]])
 	hud.open(parts)
+
+## A little coach, side on, for the coach's row on the bus card.
+func _coach_icon(ci: CanvasItem, r: Rect2) -> void:
+	var b := Rect2(r.position + Vector2(r.size.x * 0.06, r.size.y * 0.28), Vector2(r.size.x * 0.88, r.size.y * 0.42))
+	ci.draw_rect(b, Color("#2b7ea6"))
+	ci.draw_rect(Rect2(b.position + Vector2(0, b.size.y * 0.62), Vector2(b.size.x, b.size.y * 0.12)), Color("#f2b134"))
+	for i in 5: ci.draw_rect(Rect2(b.position + Vector2(b.size.x * (0.06 + i * 0.18), b.size.y * 0.14), Vector2(b.size.x * 0.13, b.size.y * 0.34)), Color("#cfe8f4"))
+	ci.draw_rect(Rect2(b.position + Vector2(b.size.x * 0.1, -b.size.y * 0.22), Vector2(b.size.x * 0.55, b.size.y * 0.16)), Color("#c9603a"))   # a kayak on the roof rack
+	for wx in [0.22, 0.8]: ci.draw_circle(b.position + Vector2(b.size.x * wx, b.size.y), b.size.y * 0.2, Color("#22313a"))
+
+## Kinds of fish (not junk) you've caught in Port Mullet's water, for the coach north.
+func _home_species() -> int:
+	var n := 0
+	var seen := {}
+	for sid in Game.spots:
+		if int(sid) >= 20: continue
+		for f in Game.spots[sid].fish:
+			if f.get("junk", false) or seen.has(f.n): continue
+			seen[f.n] = true
+			if Game.S.journal.has(f.n): n += 1
+	return n
 
 func _ride_bus(i: int) -> void:
 	if Game.S.cash < 2: return
@@ -1650,10 +1738,119 @@ func _arrive_bus(i: int) -> void:
 	Game.S.cash -= 2
 	Game.skip_minutes(25)
 	Game.S.boat = false
-	player.position = Story.BUS[i][1]; player.path.clear()
+	var stops := Story.bus_list()
+	player.position = stops[i][1]; player.path.clear()
 	cam.position = player.position * TS; cam.reset_smoothing()
 	for w in guards.watchers: w.alert = 0.0
-	hud.close(); hud.flash("The bus wheezes to a stop: %s." % Story.BUS[i][0]); Game.save_game()
+	hud.close(); hud.flash("The bus wheezes to a stop: %s." % stops[i][0]); Game.save_game()
+
+## The coach to the other town: six hours, and you get off at its first stop (Lou's, or Ironwater Station).
+## The map changes, so the save is written and the scene reloaded in the new town.
+func _take_coach(to: int) -> void:
+	if Game.S.cash < COACH_FARE: return
+	hud.close()
+	menu.fade(func():
+		Game.S.cash -= COACH_FARE
+		Game.skip_minutes(6 * 60)
+		Game.S.boat = false
+		Game.S.parked = {}           # your kayak and skiff came with you, on the roof rack
+		Game.S.level = to
+		var p: Vector2 = Story.bus_list(to)[0][1]
+		Game.S.x = p.x; Game.S.y = p.y; Game.S.face = PI / 2
+		Game.S.coach_in = true
+		Game.S.trips = int(Game.S.get("trips", 0)) + 1
+		Game.save_game()
+		Game.skip_title = true
+		get_tree().reload_current_scene(), 0.6, 0.0)
+
+## Just off the coach: the first time in Ironwater, a card about the town; after that a line.
+func _coach_arrival() -> void:
+	if not Game.S.get("coach_in", false): return
+	Game.S.coach_in = false
+	Sound.play("bus")
+	if Town.level == 0:
+		hud.flash("The coach pulls in at Lou's. Port Mullet smells like low tide. It's good to be home."); return
+	if Game.S.get("iw_seen", false):
+		hud.flash("The coach hisses to a stop at Ironwater Station. You can hear the dam from here."); return
+	Game.S.iw_seen = true; Game.save_game()
+	hud.open([["h3", "Ironwater · pop. 41,300 · on the Calder River"], ["h2", "\"You can hear the dam from the station.\""],
+		["p", "Six hours north of Port Mullet, the Calder River comes over the Ironwater Dam and roars down the spillway, then runs straight through an old mill town under three street bridges and the high I-90 viaduct."],
+		["sub", "Fish the tailwater pier and the river walks for free. The big flatheads live in the boil right under the gates, but the wing walls are restricted. Walleye wait under the viaduct lights at night. The old mill race, the brewery pond and the ballpark splash pool all have someone watching."],
+		["sub", "Calder River Outfitters on River St buys your fish and sells the same gear as Lou. The Riverview Motor Inn has rooms. Take the coach home from any bus stop."],
+		["row", [["Let's fish", func(): hud.close(), true, "hot"]]]])
+
+## Where things are in the town you're in. Port Mullet keeps its constants.
+func _place_town() -> void:
+	if Town.level == 1:
+		lou_door = Vector2(33.5, 88.4); home_door = Vector2(32.5, 115.4); marina_door = Vector2(-99, -99)
+		oldtimer_at = Vector2(-99, -99); rosa_at = WALT
+
+## Ironwater's things that stand up: the waterwheel at the mill.
+func _ironwater_props() -> void:
+	var wp := Vector2(27.0, 43.0)
+	ents.add_child(Drawer.make(func(ci): Ironwater.draw_wheel(ci, wp, Time.get_ticks_msec() / 1000.0), wp.y + 1.4, true, Rect2(wp - Vector2(2, 2.5), Vector2(4, 5))))
+	var ground := Drawer.make(func(ci): Ironwater.draw_ground(ci), 0, false)
+	ground.z_index = -8
+	world.add_child(ground)
+	var dam := Drawer.make(func(ci): Ironwater.draw_dam(ci, _view_tiles().grow(2), Time.get_ticks_msec() / 1000.0), 0, true)
+	dam.z_index = -7
+	world.add_child(dam)
+
+## Calder River Outfitters: Dot buys your catch and sells the same gear as Lou.
+func open_outfitter() -> void:
+	var S := Game.S
+	if shop_tab != "sell" and shop_tab != "gear": shop_tab = "sell"
+	var tabs := []
+	for td in [["sell", "Sell"], ["gear", "Gear"]]:
+		var key: String = td[0]
+		tabs.append([td[1], func(): shop_tab = key; open_outfitter(), shop_tab == key])
+	var parts := [["h3", "Calder River Outfitters · bait, tackle, licenses"], ["h2", "\"%s\"" % ["Port Mullet? Long way to come for a walleye.", "Dot. Nice to meet you. What've you got?", "You fish the boil yet? Don't tell me.", "Wipe your boots, it's muddy out."].pick_random()], ["tabs", tabs]]
+	if shop_tab == "sell":
+		_sell_parts(parts, "Dot")
+		parts.append(["sub", "Dot pays the same as Lou. She'll even take your Florida fish, \"for the novelty.\""])
+	else:
+		parts.append(_kit_part())
+		parts.append(["sub", "Dot's bait chart: worms for perch, crappie, sauger and trout. Bread for carp. Lures for smallmouth, walleye and muskie. Hot dogs for the big catfish below the dam."])
+		_gear_list(parts, Game.gear.filter(func(g): return not g.has("where")))
+		parts.append(["sub", "Your rod: %s. Boats and big-game tackle are back at the marina in Port Mullet." % Game.rod().name])
+	parts.append(["kv", [["Cash", Game.money(S.cash)], ["Rep", str(int(S.rep))], ["Cooler", "%d/%d" % [S.cooler.size(), S.cooler_cap]]]])
+	parts.append(["row", [["Back outside", func(): hud.close(), true, "hot"]]])
+	hud.open(parts)
+
+## The Riverview Motor Inn: a room to rest in while you're in Ironwater, $10 a stay.
+func open_motel() -> void:
+	var rest := func(h: float):
+		if Game.S.cash < 10: return
+		Game.S.cash -= 10
+		hud.close()
+		menu.fade(func(): Game.skip_to(h); hud.flash("You rest until %s. The ice machine never stops." % Game.clock_text()); Game.save_game(), 0.4, 0.7)
+	var can: bool = Game.S.cash >= 10
+	hud.open([["h3", "Riverview Motor Inn · rooms by the night"], ["h2", "\"%s\"" % ["Checkout's at eleven. Ish.", "No cleaning fish in the room.", "Ice machine's down the hall."].pick_random()],
+		["p", "A room is $10 a stay, cash. The workbench, the trophy wall and Chum are back home in Port Mullet."],
+		["item", "Dawn", "Walleye and sauger bite at first light.", "Rest until 6:00 AM ($10)", func(): rest.call(6.0), can],
+		["item", "Noon", "Brewery tour hours: a lanyard gets you to the cooling pond.", "Rest until 12:00 PM ($10)", func(): rest.call(12.0), can],
+		["item", "Dusk", "The mill foreman and the groundskeeper knock off at 5.", "Rest until 5:30 PM ($10)", func(): rest.call(17.5), can],
+		["item", "Night", "Old Rivet and the Viaduct Ghost come out.", "Rest until 9:00 PM ($10)", func(): rest.call(21.0), can],
+		["row", [["Back outside", func(): hud.close(), true, "hot"]]]])
+
+const WALT_TIPS := [
+	"\"The boil under the gates is where the big flatheads live. Old Rivet too. The ranger walks the west wing wall till nine at night. After that it's just the cameras. Watch which way they're pointing.\"",
+	"\"Walleye come up under the viaduct lights after dark. Worms or a lure, right on the shadow line. Paddle under there if you've got a boat.\"",
+	"\"Skipjack are no good to eat, but drop a hot dog where they're busting bait and something big comes looking.\"",
+	"\"The Mayor's a muskie. Lures only, dawn or dusk, out on the reservoir. Bring a better rod than that.\"",
+	"\"The old mill race runs cold right out of the reservoir. Trout. The foreman goes home at five and the watchman's dog comes on at nine. Do the math.\"",
+	"\"That brewery pond? The carp eat the spent grain. Bread. Go in tour hours with a lanyard round your neck and security thinks you're on the tour.\"",
+	"\"The ballpark's got a splash pool past center field. Groundskeeper leaves at five, security starts at ten. In between, everybody's watching the game.\"",
+	"\"Hook a sturgeon, you let it go. Everybody in this town will hear about it if you don't. The Ghost under the viaduct most of all.\"",
+]
+
+func talk_walt() -> void:
+	var n := int(Game.S.get("walt", 0))
+	var first := n == 0
+	Game.S.walt = n + 1; Game.save_game()
+	hud.open([["h3", "Walt · end of the tailwater pier"], ["h2", "\"Pull up a bucket.\"" if first else "\"Back again. Good.\""], ["quote", WALT_TIPS[n % WALT_TIPS.size()]],
+		["sub", "Walt worked forty years at the woolen mill and has fished below the dam every day since it closed."],
+		["row", [["Thanks, Walt", func(): hud.close(), true, "hot"]]]])
 
 static func draw_bus_stop(ci: CanvasItem, p: Vector2) -> void:
 	p = p - Vector2(0, 0.5)

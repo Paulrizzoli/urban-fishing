@@ -49,6 +49,9 @@ const SPOTS := [[1, "p_caps"], [2, "p_wire"], [9, "p_spoon"], [13, "p_spoon"], [
 	[2, "p_glass"], [9, "p_glass"], [3, "p_graphite"], [13, "p_graphite"], [14, "p_reel"], [12, "p_reel"],
 	[16, "p_bigreel"], [6, "p_bigreel"], [17, "p_cork"], [13, "p_cork"], [10, "p_foam"], [11, "p_foam"]]
 const LOU_SPOT := Vector2(52.4, 33.4)
+## Ironwater's part spots, on the banks of its own water. Their picked-up days are kept apart from Port Mullet's.
+const SPOTS2 := [[26, "p_caps"], [22, "p_spoon"], [21, "p_wire"], [20, "p_feather"], [23, "p_cork"], [24, "p_glass"], [25, "p_beads"], [22, "p_reel"], [20, "p_graphite"], [21, "p_foam"]]
+static func _key(i: int) -> String: return str(i) if Town.level == 0 else "w%d" % i
 const RESPAWN_DAYS := 2
 
 static var spots: Array = []   # [[Vector2 position, part id], ...] worked out once from the map
@@ -107,7 +110,7 @@ static func build_spots() -> void:
 				if not cands.has(r): cands[r] = []
 				cands[r].append(Vector2i(x, y))
 	var seen := {}
-	for s in SPOTS:
+	for s in (SPOTS2 if Town.level == 1 else SPOTS):
 		var r: int = s[0]
 		var k: int = seen.get(r, 0); seen[r] = k + 1   # a second spot on the same water goes elsewhere on the bank
 		if not cands.has(r): continue
@@ -124,14 +127,14 @@ static func build_spots() -> void:
 				var dd := Vector2(q).distance_to(c) + Town.hash2(q.x * 7 + k * 31, q.y * 13 + k * 17) * (3.0 + k * 40.0)
 				if dd < bd: bd = dd; best = Vector2(q) + Vector2(0.5, 0.5)
 		if best.x >= 0: spots.append([best, s[1]])
-	spots.append([LOU_SPOT, "p_caps"])
+	if Town.level == 0: spots.append([LOU_SPOT, "p_caps"])
 
 static func _solid(x: int, y: int) -> bool:
 	var t: int = Town.tile[Town.idx(x, y)]
 	return t in Town.BLOCK or t == Town.T.GRATE or t == Town.T.PGATE or t == Town.T.HGATE or t == Town.T.DOOR
 
 static func available(i: int) -> bool:
-	return int(Game.S.get("picked", {}).get(str(i), -99)) + RESPAWN_DAYS <= int(Game.S.day)
+	return int(Game.S.get("picked", {}).get(_key(i), -99)) + RESPAWN_DAYS <= int(Game.S.day)
 
 ## The part spot you're standing on, or -1.
 static func near(pos: Vector2) -> int:
@@ -144,7 +147,7 @@ static func pick(i: int) -> String:
 	var p: String = spots[i][1]
 	if not Game.S.has("picked"): Game.S.picked = {}
 	if not Game.S.has("parts"): Game.S.parts = {}
-	Game.S.picked[str(i)] = int(Game.S.day)
+	Game.S.picked[_key(i)] = int(Game.S.day)
 	var n := 2 if p in ["p_caps", "p_cork"] else 1
 	Game.S.parts[p] = count(p) + n
 	var first: bool = not Game.S.get("found_part", false)

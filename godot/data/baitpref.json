@@ -211,5 +211,101 @@
  ],
  "The Mayor's Pet": [
   "hotdog"
+ ],
+ "Yellow Perch": [
+  "worms"
+ ],
+ "Black Crappie": [
+  "worms",
+  "lure"
+ ],
+ "Smallmouth Bass": [
+  "lure",
+  "worms"
+ ],
+ "Walleye": [
+  "worms",
+  "lure"
+ ],
+ "Muskellunge": [
+  "lure"
+ ],
+ "The Mayor": [
+  "lure"
+ ],
+ "White Bass": [
+  "lure",
+  "worms"
+ ],
+ "Skipjack Herring": [
+  "lure"
+ ],
+ "Freshwater Drum": [
+  "worms",
+  "shrimp"
+ ],
+ "Sauger": [
+  "worms",
+  "lure"
+ ],
+ "Striped Bass": [
+  "lure",
+  "squid"
+ ],
+ "Flathead Catfish": [
+  "hotdog",
+  "worms"
+ ],
+ "Old Rivet": [
+  "hotdog"
+ ],
+ "Common Carp": [
+  "bread"
+ ],
+ "Longnose Gar": [
+  "lure"
+ ],
+ "Paddlefish": [
+  "worms"
+ ],
+ "Lake Sturgeon": [
+  "worms"
+ ],
+ "The Viaduct Ghost": [
+  "worms"
+ ],
+ "Rainbow Trout": [
+  "worms",
+  "bread"
+ ],
+ "Creek Chub": [
+  "worms",
+  "bread"
+ ],
+ "Brown Trout": [
+  "lure",
+  "worms"
+ ],
+ "Brook Trout": [
+  "worms"
+ ],
+ "The Foreman": [
+  "lure"
+ ],
+ "Mirror Carp": [
+  "bread"
+ ],
+ "The Brewmaster": [
+  "bread"
+ ],
+ "Pumpkinseed": [
+  "worms",
+  "bread"
+ ],
+ "Home Run Henry": [
+  "lure"
+ ],
+ "Old Founder": [
+  "bread"
  ]
 }

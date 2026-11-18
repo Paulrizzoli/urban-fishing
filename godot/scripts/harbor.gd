@@ -63,6 +63,7 @@ class Boat extends Node2D:
 		if horn_fx > 0.0: Art.horn_lines(self, centre - position + Vector2.from_angle(heading) * (HL + 0.2), heading, horn_fx, true)
 
 func setup(ents: Node2D) -> void:
+	if Town.level != 0: return   # Ironwater has no marina
 	for s in SLIPS:
 		var b := Boat.new()
 		b.slip = Vector2(s[0], SLIP_Y)
@@ -94,7 +95,7 @@ func _route_in(b: Boat, from: Array) -> Array:
 
 func _process(dt: float) -> void:
 	dt = minf(dt, 0.05)
-	if player == null: return
+	if player == null or boats.is_empty(): return
 	var h := Game.hour()
 	var any_out := boats.any(func(o): return o.state != "moored")
 	leave_t -= dt

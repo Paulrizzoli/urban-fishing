@@ -144,6 +144,8 @@ func near_ok(f: Dictionary, x: int, y: int) -> bool:
 		"island": return Vector2(x - 62, (y - 165) * 1.8).length() < 10
 		"marina": return x >= 83 and y <= 165
 		"far": return y >= 177
+		"boil": return y <= 38                                  # Ironwater: right under the dam gates
+		"viaduct": return y >= Ironwater.VIA_Y0 - 2 and y <= Ironwater.VIA_Y1 + 2   # under the I-90 viaduct
 	if f.get("bridge", false): return (x >= 36 and x <= 46) or (x >= 54 and x <= 64)
 	return true
 

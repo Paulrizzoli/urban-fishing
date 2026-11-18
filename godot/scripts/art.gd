@@ -464,7 +464,20 @@ static func bush(ci: CanvasItem, x: int, y: int) -> void:
 
 static func tree(ci: CanvasItem, x: int, y: int, t: float) -> void:
 	var h := Town.hash2(x, y)
-	if (y < 33 and h < 0.5) or (Town.zone[Town.idx(x, y)] == 1 and h < 0.35):
+	if Town.level == 1 and h < 0.3:
+		# Ironwater's pines and spruces
+		var wp := TownLife.wind()
+		var sw := sin(t * 0.9 + x * 0.6 + y) * 0.02 * wp
+		ellipse(ci, Vector2(x + 0.85, y + 0.95), 0.8, 0.4, Color(0.08, 0.16, 0.08, 0.25))
+		ci.draw_rect(Rect2(x + 0.42, y + 0.6, 0.16, 0.38), Color("#6b4a2a"))
+		for k in 3:
+			var w := 0.75 - k * 0.2
+			var by := y + 0.75 - k * 0.42
+			var tip := Vector2(x + 0.5 + sw * (k + 1), by - 0.62)
+			ci.draw_colored_polygon(PackedVector2Array([Vector2(x + 0.5 - w, by), Vector2(x + 0.5 + w, by), tip]), Color("#24502e") if k % 2 == 0 else Color("#2d5f36"))
+			ci.draw_line(tip, Vector2(x + 0.5 - w * 0.8, by - 0.02), Color(1, 1, 1, 0.06), 0.04)
+		return
+	if Town.level == 1 or (y < 33 and h < 0.5) or (Town.zone[Town.idx(x, y)] == 1 and h < 0.35):
 		# a leafy tree: the crown leans and its clumps rustle with the wind
 		var wd := TownLife.wind()
 		var lean := Vector2(sin(t * 0.8 + x * 0.6 + y) * 0.025 * wd + (wd - 1.0) * 0.04, 0)

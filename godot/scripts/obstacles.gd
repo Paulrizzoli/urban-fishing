@@ -12,6 +12,9 @@ static var harbor: Harbor           # set by main, for the marina boats
 ## wait for you then instead of running you over.
 static var player_busy := false
 
+static func reset() -> void:
+	_built = false; parked.clear()
+
 ## Where the car in a driveway sits and which way it points: [centre, angle].
 static func driveway_car(dw: Dictionary) -> Array:
 	var r: Rect2 = dw.r

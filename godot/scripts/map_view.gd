@@ -153,14 +153,20 @@ const SHOP_RED := Color("#e2583e")
 const SPOT_AT := { 2: Vector2(70.5, 52.5), 7: Vector2(18.5, 63.5), 9: Vector2(70.5, 79.5), 13: Vector2(79.5, 128), 14: Vector2(44, 163.5), 15: Vector2(30, 177.5) }
 ## Shops and landmarks: [label, tile, icon].
 const PLACES := [["Lou's Bait & Tackle", Vector2(49, 29.5), "hook"], ["Mullet Bay Marina", Vector2(88.5, 142.5), "anchor"], ["FINTASTIC! Outdoors", Vector2(88.5, 124.5), "bag"]]
+const PLACES2 := [["Calder River Outfitters", Vector2(33.5, 85.5), "hook"], ["Ironwater Station", Vector2(25, 168), "bag"]]
+const SPOT_AT2 := { 20: Vector2(66, 14), 21: Vector2(56, 44), 22: Vector2(56, 112) }
+static func places() -> Array: return PLACES2 if Town.level == 1 else PLACES
 
 static var _spots: Array = []     # [id, tile, name]
+
+static func reset() -> void: _spots = []
 
 static func spots() -> Array:
 	if not _spots.is_empty(): return _spots
 	for id in Game.spots:
 		var p: Vector2
-		if SPOT_AT.has(id): p = SPOT_AT[id]
+		var at: Dictionary = SPOT_AT2 if Town.level == 1 else SPOT_AT
+		if at.has(id): p = at[id]
 		else:
 			var sum := Vector2.ZERO
 			var n := 0
@@ -198,8 +204,8 @@ func draw_over(ci: CanvasItem) -> void:
 	var hp := to_screen(home_pos())
 	var hsz := clampf(kk * 1.6, 14, 30)
 	# the icons first, then the names on top of them; earlier names win when two would overlap
-	for bs in Story.BUS: bus_icon(ci, o + bs[1] * kk, isz)
-	for pl in PLACES: place_icon(ci, o + pl[1] * kk, isz * 1.1, pl[2])
+	for bs in Story.bus_list(): bus_icon(ci, o + bs[1] * kk, isz)
+	for pl in places(): place_icon(ci, o + pl[1] * kk, isz * 1.1, pl[2])
 	for sp in spots():
 		var pr := spot_progress(sp[0])
 		spot_icon(ci, o + sp[1] * kk, isz, true, pr.x >= pr.y)
@@ -209,19 +215,19 @@ func draw_over(ci: CanvasItem) -> void:
 	for l in Town.labels:
 		_text_on(ci, o + Vector2(l.x, l.y) * kk, l.t, fs, INK, true)
 	if zoom >= 1.6:
-		for pl in PLACES: _text_on(ci, o + pl[1] * kk + Vector2(isz * 1.1 + 4, 5), pl[0], 12, SHOP_RED.darkened(0.2), false)
+		for pl in places(): _text_on(ci, o + pl[1] * kk + Vector2(isz * 1.1 + 4, 5), pl[0], 12, SHOP_RED.darkened(0.2), false)
 	if zoom >= 1.6:
 		for sp in spots():
 			var pr := spot_progress(sp[0])
 			_text_on(ci, o + sp[1] * kk + Vector2(0, isz + 13), "%s  %d/%d" % [sp[2], pr.x, pr.y], 11, SPOT_BLUE.darkened(0.25), true)
 	if zoom >= 2.5:
-		for bs in Story.BUS: _text_on(ci, o + bs[1] * kk + Vector2(isz + 3, 4), "Bus · " + bs[0], 11, SPOT_BLUE, false)
+		for bs in Story.bus_list(): _text_on(ci, o + bs[1] * kk + Vector2(isz + 3, 4), "Bus · " + bs[0], 11, SPOT_BLUE, false)
 	# building names up close
 	if zoom >= 3.2:
 		for b in Town.buildings:
 			var lb: String = b.get("label", "")
 			if lb == "" or b.get("home", false): continue
-			if PLACES.any(func(pl): return Rect2(b.x, b.y, b.w, b.h).has_point(pl[1])): continue
+			if places().any(func(pl): return Rect2(b.x, b.y, b.w, b.h).has_point(pl[1])): continue
 			var c: Vector2 = o + Vector2(b.x + b.w / 2.0, b.y + b.h / 2.0) * kk
 			_text_on(ci, c + Vector2(0, 4), lb.capitalize() if lb.length() > 3 else lb, 11, Color("#4a3a2c"), true)
 	# the boats you left somewhere
@@ -250,7 +256,7 @@ func draw_over(ci: CanvasItem) -> void:
 func _street_names(ci: CanvasItem, kk: float) -> void:
 	var done := {}
 	var fs := 11 if zoom < 3 else 13
-	for s in MapArt.STREETS:
+	for s in MapArt.streets():
 		if done.has(s[0]) and s[0] == "Egret Circle": continue
 		done[s[0]] = true
 		var a: Vector2 = to_screen(s[1])

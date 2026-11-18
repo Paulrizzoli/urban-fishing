@@ -21,7 +21,7 @@ var hoa_t := 6.0
 var plane_hint := false
 
 func setup(ents: Node2D) -> void:
-	var f := FileAccess.open("res://data/watch.json", FileAccess.READ)
+	var f := FileAccess.open("res://data/watch.json" if Town.level == 0 else "res://data/watch2.json", FileAccess.READ)
 	var d: Dictionary = JSON.parse_string(f.get_as_text())
 	for k in d.exit: exits[int(k)] = Vector2(d.exit[k][0], d.exit[k][1])
 	for k in d.zname: znames[int(k)] = d.zname[k]
@@ -81,13 +81,13 @@ func can_see(w: Dictionary) -> bool:
 	return los_clear(w.pos, player.position)
 
 # ---------- the windows ----------
-func plane_x() -> Variant: return 130.0 - plane_t * 13.5 if plane_t < 5 else null
+func plane_x() -> Variant: return 130.0 - plane_t * 13.5 if plane_t < 5 and Town.level == 0 else null
 func plane_loud() -> bool:
 	var x = plane_x()
 	return x != null and x > 74 and x < 118
 func hoa_car_pos() -> Variant:
 	var k := hoa_t
-	if k > 5: return null
+	if k > 5 or Town.level != 0: return null
 	if k < 2.5: return [Vector2(44 + k / 2.5 * 17.5, 83.5), 0.0]
 	return [Vector2(61.5, 83.5 + (k - 2.5) / 2.5 * 9.5), PI / 2]
 func hoa_gate_open() -> bool: return hoa_t > 1.8 and hoa_t < 4.7
@@ -95,11 +95,11 @@ func hoa_gate_open() -> bool: return hoa_t > 1.8 and hoa_t < 4.7
 func update(dt: float) -> void:
 	var was_plane := plane_t < 5
 	plane_t = fmod(plane_t + dt, PLANE_CYCLE)
-	if plane_t < 5 and not was_plane and player.position.distance_to(Vector2(96, 99)) < 45:
+	if plane_t < 5 and not was_plane and Town.level == 0 and player.position.distance_to(Vector2(96, 99)) < 45:
 		Sound.play("jet", -2.0 if zone_at(player.position) == 7 else -8.0)
 		if zone_at(player.position) == 7: plane_hint = true
 	hoa_t = fmod(hoa_t + dt, HOA_CYCLE)
-	Game.hoa_open = hoa_gate_open()
+	Game.hoa_open = hoa_gate_open() and Town.level == 0
 	var t := Time.get_ticks_msec() / 1000.0
 	var seen_by = null
 	var pz := zone_at(player.position)
