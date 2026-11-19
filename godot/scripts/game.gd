@@ -222,7 +222,7 @@ func order_match(o: Dictionary, c: Dictionary) -> bool:
 func order_matches() -> Array:
 	var o = cur_order()
 	if o == null: return []
-	return S.cooler.filter(func(c): return order_match(o, c))
+	return S.cooler.filter(func(c): return order_match(o, c) and not c.get("keep", false))
 
 # ---------- helpers ----------
 func money(n: float) -> String:

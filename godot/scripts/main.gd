@@ -1215,24 +1215,55 @@ func open_shop() -> void:
 	parts.append(["row", [["Back outside", func(): hud.close(), true, "hot"]]])
 	hud.open(parts)
 
-## The Sell tab: everything in your cooler and the button to sell it all. who is buying (Lou, or Dot in Ironwater).
+## The Sell tab: everything in your cooler, each with its own price button, and the button to sell the rest.
+## who is buying (Lou, Dot in Ironwater or Sal in Gannet Harbor). A fish you Keep stays out of "Sell everything".
 func _sell_parts(parts: Array, who: String) -> void:
 	var S := Game.S
 	if S.cooler.is_empty():
 		parts.append(["sub", ("Sold for %s. " % Game.money(last_sale) if last_sale else "") + "Your cooler is empty. %s buys anything with fins, and some things without." % who + ""])
 	else:
 		var total := 0
+		var kept := 0
+		var slam := Story.slam_fish()
+		if not slam.is_empty(): parts.append(["sub", "You're in today's Slam. Fish marked \"counts for the Slam\" have to be in your cooler when you weigh in, so \"Sell everything\" leaves them alone until you do."])
 		for c in S.cooler:
-			total += int(c.value)
 			var cc: Dictionary = c
+			var keep: bool = c.get("keep", false)
+			if keep or slam.has(c): kept += 1
+			else: total += int(c.value)
+			var keep_btn := ["Kept" if keep else "Keep", func(): _toggle_keep(cc), true, "teal" if keep else ""]
+			var tag := (" · counts for the Slam" if slam.has(c) else "") + (" · kept" if keep else "")
 			if c.junk:
-				parts.append(["item", c.n, "%s lb · %s · %s pays %s, or strip it for %s" % [str(c.w), Game.spots[int(c.spot)].name, who, Game.money(c.value), Crafting.PARTS[Crafting.salvage_part(c.n)].to_lower()],
-					"Strip for parts", func(): hud.flash(Crafting.salvage(cc)); open_shop(), true, func(ci, r): ItemIcons.draw_catch(ci, cc, r)])
+				parts.append(["item", c.n, "%s lb · %s · or strip it for %s%s" % [str(c.w), Game.spots[int(c.spot)].name, Crafting.PARTS[Crafting.salvage_part(c.n)].to_lower(), tag],
+					"Sell for " + Game.money(c.value), func(): _sell_one(cc), true, func(ci, r): ItemIcons.draw_catch(ci, cc, r), false,
+					["Strip for parts", func(): hud.flash(Crafting.salvage(cc)); open_shop(), true]])
 			else:
-				parts.append(["item", c.n + (" ★" if c.legend else ""), "%s lb · %s" % [str(c.w), Game.spots[int(c.spot)].name], Game.money(c.value), func(): pass, false,
-					func(ci, r): ItemIcons.draw_catch(ci, cc, r)])
-		parts.append(["row", [["Sell everything for " + Game.money(total), _sell_all, true, "go"]]])
+				parts.append(["item", c.n + (" ★" if c.legend else ""), "%s lb · %s%s" % [str(c.w), Game.spots[int(c.spot)].name, tag], "Sell for " + Game.money(c.value), func(): _sell_one(cc), true,
+					func(ci, r): ItemIcons.draw_catch(ci, cc, r), false, keep_btn])
+		if kept < S.cooler.size():
+			parts.append(["row", [[("Sell everything else for " if kept else "Sell everything for ") + Game.money(total), _sell_all, true, "go"]]])
+		parts.append(["sub", ("Holding back %d. " % kept if kept else "") + "Press Keep on a fish and \"Sell everything\" leaves it in your cooler."])
 	last_sale = 0
+
+## Keep: a fish "Sell everything" leaves in your cooler. reopen redraws the card you pressed it in.
+func _toggle_keep(c: Dictionary, reopen := Callable()) -> void:
+	if c.get("keep", false): c.erase("keep")
+	else: c.keep = true
+	Game.save_game()
+	if reopen.is_valid(): reopen.call()
+	else: open_shop()
+
+## Sells one thing from your cooler at the tackle shop.
+func _sell_one(c: Dictionary) -> void:
+	if not Game.S.cooler.has(c): return
+	Game.S.cash += int(c.value)
+	if int(c.value) > 0: Sound.play("cash")
+	_note_story([c])
+	Game.S.cooler.erase(c)
+	last_sale = int(c.value)
+	Game.save_game()
+	open_shop()
+	hud.flash("Sold the %s for %s." % [String(c.n).to_lower(), Game.money(c.value)])
 
 func _gear_list(parts: Array, list: Array) -> void:
 	var S := Game.S
@@ -1268,12 +1299,14 @@ func _rod_icon(ci: CanvasItem, r: Rect2) -> void:
 	else: ItemIcons.draw(ci, "rod%d" % Game.shop_rod_level(), r, Time.get_ticks_msec() / 1000.0)
 
 func _sell_all() -> void:
+	var hold := Story.held_fish()
+	var sold: Array = Game.S.cooler.filter(func(c): return not hold.has(c))
 	var total := 0
-	for c in Game.S.cooler: total += int(c.value)
+	for c in sold: total += int(c.value)
 	Game.S.cash += total
 	if total > 0: Sound.play("cash")
-	_note_story(Game.S.cooler)
-	Game.S.cooler = []
+	_note_story(sold)
+	Game.S.cooler = hold
 	last_sale = total
 	Game.save_game()
 	open_shop()
@@ -1449,15 +1482,18 @@ func open_buyer(id: String) -> void:
 				# what they'll buy first, best price first
 				var rows: Array = S.cooler.map(func(c): return [c, Buyers.offer(bd, c)])
 				rows.sort_custom(func(x, y): return int(x[1][0]) > int(y[1][0]))
+				var slam := Story.slam_fish()
 				for row in rows:
 					var c: Dictionary = row[0]
 					var cc: Dictionary = c
 					var o: Array = row[1]
 					var pay: int = o[0]
 					var ok: bool = pay > 0 and Buyers.room(bd) > 0
-					var desc := "%s lb · %s pays %s · %s" % [str(c.w), Buyers.baseline(), Game.money(c.value), o[1]]
+					var keep: bool = c.get("keep", false)
+					var desc := "%s lb · %s pays %s · %s" % [str(c.w), Buyers.baseline(), Game.money(c.value), o[1]] + (" · counts for the Slam" if slam.has(c) else "") + (" · kept" if keep else "")
 					parts.append(["item", c.n + (" ★" if c.legend else ""), desc, ("Sell for " + Game.money(pay)) if pay > 0 else "No thanks", func(): _buyer_sell(id, [cc]), ok,
-						func(ci, r): ItemIcons.draw_catch(ci, cc, r), pay <= 0])
+						func(ci, r): ItemIcons.draw_catch(ci, cc, r), pay <= 0,
+						null if c.junk else ["Kept" if keep else "Keep", func(): _toggle_keep(cc, func(): open_buyer(id)), true, "teal" if keep else ""]])
 				var tk := Buyers.takes(bd)
 				if not tk.is_empty():
 					var tot := 0

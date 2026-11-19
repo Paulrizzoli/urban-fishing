@@ -440,6 +440,7 @@ func _run() -> void:
 		"reach": await reach()
 		"boats": await boats()
 		"pad": await pad_test()
+		"sell": await sell_test()
 	L("EVENTS " + JSON.stringify(events))
 	for sid in catches: L("CATCHES %d %s: %s" % [sid, Game.spots[sid].name, ", ".join(catches[sid])])
 	L("SPOT TRIES " + JSON.stringify(spot_tries))
@@ -487,6 +488,93 @@ func journey() -> void:
 			if not await take_coach(lv + 1): ISSUE("coach to town %d failed" % (lv + 1)); Game.S.level = lv + 1; return
 	# and home again
 	await take_coach(0)
+
+## A screenshot to user://<name>.png, when the game is run with a window (not --headless).
+func shot(name: String) -> void:
+	if DisplayServer.get_name() == "headless": return
+	await fr(6)
+	var img := get_viewport().get_texture().get_image()
+	img.save_png(OS.get_user_data_dir() + "/" + name + ".png"); L("screenshot user://%s.png" % name)
+
+## Selling one fish at a time, Keep, and the Slam hold, at the tackle shop in each town and at a market.
+func sell_test() -> void:
+	await new_game()
+	Game.S.started = true; Game.S.cash = 100
+	for lv in [0, 1, 2]:
+		if Town.level != lv:
+			Game.S.level = lv; var p: Vector2 = Story.bus_list(lv)[0][1]; Game.S.x = p.x; Game.S.y = p.y; Game.S.coach_in = true
+			Game.save_game(); Game.skip_title = true
+			var old = M
+			get_tree().reload_current_scene()
+			for k in 200:
+				await fr()
+				if get_tree().current_scene != old: break
+			await scene_ready(); await fr(10); await popups()
+		var d := int(Game.S.day)
+		Game.S.cooler = [
+			{ "n": "Mullet", "w": 1.5, "value": 4, "spot": 1, "legend": false, "junk": false, "day": d, "tm": 0 },
+			{ "n": "Snook", "w": 31.4, "value": 90, "spot": 1, "legend": false, "junk": false, "day": d, "tm": 0 },
+			{ "n": "Bluegill", "w": 0.6, "value": 2, "spot": 1, "legend": false, "junk": false, "day": d, "tm": 0 },
+			{ "n": "Old Boot", "w": 2.0, "value": 1, "spot": 1, "legend": false, "junk": true, "day": d, "tm": 0 }]
+		M.shop_tab = "sell"; M.open_shop(); await fr(3)
+		for i in 3:
+			if "Sell everything" in card_text(): break
+			if not await click("Into the shop", true): await popups(1); M.shop_tab = "sell"; M.open_shop(); await fr(3)
+		L("SELL TAB: " + card_text().substr(0, 500))
+		var cash := int(Game.S.cash)
+		if not await click("Sell for $4"): ISSUE("%s: no working Sell button for the mullet" % Town.NAMES[lv])
+		elif int(Game.S.cash) - cash != 4 or Game.S.cooler.size() != 3: ISSUE("%s: selling the mullet paid %d and left %d" % [Town.NAMES[lv], int(Game.S.cash) - cash, Game.S.cooler.size()])
+		# Keep the snook (the first Keep button is the snook's now)
+		if not await click("Keep"): ISSUE("%s: no Keep button" % Town.NAMES[lv])
+		if not Game.S.cooler.any(func(c): return c.n == "Snook" and c.get("keep", false)): ISSUE("%s: Keep didn't mark the snook" % Town.NAMES[lv])
+		L("AFTER KEEP: " + card_text().substr(0, 400))
+		await shot("sell-%d" % lv)
+		cash = int(Game.S.cash)
+		if not await click("Sell everything else for $3"): ISSUE("%s: no 'Sell everything else' button" % Town.NAMES[lv])
+		if Game.S.cooler.size() != 1 or Game.S.cooler[0].n != "Snook": ISSUE("%s: Sell everything left %s" % [Town.NAMES[lv], str(Game.S.cooler.map(func(c): return c.n))])
+		if int(Game.S.cash) - cash != 3: ISSUE("%s: Sell everything else paid %d" % [Town.NAMES[lv], int(Game.S.cash) - cash])
+		# un-keep, then sell it on its own
+		await click("Kept")
+		if Game.S.cooler[0].get("keep", false): ISSUE("%s: pressing Kept didn't let it go" % Town.NAMES[lv])
+		if not await click("Sell for $90"): ISSUE("%s: couldn't sell the snook on its own" % Town.NAMES[lv])
+		if not Game.S.cooler.is_empty(): ISSUE("%s: cooler not empty at the end" % Town.NAMES[lv])
+		L("%s shop OK: %s" % [Town.NAMES[lv], card_text().substr(0, 200)])
+		await click("Back outside", true)
+	# the Slam: signed up on a Slam day, the fish that count stay behind when you sell everything
+	Game.S.day = 6; Game.S.min = 6 * 1440 - 1440 + 9 * 60.0
+	Game.S.tour = { "day": 6, "signed": true, "at": Game.S.min - 60, "done": false, "place": 0 }
+	var fmt := Story.tour_fmt(6)
+	Game.S.cooler = [
+		{ "n": "Snook", "w": 20.0, "value": 60, "spot": 1, "legend": false, "junk": false, "day": 6, "tm": Game.S.min - 30 },
+		{ "n": "Mullet", "w": 1.0, "value": 3, "spot": 1, "legend": false, "junk": false, "day": 6, "tm": Game.S.min - 20 },
+		{ "n": "Tarpon", "w": 50.0, "value": 200, "spot": 1, "legend": false, "junk": false, "day": 5, "tm": 0 }]
+	M.shop_tab = "sell"; M.open_shop(); await fr(3)
+	await shot("sell-slam")
+	L("SLAM SELL TAB (%s): %s" % [fmt, card_text().substr(0, 600)])
+	if not "counts for the Slam" in card_text(): ISSUE("no Slam label in the Sell tab")
+	await click("Sell everything else")
+	var left: Array = Game.S.cooler.map(func(c): return c.n)
+	L("after Sell everything on Slam day (%s): %s" % [fmt, str(left)])
+	if not "Snook" in left: ISSUE("Sell everything sold the Slam fish")
+	if "Tarpon" in left: ISSUE("Sell everything kept yesterday's tarpon, which doesn't count")
+	await click("Back outside", true)
+	# a fish market: Keep there too, and "Sell all" leaves kept fish behind
+	var mk: Array = Buyers.here().filter(func(b): return b.kind == "market")
+	if mk.is_empty(): ISSUE("no fish market in %s" % Town.NAMES[Town.level]); return
+	var bd: Dictionary = mk[0]
+	Game.S.min = floorf(Game.S.min / 1440.0) * 1440.0 + (float(bd.hours[0]) + 1.0) * 60.0
+	Game.S.tour = {}
+	Game.S.cooler = [
+		{ "n": "Striped Bass", "w": 30.0, "value": 150, "spot": 30, "legend": false, "junk": false, "day": int(Game.S.day), "tm": 0 },
+		{ "n": "Bluefish", "w": 11.8, "value": 35, "spot": 30, "legend": false, "junk": false, "day": int(Game.S.day), "tm": 0 }]
+	M.buyer_tab = "sell"; M.open_buyer(bd.id); await fr(3)
+	L("MARKET: " + card_text().substr(0, 400))
+	await click("Keep")
+	await click("Sell all", true)
+	L("after Sell all at %s: %s" % [bd.name, str(Game.S.cooler.map(func(c): return c.n))])
+	if Game.S.cooler.size() != 1 or not Game.S.cooler[0].get("keep", false): ISSUE("Sell all at the market didn't leave the kept fish (%s)" % str(Game.S.cooler))
+	await shot("sell-market")
+	await click("Back outside", true)
 
 func all_spots() -> void:
 	# every spot in every town, teleporting in, with all the gear, a few casts each

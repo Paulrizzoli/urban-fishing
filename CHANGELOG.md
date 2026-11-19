@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.50 | Nov 19, 2026 | Sell fish one at a time at Lou's, Dot's and Sal's, and Keep the ones you want to hold on to |
 | v0.9.47 | Nov 19, 2026 | Controller support, and every control can be changed in Settings |
 | v0.9.46 | Nov 19, 2026 | Traffic gets out of Heron Lakes: cars no longer pile up on the loop road behind the gate |
 | v0.9.45 | Nov 18, 2026 | A playtest pass through all three towns: walks that keep to the sidewalk and go around parked cars, a cast marker that starts on the water, and the right shop names in Ironwater and Gannet Harbor |
@@ -71,6 +72,16 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.50 · Sell one fish at a time, and Keep the big ones
+
+_Nov 19, 2026 · Builds: `UrbanFishing-v0.9.50-windows.zip`, `UrbanFishing-v0.9.50-godot-project.zip`_
+
+- **Sell fish one at a time at the tackle shops.** The price next to each fish in the Sell tab at Lou's, Dot's (Calder River Outfitters) and Sal's (Pier 6) used to be a label you couldn't press, so the only way to sell was "Sell everything". Now it's a **Sell for $X** button that sells just that fish, like at the fish markets. Junk gets one too, next to **Strip for parts**.
+- **Keep a fish.** Every fish in the Sell tab, at the tackle shops and at the restaurants and fish markets, has a **Keep** button. A kept fish stays in your cooler when you press **Sell everything** (which now says "Sell everything else" and shows the total for the rest) or "Sell all" at a market, and Lou won't take it for his daily order. Press **Kept** to let it go again. You can still sell a kept fish on its own with its price button.
+- **Slam fish stay put.** On a Slam day, once you've signed up and until you weigh in, the fish that make up your score are marked "counts for the Slam" in every Sell tab, and "Sell everything" leaves them in your cooler on its own, so you can sell the small stuff to make room without losing your score.
+- **The Slam explained.** The marina's Slam card now says on the days in between that only fish you catch after signing up count, so there's no need to save big fish from earlier days.
+- **For checking future builds:** `tools/playtest.sh <godot> sell` sells one fish, keeps one and sells the rest at the tackle shop in each town, checks that the Slam fish stay behind on a Slam day, and keeps a fish at a fish market. Run it with a window (not headless) and it saves screenshots of each Sell tab.
 
 ## v0.9.47 · Controller support, and change any control
 

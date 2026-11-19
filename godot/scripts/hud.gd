@@ -370,7 +370,7 @@ func close() -> void:
 	modal.visible = false
 
 ## Opens a card. parts: [["h3", text], ["h2", text], ["p", text], ["sub", text], ["quote", text],
-## ["kv", [[k, v], ...]], ["row", [[label, callable, enabled, style], ...]], ["item", name, desc, button, callable, enabled]]
+## ["kv", [[k, v], ...]], ["row", [[label, callable, enabled, style], ...]], ["item", name, desc, button, callable, enabled, icon, dim, extra button]]
 ## wide: the card fills most of the window (the map uses this). ["node", control] adds a ready-made control.
 ## width: a card wider than the usual 620 (capped to the window), for one with a big picture.
 var card_key := ""
@@ -434,7 +434,7 @@ func open(parts: Array, wide := false, width := 0.0) -> void:
 					if first_btn == null and not b.disabled: first_btn = b
 				card_box.add_child(hb)
 			"item":
-				# [title, desc, button text, callback, enabled, optional icon Callable(ci, rect), optional dim]
+				# [title, desc, button text, callback, enabled, optional icon Callable(ci, rect), optional dim, optional extra button]
 				var hb := HBoxContainer.new(); hb.add_theme_constant_override("separation", 14)
 				if p.size() > 6 and p[6] is Callable:
 					hb.add_child(_icon_tile(p[6], 64, p.size() > 7 and p[7]))
@@ -442,6 +442,12 @@ func open(parts: Array, wide := false, width := 0.0) -> void:
 				v.add_child(_label(p[1], 16, INK)); v.add_child(_label(p[2], 13, MUTED))
 				v.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 				hb.add_child(v)
+				# optional second button before the main one: [label, callback, enabled, style]
+				if p.size() > 8 and p[8] is Array:
+					var x: Array = p[8]
+					var xb := _button(x[0], x[1], x[2] if x.size() > 2 else true, x[3] if x.size() > 3 else "")
+					xb.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+					hb.add_child(xb)
 				var b := _button(p[3], p[4], p[5])
 				b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 				hb.add_child(b)

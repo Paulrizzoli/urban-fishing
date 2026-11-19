@@ -15,6 +15,7 @@
 #   traffic   cars in each town get out: none trapped driving in circles or stood still in a jam
 #   pad       a new game played only with a controller: title, walking, a shop, fishing, pause, map,
 #             journal, and rebinding a button in the controls card
+#   sell      selling one fish at a time, Keep, and the Slam fish staying put, at the tackle shop in each town
 #   probe     --lv=N --from=x,y --to=x,y: walk from one place to another and log each step
 # Each line it prints starts with "PT [town, day, time, cash, cooler]". Problems start with "!!! ISSUE",
 # and the last lines list them all. The full log, engine output too, is in playtest-<scenario>.log
