@@ -22,15 +22,23 @@ The current version is in `project.godot` (`config/version`) and shows on the ti
 
 ## Controls
 
-- **WASD / arrow keys** to walk, or **click** where you want to go
-- **F / Space / E** to cast, hook, reel, and to go through doors
-- **Arrows** (or the mouse) to move the cast marker, up to as far as your rod reaches
-- **◀ ▶** to twitch the lure in to the left or right, or pull against a running fish
-- **B** to switch bait
-- **K** to launch or land a kayak or skiff
-- **M** for the map, **J** for the journal (spots, Lou's Wall of Fame, the Gazette)
-- **Esc** opens the pause menu (resume, controls, settings, save and quit), or closes a card
-- **F11** switches full screen on and off
+Keyboard and mouse, or a controller (Xbox-style names below; PlayStation and other pads work the same way). Every control can be changed in **Settings → Change controls**, or **Controls** on the title screen and pause menu. Each action takes two keys and two controller buttons, and your choices are saved.
+
+| What | Keyboard | Controller |
+|---|---|---|
+| Walk, aim the cast marker | WASD / arrows, or click | Left stick / D-pad |
+| Cast, hook, hold to reel, doors, talk, bus | F / Space | A / RT |
+| Twitch the lure left or right | ◀ ▶, or Z / X | Left stick, or LB / RB |
+| Pull against a running fish | ◀ ▶ | Left stick |
+| Switch bait | B | X |
+| Launch or land a kayak or skiff | K | Y |
+| Map (+ and − zoom, drag to move) | M | Back (RB / LB zoom, right stick moves) |
+| Journal | J | LT |
+| Close a card, reel your line in | Backspace | B |
+| Pause menu, close a card | Esc | Start |
+| Full screen | F11 | |
+
+In menus and shops the D-pad or left stick moves between buttons, A picks and B goes back.
 
 ## What's ported so far
 
@@ -55,6 +63,7 @@ The current version is in `project.godot` (`config/version`) and shows on the ti
 - [x] Traffic, FINTASTIC! (walk in, Brayden, the flashy extras) and the energy drink
 - [ ] Manholes, the storm drain's darkness, the power station's Geiger counter, golf course gator, home aquarium
 - [x] Title screen, pause menu, controls screen, settings (full screen, window size, VSync, lightning flashes), fades and a save indicator
+- [x] Controller support, and every control can be changed (v0.9.47)
 - [x] Ironwater (v0.9.34) and Gannet Harbor (v0.9.42), two more towns reached by coach
 - [x] Music and sound: seven tunes that change with where you are and the time of day, sound effects, day, night and rain ambience, and volume settings
 - [ ] Real art to replace the code-drawn shapes

@@ -13,6 +13,8 @@
 #   reach     every door, bus stop, buyer and price board can be walked to from the coach stop
 #   cars      where busted players get walked out to, and standing in busy streets
 #   traffic   cars in each town get out: none trapped driving in circles or stood still in a jam
+#   pad       a new game played only with a controller: title, walking, a shop, fishing, pause, map,
+#             journal, and rebinding a button in the controls card
 #   probe     --lv=N --from=x,y --to=x,y: walk from one place to another and log each step
 # Each line it prints starts with "PT [town, day, time, cash, cooler]". Problems start with "!!! ISSUE",
 # and the last lines list them all. The full log, engine output too, is in playtest-<scenario>.log

@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.47 | Nov 19, 2026 | Controller support, and every control can be changed in Settings |
 | v0.9.46 | Nov 19, 2026 | Traffic gets out of Heron Lakes: cars no longer pile up on the loop road behind the gate |
 | v0.9.45 | Nov 18, 2026 | A playtest pass through all three towns: walks that keep to the sidewalk and go around parked cars, a cast marker that starts on the water, and the right shop names in Ironwater and Gannet Harbor |
 | v0.9.44 | Nov 18, 2026 | Gannet Harbor, a third town: a big harbor city with a suspension bridge, a fish market wharf, a container port and a subway |
@@ -70,6 +71,22 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.47 · Controller support, and change any control
+
+_Nov 19, 2026 · Builds: `UrbanFishing-v0.9.47-windows.zip`, `UrbanFishing-v0.9.47-godot-project.zip`_
+
+- **Play with a controller.** Plug in an Xbox, PlayStation or other gamepad and play the whole game on it:
+  - The left stick (or D-pad) walks, and a gentle push walks slower. It also moves the cast marker while you aim.
+  - **A** (or **RT**) casts, hooks the fish and, held down, reels. It also goes through doors, talks to people and rides the bus.
+  - **LB / RB** twitch the lure left or right, and so does a flick of the stick. While you reel, the stick pulls against a running fish.
+  - **X** switches bait, **Y** launches or lands the kayak or skiff, **Back** opens the map, **LT** opens the journal, **Start** pauses, and **B** closes a card or reels your line back in.
+  - In the map, **RB / LB** zoom and the right stick moves it around.
+  - In menus and shops, the D-pad or left stick moves between buttons, **A** picks and **B** goes back. Long cards scroll to follow you. After you buy something or change a setting, you stay on the same button instead of jumping back to the top.
+- **Change any control.** Settings now has **Change controls** at the top (it's also the **Controls** button on the title screen and in the pause menu). Every action has two keyboard slots and two controller slots. Pick a slot, then press the new key, button or stick direction. Esc cancels, and Delete clears the slot. If you take a key another action uses, the two swap. **Reset to defaults** puts everything back. Your choices are saved with your other settings.
+- **Hints show your buttons.** The hints at the bottom of the screen, the bait label, the boat button and the map and journal buttons name the keys you've set. When you're on a controller they name the controller buttons instead ("Press A to cast").
+- **Changed:** **E** no longer casts or opens doors by default. Use **F** or **Space**, or set E back in Change controls. **Z / X** are new twitch keys, next to the arrows, which still twitch.
+- **For checking future builds:** `tools/playtest.sh <godot> pad` plays a new game with only a controller: the title screen, walking, a shop, four casts at Maple Park Pond, the pause menu, the map, the journal, and rebinding a button. The other playtests press the same keys as before.
 
 ## v0.9.46 · Traffic gets out of Heron Lakes
 

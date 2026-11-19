@@ -15,19 +15,11 @@ const STYLES := [["auto", "Auto"], ["surf", "Surf"], ["steel", "Steel drum"], ["
 	["miami", "Miami nights"], ["swamp", "Swamp blues"], ["reactor", "Meltdown"], ["yacht", "Yacht rock"]]
 const SIZES := [Vector2i(1280, 720), Vector2i(1600, 900), Vector2i(1920, 1080)]
 
-const CONTROLS := [
-	["WASD / arrows", "Walk. Or click where you want to go"],
-	["F / Space", "Cast, hook the fish, hold to reel"],
-	["◀ ▶ (A / D)", "Twitch the lure in to the left or right, pull against a running fish"],
-	["Arrows (casting)", "Move the cast marker (or use the mouse), as far as your rod reaches"],
-	["Click the water", "Cast right at that spot"],
-	["E", "Talk, go through doors, ride the bus"],
-	["B", "Switch bait"],
-	["K", "Launch or land a kayak or skiff"],
-	["J", "Journal: spots, Lou's Wall of Fame, the Gazette"],
-	["M", "Map. Scroll or + and − to zoom, drag to move it"],
-	["Esc", "Pause menu. Closes any card"],
-	["F11", "Full screen on or off"],
+## The controls that can't be changed, shown under the ones that can.
+const FIXED := [
+	["Mouse", "Click to walk somewhere, or click the water to cast right there. Drag and scroll the map"],
+	["Right stick", "Moves the map around"],
+	["Menus", "D-pad or left stick to move, A to pick, B to go back (arrows, Enter, Esc on the keyboard)"],
 ]
 
 var hud: Hud
@@ -126,7 +118,7 @@ func show_title() -> void:
 	box.add_child(_title_button("Settings", "", func(): show_settings()))
 	box.add_child(_title_button("Quit", "", func(): get_tree().quit()))
 	var foot := Label.new()
-	foot.text = "v" + Game.version + " · Esc for the menu any time · Fonts: Lilita One and Atkinson Hyperlegible (SIL OFL)"
+	foot.text = "v" + Game.version + " · Esc or Start for the menu any time · Fonts: Lilita One and Atkinson Hyperlegible (SIL OFL)"
 	foot.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	foot.offset_left = 90; foot.offset_top = -40
 	foot.add_theme_font_size_override("font_size", 12)
@@ -211,10 +203,27 @@ func show_pause() -> void:
 		["row", [["Save and quit to title", func(): hud.close(); quit_to_title()], ["Quit game", func(): Game.save_game(); get_tree().quit(), true, "go"]]]])
 
 # ---------- controls ----------
-func show_controls(from_pause := false) -> void:
-	hud.open([["h3", "How to play"], ["h2", "Controls"], ["keys", CONTROLS],
-		["sub", "Fishing: steer the cast marker onto a fish and release in the green to land right on it. When the bobber dips, hook it fast. Then hold to reel, keep the tension needle in the green, and pull against the fish when it runs."],
-		["row", [["Back", func(): show_pause() if from_pause else hud.close(), true, "hot"]]]])
+## The controls card: every action with its two keys and two controller buttons. Pick one, then press
+## the new key or button. from: "pause" or "settings" to go back there, "" to just close.
+func show_controls(from = "") -> void:
+	if from is bool: from = "pause" if from else ""
+	var again := func(): show_controls(from)
+	var parts: Array = [["h3", "Settings"], ["h2", "Controls"], ["top"],
+		["sub", "Pick a slot and press the new key, or the new button or stick direction on your controller. Esc cancels, Delete clears the slot. Taking a key another action uses swaps the two."],
+		["bindhead"]]
+	for a in Controls.ACTIONS:
+		var id: String = a[0]
+		var names: Array = Controls.binds[id].map(func(b): return Controls.name_of(b) if b != "" else "—")
+		parts.append(["bind", a[1], names, Controls.cap_slot if Controls.capturing == id else -1,
+			func(slot):
+				Controls.capture(id, slot, again)
+				again.call()])
+	parts.append(["head", "Always"])
+	parts.append(["keys", FIXED])
+	parts.append(["sub", "Fishing: steer the cast marker onto a fish and release in the green to land right on it. When the bobber dips, hook it fast. Then hold to reel, keep the tension needle in the green, and pull against the fish when it runs."])
+	parts.append(["row", [["Back", func(): (show_pause() if from == "pause" else show_settings(from == "settings_pause") if from.begins_with("settings") else hud.close()), true, "hot"],
+		["Reset to defaults", func(): Controls.reset(); again.call()]]])
+	hud.open(parts, false, 900)
 
 # ---------- settings ----------
 func show_settings(from_pause := false) -> void:
@@ -229,7 +238,9 @@ func show_settings(from_pause := false) -> void:
 		styles[i / 4].append([STYLES[i][1], func(): settings.style = st; apply_settings(); back.call(), settings.style == st])
 	var vol := func(k: String, label: String) -> Array:
 		return ["vol", label, int(settings[k]), func(v): settings[k] = clampi(v, 0, 10); apply_settings(); back.call()]
-	hud.open([["h3", "Settings"], ["h2", "Settings"],
+	hud.open([["h3", "Settings"], ["h2", "Settings"], ["top"],
+		["head", "Controls", "keyboard and controller, change any button"],
+		["row", [["Change controls", func(): show_controls("settings_pause" if from_pause else "settings")]]],
 		["head", "Graphics quality", "lower it if the game runs slowly"],
 		["tabs", [["Low", func(): settings.gfx = 0; apply_settings(); back.call(), int(settings.gfx) == 0], ["Medium", func(): settings.gfx = 1; apply_settings(); back.call(), int(settings.gfx) == 1], ["High", func(): settings.gfx = 2; apply_settings(); back.call(), int(settings.gfx) == 2]]],
 		["sub", ["Low: simpler water, no reflections, mist or puddles, still trees, fewer cars and people.", "Medium: most of the effects, a little simpler water, a few fewer cars and people.", "High: everything on."][clampi(int(settings.gfx), 0, 2)]],

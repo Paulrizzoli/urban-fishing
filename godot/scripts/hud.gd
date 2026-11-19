@@ -164,6 +164,7 @@ func _ready() -> void:
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(600, 0)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.follow_focus = true   # moving between buttons with a controller or the keyboard scrolls to them
 	card.add_child(scroll)
 	card_box = VBoxContainer.new()
 	card_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -218,7 +219,7 @@ func refresh(near: String) -> void:
 	top_labels.cash[0].text = "CASH"; top_labels.cash[1].text = Game.money(S.cash)
 	top_labels.rep[0].text = Game.rep_title().to_upper(); top_labels.rep[1].text = "%d rep" % S.rep
 	top_labels.cooler[0].text = "COOLER"; top_labels.cooler[1].text = "%d / %d" % [S.cooler.size(), S.cooler_cap]
-	top_labels.bait[0].text = "BAIT (B)"; top_labels.bait[1].text = Game.bait_name()
+	top_labels.bait[0].text = "BAIT (%s)" % Controls.k("bait").to_upper(); top_labels.bait[1].text = Game.bait_name()
 	if bait_icon.get_meta("id", "") != Game.S.bait: bait_icon.set_meta("id", Game.S.bait); bait_icon.queue_redraw()
 	var st := fishing.state
 	action.visible = st != "idle" or near != ""
@@ -255,19 +256,21 @@ func refresh(near: String) -> void:
 	if hint_t > 0: hint_t -= dt
 	else:
 		var m := ""
+		var A := Controls.k("action")
+		var pe := "Press %s" % A
 		match st:
-			"idle": m = { "fish": "Cooler's full. Sell at %s's." % Buyers.baseline() if S.cooler.size() >= S.cooler_cap else "Press F or Space to cast. B switches bait.", "shop": ["Lou's Bait & Tackle", "Calder River Outfitters", "Pier 6 Bait & Tackle"][Town.level] + ". Press E or F to go in.", "home": ["Home. Press E or F to go inside.", "Riverview Motor Inn. Press E or F to get a room.", "Seamen's Hostel. Press E or F to get a bunk."][Town.level], "marina": "Mullet Bay Marina. Press E to go in.", "fin": "FINTASTIC! is closed for rebranding. Press E to look in." if Fintastic.closed() else "FINTASTIC! Outdoor Megastore. Press E to go in.", "oldtimer": "Press E to talk.", "rosa": "Press E to talk.", "bus": ["Route 1 bus stop. Press E to ride, or take a coach.", "Calder Line bus stop. Press E to ride, or take a coach.", "Harbor Line subway. Press E to ride, or take a coach."][Town.level] + " M for the map, J for the journal.", "part": "Something shiny on the ground. Press E to pick it up.",
-				"manhole": ("Cooler's full. Sell at %s's." % Buyers.baseline() if S.cooler.size() >= S.cooler_cap else "A manhole. Press F to drop a line down it.") if S.gear.has("prybar") else "A manhole. The cover's too heavy. %s sells a pry bar." % Buyers.baseline() }.get(near, "")
-			"power": m = "Release in the green to land right on the marker. Arrows or the mouse move it." if fishing.over != null else "Move the marker onto a fish with the arrows or the mouse, then release in the green."
-			"wait": m = "Tap to jig the line. Hold to pull it back up." if fishing.manhole >= 0 else "Something's coming over…" if fishing.target != null else "Tap to twitch the lure toward you, ◀ ▶ to twitch it in, left or right. Hold to reel it back in."
+			"idle": m = { "fish": "Cooler's full. Sell at %s's." % Buyers.baseline() if S.cooler.size() >= S.cooler_cap else "Press %s to cast. %s switches bait." % [Controls.k2("action"), Controls.k("bait")], "shop": ["Lou's Bait & Tackle", "Calder River Outfitters", "Pier 6 Bait & Tackle"][Town.level] + ". " + pe + " to go in.", "home": ["Home. " + pe + " to go inside.", "Riverview Motor Inn. " + pe + " to get a room.", "Seamen's Hostel. " + pe + " to get a bunk."][Town.level], "marina": "Mullet Bay Marina. " + pe + " to go in.", "fin": "FINTASTIC! is closed for rebranding. " + pe + " to look in." if Fintastic.closed() else "FINTASTIC! Outdoor Megastore. " + pe + " to go in.", "oldtimer": "" + pe + " to talk.", "rosa": "" + pe + " to talk.", "bus": ["Route 1 bus stop. " + pe + " to ride, or take a coach.", "Calder Line bus stop. " + pe + " to ride, or take a coach.", "Harbor Line subway. " + pe + " to ride, or take a coach."][Town.level] + " %s for the map, %s for the journal." % [Controls.k("map"), Controls.k("journal")], "part": "Something shiny on the ground. " + pe + " to pick it up.",
+				"manhole": ("Cooler's full. Sell at %s's." % Buyers.baseline() if S.cooler.size() >= S.cooler_cap else "A manhole. %s to drop a line down it." % pe) if S.gear.has("prybar") else "A manhole. The cover's too heavy. %s sells a pry bar." % Buyers.baseline() }.get(near, "")
+			"power": m = "Release in the green to land right on the marker. %s moves it." % ("The left stick" if Controls.pad else "The arrows or the mouse") if fishing.over != null else "Move the marker onto a fish with %s, then release in the green." % ("the left stick" if Controls.pad else "the arrows or the mouse")
+			"wait": m = "Tap to jig the line. Hold to pull it back up." if fishing.manhole >= 0 else "Something's coming over…" if fishing.target != null else "Tap %s to twitch the lure toward you, %s to twitch it in, left or right. Hold to reel it back in." % [A, Controls.twitch_text()]
 			"nibble": m = "It's nibbling… wait for the big dip."
 			"bite": m = "NOW!"
-			"reel": m = "Hold to reel. Keep the needle in the green. Pull ◀ ▶ against the fish."
+			"reel": m = "Hold %s to reel. Keep the needle in the green. Pull %s against the fish." % [A, "the stick ◀ ▶" if Controls.pad else "◀ ▶"]
 		if st == "idle" and (near.begins_with("buy:") or near.begins_with("board:")):
 			var bd := Buyers.by_id(near.get_slice(":", 1))
 			if not bd.is_empty():
-				if near.begins_with("board:"): m = "%s's price board. Press E to read today's prices." % bd.name
-				else: m = "%s. %s %s. Press E to go in." % [bd.name, "Open" if Buyers.open_now(bd) else "Closed. Open", Buyers.hours_text(bd)]
+				if near.begins_with("board:"): m = "%s's price board. %s to read today's prices." % [bd.name, pe]
+				else: m = "%s. %s %s. %s to go in." % [bd.name, "Open" if Buyers.open_now(bd) else "Closed. Open", Buyers.hours_text(bd), pe]
 		if place_near != "":
 			if place_t >= PLACE_SECS: m = ""
 			else: hint.modulate.a = clampf((PLACE_SECS - place_t) / 0.6, 0.0, 1.0)
@@ -370,7 +373,25 @@ func close() -> void:
 ## ["kv", [[k, v], ...]], ["row", [[label, callable, enabled, style], ...]], ["item", name, desc, button, callable, enabled]]
 ## wide: the card fills most of the window (the map uses this). ["node", control] adds a ready-made control.
 ## width: a card wider than the usual 620 (capped to the window), for one with a big picture.
+var card_key := ""
+const BIND_W := 116.0
+
+## The buttons in the open card you can move between, top to bottom.
+func _focusables(n: Node, out: Array = []) -> Array:
+	for c in n.get_children():
+		if c.is_queued_for_deletion(): continue
+		if c is Button and c.focus_mode != Control.FOCUS_NONE and c.is_visible_in_tree(): out.append(c)
+		_focusables(c, out)
+	return out
+
 func open(parts: Array, wide := false, width := 0.0) -> void:
+	# the same card opening again (a setting changed, something bought): keep your place in it
+	var key := str(parts.slice(0, 2).map(func(x): return x[1] if x.size() > 1 and x[1] is String else ""))
+	var keep := -1
+	if modal.visible and key == card_key:
+		var fo := get_viewport().gui_get_focus_owner()
+		keep = _focusables(card_box).find(fo)
+	card_key = key
 	for c in card_box.get_children(): c.queue_free()
 	var scroll: Control = card_box.get_parent()
 	var cardc: Control = scroll.get_parent()
@@ -379,8 +400,10 @@ func open(parts: Array, wide := false, width := 0.0) -> void:
 	cardc.custom_minimum_size.x = vs.x - 80 if wide else cw
 	scroll.custom_minimum_size.x = vs.x - 124 if wide else cw - 20
 	var first_btn: Button = null
+	var focus_top := false   # ["top"] in a card: start on its first button, not on the first row of buttons
 	for p in parts:
 		match p[0]:
+			"top": focus_top = true
 			"h3":
 				var h3 := _label(p[1].to_upper(), 12, MUTED); h3.add_theme_font_override("font", Game.font_bold); card_box.add_child(h3)
 			"h2":
@@ -558,6 +581,31 @@ func open(parts: Array, wide := false, width := 0.0) -> void:
 				if p.size() > 2:
 					var hs := _label(p[2], 13, MUTED); hs.autowrap_mode = TextServer.AUTOWRAP_OFF; hs.custom_minimum_size.x = 0; hr.add_child(hs)
 				card_box.add_child(hr)
+			"bindhead":
+				# column titles over the "bind" rows
+				var hh := HBoxContainer.new(); hh.add_theme_constant_override("separation", 6)
+				var sp := Control.new(); sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL; hh.add_child(sp)
+				for t in ["Keyboard", "", "Controller", ""]:
+					var tl := _label(t.to_upper(), 11, MUTED); tl.add_theme_font_override("font", Game.font_bold)
+					tl.custom_minimum_size.x = BIND_W; tl.autowrap_mode = TextServer.AUTOWRAP_OFF
+					hh.add_child(tl)
+				card_box.add_child(hh)
+			"bind":
+				# [label, [4 binding names], slot waiting for a key or -1, callable(slot)]
+				var bh := HBoxContainer.new(); bh.add_theme_constant_override("separation", 6)
+				var bl := _label(p[1], 14, INK); bl.size_flags_horizontal = Control.SIZE_EXPAND_FILL; bl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+				bh.add_child(bl)
+				var cbb: Callable = p[4]
+				for i in 4:
+					var ii := i
+					var waiting: bool = p[3] == i
+					var b := _button(("Press a key…" if i < 2 else "Press a button…") if waiting else p[2][i], func(): cbb.call(ii), true, "hot" if waiting else "")
+					b.custom_minimum_size = Vector2(BIND_W, 36)
+					b.add_theme_font_size_override("font_size", 13)
+					b.clip_text = true
+					if p[2][i] == "—" and not waiting: b.add_theme_color_override("font_color", MUTED)
+					bh.add_child(b)
+				card_box.add_child(bh)
 			"tabs":
 				var hb := HBoxContainer.new(); hb.add_theme_constant_override("separation", 6)
 				for tdef in p[1]:
@@ -574,7 +622,18 @@ func open(parts: Array, wide := false, width := 0.0) -> void:
 		var tw := create_tween().set_parallel()
 		tw.tween_property(modal, "modulate:a", 1.0, 0.12)
 		tw.tween_property(card, "scale", Vector2.ONE, 0.16).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	if first_btn: first_btn.grab_focus.call_deferred()
+	if keep >= 0 or Controls.pad or focus_top: _refocus.call_deferred(keep, null if focus_top else first_btn)
+	elif first_btn: first_btn.grab_focus.call_deferred()
+
+## Puts the focus back on the button at index i (or the nearest one), or on a controller,
+## on the first button in the card, so you start at the top.
+func _refocus(i: int, fallback: Button) -> void:
+	var bs := _focusables(card_box)
+	if bs.is_empty(): return
+	if i < 0:
+		(fallback if fallback != null and Controls.pad and bs.find(fallback) < 3 else bs[0]).grab_focus()
+		return
+	(bs[clampi(i, 0, bs.size() - 1)] as Button).grab_focus()
 
 ## A rounded paper tile with a picture drawn in it. Locked items are drawn faded.
 func _icon_tile(fn: Callable, sz: int, dim: bool) -> Control:
@@ -608,6 +667,7 @@ func _button(s: String, cb: Callable, enabled: bool, style := "") -> Button:
 	var b := Button.new()
 	b.text = s
 	b.disabled = not enabled
+	if not enabled: b.focus_mode = Control.FOCUS_NONE
 	if style != "":
 		var bg: Color = { "hot": SUN, "go": CORAL, "ink": INK, "teal": TEAL }.get(style, PAPER)
 		var sb: StyleBoxFlat = theme_.get_stylebox("normal", "Button").duplicate()

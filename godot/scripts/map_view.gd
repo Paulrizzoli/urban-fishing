@@ -96,6 +96,16 @@ static func home_pos() -> Vector2:
 		if b.get("home", false): return Vector2(b.x + b.w / 2.0, b.y + b.h / 2.0)
 	return Vector2(10, 10)
 
+## The right stick moves the map around.
+func _process(dt: float) -> void:
+	var v := Vector2(Input.get_joy_axis(_pad(), JOY_AXIS_RIGHT_X), Input.get_joy_axis(_pad(), JOY_AXIS_RIGHT_Y))
+	if v.length() < 0.2: return
+	center += v * v.length() * dt * 900.0 / k(); clamp_center(); queue_redraw()
+
+func _pad() -> int:
+	var pads := Input.get_connected_joypads()
+	return pads[0] if not pads.is_empty() else 0
+
 func _gui_input(e: InputEvent) -> void:
 	if e is InputEventMouseButton:
 		if e.button_index == MOUSE_BUTTON_WHEEL_UP and e.pressed: zoom_by(1.15, e.position)
