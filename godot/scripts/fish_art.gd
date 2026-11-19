@@ -162,8 +162,46 @@ static func kind_of(n: String) -> String:
 		if n.contains(w): return (w as String).to_lower()
 	return "other"
 
+## Named catches with a sprite of their own (art/fish/<key>.png); everything else uses its kind's.
+const SPRITES := {
+	"Blue Crab": "blue_crab", "Stingray": "stingray", "Burmese Python": "burmese_python", "Baby Gator": "baby_gator",
+	"Sewer Rat": "sewer_rat", "Glow-in-the-Dark Shrimp": "glow_shrimp",
+	"Glowing Bass": "glowing_bass", "The Isotope": "isotope", "Reactor Goliath": "reactor_goliath",
+	"Three-Eyed Tilapia": "three_eyed_tilapia", "Something From Another Dimension": "another_dimension",
+	"Two-Headed Catfish": "two_headed_catfish", "Giant Tilapia": "giant_tilapia", "Snook XL": "snook_xl",
+	"Mr. Chairman": "mr_chairman", "The Golden Arowana": "golden_arowana", "The Mayor's Pet": "mayors_pet",
+	"The Key to the City": "key_to_the_city", "The Volcano Pacu": "volcano_pacu", "Escaped Koi": "escaped_koi",
+	"Old Glory": "old_glory", "The Gray Ghost": "gray_ghost",
+}
+## Sprites that glow, and in what color.
+const GLOWS := { "glowing_bass": Color(0.6, 1.0, 0.35), "isotope": Color(0.6, 1.0, 0.35), "reactor_goliath": Color(0.6, 1.0, 0.35),
+	"another_dimension": Color(0.75, 0.5, 1.0), "volcano_pacu": Color(1, 0.45, 0.1), "glow_shrimp": Color(0.55, 1.0, 0.45) }
+const SHINES := ["mr_chairman", "golden_arowana", "mayors_pet", "key_to_the_city", "ogon"]
+static var _tex := {}
+static var _soft := {}
+
+static func sprite_key(n: String) -> String:
+	return SPRITES.get(n, kind_of(n))
+
+## The pixel-art sprite for a catch, or null if there isn't one (then draw() falls back to shapes).
+static func sprite(n: String) -> CanvasTexture:
+	var key := sprite_key(n)
+	if not _tex.has(key):
+		var path := "res://art/fish/%s.png" % key
+		var ct: CanvasTexture = null
+		if ResourceLoader.exists(path):
+			ct = CanvasTexture.new()
+			ct.diffuse_texture = load(path)
+			ct.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		_tex[key] = ct
+	return _tex[key]
+
 ## The fish (or creature) named n, fitted into r, facing right. legend gives it a gold sheen.
 static func draw(ci: CanvasItem, n: String, r: Rect2, t := 0.0, legend := false) -> void:
+	var sp := sprite(n)
+	if sp != null:
+		_draw_sprite(ci, sp, sprite_key(n), r, t, legend)
+		return
 	match n:
 		"Blue Crab": _crab(ci, r, t); return
 		"Stingray": _ray(ci, r); return
@@ -186,6 +224,57 @@ static func draw(ci: CanvasItem, n: String, r: Rect2, t := 0.0, legend := false)
 	if n == "Old Glory": k.back = "#2a3a6a"; k.belly = "#f1f4f5"; k.pat = "bigscales"
 	if n == "The Gray Ghost": k.back = "#6a7074"; k.side = "#b8bcbe"
 	_fish(ci, k, r, t, legend)
+
+## A small sprite of the fish named n, centered on c and about len pixels long, for fish swimming
+## in the tank. base is the transform ci is drawing with (it's put back after). Returns false if
+## it has no sprite.
+static func draw_at(ci: CanvasItem, n: String, c: Vector2, len: float, face_right := true, base := Transform2D.IDENTITY) -> bool:
+	var sp := sprite(n)
+	if sp == null: return false
+	var key := sprite_key(n)
+	if not _soft.has(key):
+		var lt := CanvasTexture.new(); lt.diffuse_texture = sp.diffuse_texture; lt.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		_soft[key] = lt
+	var ts := Vector2(sp.diffuse_texture.get_size())
+	var s := len / ts.x
+	ci.draw_set_transform_matrix(base * Transform2D(0.0, Vector2(s if face_right else -s, s), 0.0, c))
+	ci.draw_texture_rect(_soft[key], Rect2(-ts * 0.5, ts), false)
+	ci.draw_set_transform_matrix(base)
+	return true
+
+## Draws a sprite as big as fits in r, at a whole-number scale when it's bigger than the sprite
+## so every pixel stays square and sharp; smaller than that it's scaled down smoothly.
+static func _draw_sprite(ci: CanvasItem, sp: CanvasTexture, key: String, r: Rect2, t: float, legend: bool) -> void:
+	var ts := Vector2(sp.diffuse_texture.get_size())
+	var s := minf(r.size.x / ts.x, r.size.y * 0.88 / ts.y)
+	var tex: Texture2D = sp
+	if s >= 1.0: s = floorf(s)
+	else:
+		if not _soft.has(key):
+			var lt := CanvasTexture.new(); lt.diffuse_texture = sp.diffuse_texture; lt.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+			_soft[key] = lt
+		tex = _soft[key]
+	var sz := ts * s
+	var bob := roundf(sin(t * 1.8) * s * 0.6) if t > 0.0 else 0.0
+	var pos := (r.get_center() - sz * 0.5 + Vector2(0, bob)).round()
+	var c := pos + sz * 0.5
+	if GLOWS.has(key):
+		var gc: Color = GLOWS[key]
+		var pulse := 0.8 + 0.2 * sin(t * 2.5)
+		for i in 4: Art.ellipse(ci, c, sz.x * (0.42 + i * 0.05), sz.y * (0.46 + i * 0.08), Color(gc, 0.07 * pulse))
+	elif legend:
+		for i in 3: Art.ellipse(ci, c, sz.x * (0.44 + i * 0.05), sz.y * (0.5 + i * 0.08), Color(1.0, 0.85, 0.35, 0.06))
+	ci.draw_texture_rect(tex, Rect2(pos, sz), false)
+	if legend or SHINES.has(key):
+		# a couple of glints that come and go across the scales
+		for i in 2:
+			var ph := fmod(t * 0.7 + i * 0.5, 1.0)
+			var a := sin(ph * PI)
+			if a < 0.2: continue
+			var gp := pos + Vector2(sz.x * (0.35 + 0.3 * fmod(i * 0.61 + floorf(t * 0.7 + i * 0.5) * 0.37, 1.0)), sz.y * (0.38 + 0.08 * i))
+			var gs := maxf(2.0, s * 1.5) * a
+			ci.draw_line(gp - Vector2(gs, 0), gp + Vector2(gs, 0), Color(1, 1, 0.9, 0.8 * a), maxf(1.0, s * 0.5))
+			ci.draw_line(gp - Vector2(0, gs), gp + Vector2(0, gs), Color(1, 1, 0.9, 0.8 * a), maxf(1.0, s * 0.5))
 
 static func _c(k: Dictionary, key: String) -> Color: return Color(k[key])
 

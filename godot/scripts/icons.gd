@@ -78,6 +78,10 @@ static func draw_catch(ci: CanvasItem, c: Dictionary, r: Rect2) -> void:
 	if c.get("junk", false):
 		if not JunkArt.draw(ci, str(c.get("n", "")), r.grow(-r.size.x * 0.04), Time.get_ticks_msec() / 1000.0): draw(ci, "junk", r)
 		return
+	if FishArt.sprite(str(c.get("n", ""))) != null:
+		FishArt.draw(ci, str(c.get("n", "")), r, 0.0, c.get("legend", false))
+		if c.get("legend", false): _star(ci, r.position + Vector2(r.size.x * 0.82, r.size.y * 0.2), minf(r.size.x, r.size.y) * 0.12, Color("#ffd75e"))
+		return
 	var s := minf(r.size.x, r.size.y) / 64.0
 	ci.draw_set_transform(r.position + (r.size - Vector2(64, 64) * s) / 2.0, 0.0, Vector2(s, s))
 	if c.get("legend", false):
