@@ -14,6 +14,7 @@ To make a new version, bump `config/version` in `godot/project.godot` (and the f
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.49 | Nov 19, 2026 | A fairer fight with big fish: the drag slips before the line snaps, better rods turn a running fish harder, and a new rod goes straight in your hands |
 | v0.9.48 | Nov 19, 2026 | Hand-drawn art, part 1: every fish (and crab, ray, python, gator, rat and shrimp) is now a detailed pixel-art sprite |
 | v0.9.47 | Nov 19, 2026 | Controller support, and every control can be changed in Settings |
 | v0.9.46 | Nov 19, 2026 | Traffic gets out of Heron Lakes: cars no longer pile up on the loop road behind the gate |
@@ -72,6 +73,19 @@ To make a new version, bump `config/version` in `godot/project.godot` (and the f
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.49 · A fairer fight with big fish
+
+_Nov 19, 2026 · Builds: `UrbanFishing-v0.9.49-windows.zip`, `UrbanFishing-v0.9.49-godot-project.zip`_
+
+The fight itself hadn't changed in any recent update, but it was much too twitchy for strong fish: offshore and Outer Harbor fish (pull 0.8 to 1.0) snapped the line the instant the needle touched the end, which a perfect bot could manage but a person reacting at normal speed mostly couldn't, even with the big-game rod.
+
+- **The drag slips before the line breaks.** At full tension the line no longer snaps at once. The drag slips and pays out a little line, the meter says DRAG SLIPPING, and you have a moment to let go or steer the fish back: half a second on the garage-sale rod, up to 1.1 seconds on the big-game rod. Hold on past that and it still snaps.
+- **Better rods turn a running fish harder.** Pulling against a run (◀ ▶ or the stick) is stronger with every rod up, about twice as strong on the big-game rod as on the garage-sale rod, so a big fish can't drag the line sideways faster than you can pull it back.
+- **Big fish give up line a bit more easily**, and slip away a bit more slowly while you let off the reel.
+- **A new rod goes straight in your hands.** If you were fishing with your home-built rod, buying a rod from Lou's or the marina (like the big-game rod) still left the home-built one in your hands, so the new rod did nothing until you swapped at home. Now buying a rod switches you to it.
+- Legends with the strongest pull (Bluefin Tuna, The Codfather, Goliath Grouper and the like) are still a real fight.
+- Tested with the playtest bot set to react half a second late, from the skiff: before, it landed 17 of 24 fish in Offshore and the Outer Harbor; now 24 of 24.
 
 ## v0.9.48 · Hand-drawn art, part 1: the fish
 

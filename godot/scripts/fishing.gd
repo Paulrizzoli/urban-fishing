@@ -42,6 +42,7 @@ var ang := 0.0
 var run := 0.0
 var run_t := 0.0
 var thrash_t := 0.0
+var strain := 0.0         # seconds the line has spent at full tension, with the drag slipping (see DRAG_GRACE)
 var splash := 0.0
 var splash_big := false
 var twitch := 0.0
@@ -429,7 +430,7 @@ func action_down() -> void:
 			drop_target(6); state = "wait"; wait_t = 0.0; t = 0.0; blind = false
 		"bite":
 			Sound.play("hookset")
-			state = "reel"; tension = 0.35; progress = 0.3; ang = 0.0; run = 0.0; run_t = randf_range(0.6, 1.4); thrash_t = randf_range(1.0, 2.2); holding = true
+			state = "reel"; tension = 0.35; progress = 0.3; ang = 0.0; run = 0.0; strain = 0.0; run_t = randf_range(0.6, 1.4); thrash_t = randf_range(1.0, 2.2); holding = true
 			bob0 = bob
 			var a: float = (bob - player.position).angle()
 			shore = player.position + Vector2.from_angle(a) * 0.9
@@ -532,14 +533,15 @@ func update(dt: float) -> void:
 			run_t -= dt
 			if run_t <= 0:
 				run = 0.0 if randf() < 0.25 else (-1.0 if randf() < 0.5 else 1.0); run_t = randf_range(0.8, 2.2) / (0.6 + fp)
-			ang += (run * (0.45 + fp * 0.9) + pull * 1.35) * dt * 0.85
+			# better rods turn a running fish faster: the big-game rod pulls twice as hard as the garage-sale one
+			ang += (run * (0.45 + fp * 0.9) + pull * (1.35 + STEER_PER_ROD * Game.rod_level())) * dt * 0.85
 			ang -= ang * dt * 0.25; ang = clampf(ang, -1.05, 1.05)
 			var side := absf(ang)
 			if holding:
 				tension += (0.45 + 0.6 * fp) * rt * dt
-				progress += (0.26 * rr * (1.15 if Game.S.gear.has("turbo") else 1.0) * (1.2 - fp * 0.6) if tension >= BAND[0] and tension <= BAND[1] else 0.05) * (1 - minf(0.7, side * 0.75)) * dt
+				progress += (0.26 * rr * (1.15 if Game.S.gear.has("turbo") else 1.0) * (1.2 - fp * 0.55) if tension >= BAND[0] and tension <= BAND[1] else 0.05) * (1 - minf(0.7, side * 0.75)) * dt
 			else:
-				tension -= 0.75 * dt; progress -= (0.03 + 0.06 * fp) * dt
+				tension -= 0.75 * dt; progress -= (0.025 + 0.05 * fp) * dt
 			if side > 0.55: tension += (side - 0.55) * 1.1 * rt * dt
 			if side >= 1: tension += 0.3; ang *= 0.4; emit_signal("message", "It ran the line sideways! Pull the other way.")
 			thrash_t -= dt
@@ -550,7 +552,13 @@ func update(dt: float) -> void:
 			bob = bob0 + (shore - bob0) * k + perp * ang * 1.6
 			if target != null:
 				target.pos = bob; target.dir = (bob - player.position).angle() + ang * 0.8 + sin(target.wob) * 0.4
+			# at full tension the drag slips and pays out line instead of the line snapping at once:
+			# let go (or steer the fish back) before DRAG_GRACE runs out, longer on better rods
 			if tension >= 1:
+				if strain <= 0: emit_signal("message", "The drag's slipping! Ease off before the line goes.")
+				tension = 1.0; strain += dt; progress -= 0.05 * dt
+			else: strain = maxf(0.0, strain - dt * 0.5)
+			if strain >= drag_grace():
 				state = "idle"; holding = false; drop_target(20); Sound.play("snap")
 				emit_signal("message", "Snap! The line broke." + (" That felt like something legendary." if fish.get("legend", false) else ""))
 			elif progress <= 0:
@@ -558,6 +566,12 @@ func update(dt: float) -> void:
 			elif progress >= 1: _land()
 	if state == "idle": bob = null; manhole = -1; slide = Vector2.ZERO
 	queue_redraw()
+
+## How long the drag can slip at full tension before the line breaks: half a second on the
+## garage-sale rod, over a second on the big-game rod.
+const DRAG_GRACE := 0.5
+const STEER_PER_ROD := 0.25
+func drag_grace() -> float: return DRAG_GRACE + 0.15 * Game.rod_level()
 
 func _land() -> void:
 	var f: Dictionary = fish

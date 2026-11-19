@@ -1321,6 +1321,9 @@ func _buy(gid: String, price: int, at_marina := false) -> void:
 	if gid == "cooler": Game.S.cooler_cap = mini(Game.cooler_max(), Game.S.cooler_cap + 5)
 	elif gid in ["mcooler", "megacooler"]: Game.S.gear[gid] = 1; Game.S.cooler_cap += 10
 	else: Game.S.gear[gid] = 1
+	# a new rod from a shop goes straight in your hands, even if you were fishing the home-built one
+	if gid.begins_with("rod") and Game.S.get("use_home", false):
+		Game.S.use_home = false; hud.flash("You pick up your new %s." % Game.rod().name.to_lower())
 	for b in Game.baits:
 		if b.get("gear", "") == gid: Game.S.bait = b.id
 	if gid == "skiff": Game.add_news("Local Angler Buys Used Skiff; Lou Names It After a Coffee Can")
