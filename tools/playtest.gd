@@ -44,6 +44,32 @@ func key(k: int, down: bool) -> void:
 func tap(k: int) -> void:
 	key(k, true); await fr(2); key(k, false); await fr(1)
 
+## Controller input, for the "pad" scenario (and anything run with use_pad on).
+var use_pad := false
+func pad_btn(b: int, down: bool) -> void:
+	var e := InputEventJoypadButton.new(); e.device = 0; e.button_index = b as JoyButton; e.pressed = down; e.pressure = 1.0 if down else 0.0
+	Input.parse_input_event(e)
+func pad_axis(ax: int, v: float) -> void:
+	var e := InputEventJoypadMotion.new(); e.device = 0; e.axis = ax as JoyAxis; e.axis_value = v
+	Input.parse_input_event(e)
+func pad_tap(b: int) -> void:
+	pad_btn(b, true); await fr(2); pad_btn(b, false); await fr(1)
+
+## A control by what it does, on the keyboard or (use_pad) the controller.
+func press(what: String, down: bool) -> void:
+	if not use_pad:
+		key({ "act": KEY_F, "up": KEY_UP, "left": KEY_LEFT, "right": KEY_RIGHT, "twl": KEY_LEFT, "twr": KEY_RIGHT, "bait": KEY_B }[what], down); return
+	match what:
+		"act": pad_btn(JOY_BUTTON_A, down)
+		"up": pad_axis(JOY_AXIS_LEFT_Y, -1.0 if down else 0.0)
+		"left": pad_axis(JOY_AXIS_LEFT_X, -1.0 if down else 0.0)
+		"right": pad_axis(JOY_AXIS_LEFT_X, 1.0 if down else 0.0)
+		"twl": pad_btn(JOY_BUTTON_LEFT_SHOULDER, down)
+		"twr": pad_btn(JOY_BUTTON_RIGHT_SHOULDER, down)
+		"bait": pad_btn(JOY_BUTTON_X, down)
+func tapp(what: String) -> void:
+	press(what, true); await fr(2); press(what, false); await fr(1)
+
 func _buttons(n: Node, out: Array) -> void:
 	for c in n.get_children():
 		if c is Button and c.is_visible_in_tree(): out.append(c)
@@ -180,7 +206,7 @@ func best_bait(sid: int) -> String:
 func set_bait(b: String) -> void:
 	for i in 10:
 		if Game.S.bait == b: return
-		await tap(KEY_B)
+		await tapp("bait")
 	if Game.S.bait != b: ISSUE("B never got to bait " + b)
 
 ## One cast. Returns the landed catch name, or "".
@@ -191,18 +217,18 @@ func cast_once(wait_max := 40.0) -> String:
 	await fr(2)
 	if M.near != "fish": L("not by fishable water (near=%s)" % M.near); return "!nowater"
 	if Game.S.cooler.size() >= Game.S.cooler_cap: return "!full"
-	await tap(KEY_F)
-	if F.state != "power": L("F did not start a cast (state %s)" % F.state); return "!nocast"
+	await tapp("act")
+	if F.state != "power": L("the action button did not start a cast (state %s)" % F.state); return "!nocast"
 	# steer the marker a little with the arrows sometimes, like a player would
 	if randf() < 0.3:
-		key(KEY_UP, true); await secs(0.2); key(KEY_UP, false)
+		press("up", true); await secs(0.2); press("up", false)
 	var t := 0.0
 	while t < 6.0:
 		await fr(); t += 1.0 / FPS
 		if absf(F.power - F.green) < 0.03: break
 	var mk: Vector2 = F.tgt.pos if F.tgt != null else Vector2.ZERO
 	var pw: float = F.power
-	await tap(KEY_F)
+	await tapp("act")
 	if F.state != "wait":
 		var land: Vector2 = M.player.position + Vector2.from_angle(F.aim) * (Fishing.MINR + pw * (F.reach() - Fishing.MINR))
 		L("dry cast from %s marker %s (tile %d, water %s) power %.2f green %.2f lands ~%s tile %d" % [str(M.player.position), str(mk), Town.t_at(floori(mk.x), floori(mk.y)), F.is_water(mk), pw, F.green, str(land), Town.t_at(floori(land.x), floori(land.y))])
@@ -216,14 +242,14 @@ func cast_once(wait_max := 40.0) -> String:
 		if M.hud.is_open(): await popups(); return "!card"
 		if F.state == "idle": return "!lost"
 		if F.state == "wait" and ((t > 7 and tw == 0) or (t > 15 and tw == 1)):
-			tw += 1; ev("twitch"); await tap(KEY_RIGHT if tw == 1 else KEY_LEFT)
+			tw += 1; ev("twitch"); await tapp("twr" if tw == 1 else "twl")
 		if F.state == "bite":
 			await secs(randf_range(0.15, 0.35))
-			key(KEY_F, true); await fr(2)
+			press("act", true); await fr(2)
 			if F.state == "reel": hooked = true; ev("hooked"); break
-			key(KEY_F, false)
+			press("act", false)
 	if not hooked:
-		F.cancel(); key(KEY_F, false); return "!nobite"
+		F.cancel(); press("act", false); return "!nobite"
 	# the fight
 	var holding := true
 	var lr := 0
@@ -231,17 +257,17 @@ func cast_once(wait_max := 40.0) -> String:
 	while F.state == "reel" and t < 90:
 		await fr(); t += 1.0 / FPS
 		var want: bool = F.tension < 0.55
-		if want != holding: key(KEY_F, want); holding = want
+		if want != holding: press("act", want); holding = want
 		var w := 0
 		if F.ang > 0.2: w = -1
 		elif F.ang < -0.2: w = 1
 		if w != lr:
-			if lr == -1: key(KEY_LEFT, false)
-			if lr == 1: key(KEY_RIGHT, false)
-			if w == -1: key(KEY_LEFT, true)
-			if w == 1: key(KEY_RIGHT, true)
+			if lr == -1: press("left", false)
+			if lr == 1: press("right", false)
+			if w == -1: press("left", true)
+			if w == 1: press("right", true)
 			lr = w
-	key(KEY_F, false); key(KEY_LEFT, false); key(KEY_RIGHT, false)
+	press("act", false); press("left", false); press("right", false)
 	await fr(4)
 	if M.pending_catch != null and M.hud.is_open():
 		var c: Dictionary = M.pending_catch
@@ -374,7 +400,7 @@ func take_coach(to: int) -> bool:
 	if not await walk(stop, 200.0, "to the bus stop " + Story.bus_list()[i][0]): ISSUE("couldn't reach bus stop"); return false
 	await fr(3)
 	if M.near != "bus": ISSUE("at the bus stop but near=%s" % M.near); return false
-	await tap(KEY_E)
+	await tap(KEY_F)
 	await fr(3)
 	L("BUS CARD: " + card_text().substr(0, 600))
 	var fare: int = M.COACHES["%d-%d" % [Town.level, to]][0]
@@ -413,6 +439,7 @@ func _run() -> void:
 		"probe": await probe()
 		"reach": await reach()
 		"boats": await boats()
+		"pad": await pad_test()
 	L("EVENTS " + JSON.stringify(events))
 	for sid in catches: L("CATCHES %d %s: %s" % [sid, Game.spots[sid].name, ", ".join(catches[sid])])
 	L("SPOT TRIES " + JSON.stringify(spot_tries))
@@ -670,3 +697,129 @@ func boats() -> void:
 		if got == 0: ISSUE("nothing caught from the skiff at %d %s" % [sid, Game.spots[sid].name])
 		# and back to land with K
 		Game.S.boat = false
+
+# ---------- the controller ----------
+func focused() -> String:
+	var f = get_viewport().gui_get_focus_owner()
+	return f.text if f is Button else ("<none>" if f == null else str(f))
+
+func check(ok: bool, what: String) -> void:
+	if ok: L("ok: " + what)
+	else: ISSUE(what)
+
+## Plays with a controller only: the title screen, walking, casting, twitching, reeling, a shop, the
+## pause menu, the map and journal, and rebinding a button in the controls card.
+func pad_test() -> void:
+	use_pad = true
+	# the title screen: the D-pad moves between the buttons, A picks
+	await fr(30)
+	L("title focus: " + focused())
+	pad_tap(JOY_BUTTON_DPAD_DOWN); await fr(3)
+	var f2 := focused()
+	pad_tap(JOY_BUTTON_DPAD_UP); await fr(3)
+	check(f2 != focused(), "D-pad moves between the title buttons (%s / %s)" % [f2, focused()])
+	var old = M
+	if focused() != "New game":
+		for i in 6:
+			if focused() == "New game": break
+			pad_tap(JOY_BUTTON_DPAD_UP); await fr(3)
+	check(focused() == "New game", "reached New game with the D-pad")
+	pad_tap(JOY_BUTTON_A)
+	for k in 200:
+		await fr()
+		if get_tree().current_scene != old: break
+	await scene_ready(); await fr(20)
+	check(not M.menu.title_open, "A on New game starts the game")
+	# the intro cards: A presses the focused button, B closes
+	for i in 6:
+		if not M.hud.is_open(): break
+		L("CARD (focus %s): %s" % [focused(), card_text().substr(0, 120)])
+		pad_tap(JOY_BUTTON_A); await fr(6)
+	if M.hud.is_open(): pad_tap(JOY_BUTTON_B); await fr(4)
+	check(not M.hud.is_open(), "intro cards closed with A / B")
+	Controls.pad = true
+	# walking: full push and half push on the left stick
+	var p0: Vector2 = M.player.position
+	pad_axis(JOY_AXIS_LEFT_X, 1.0); await secs(1.0); pad_axis(JOY_AXIS_LEFT_X, 0.0); await fr(2)
+	var full: float = M.player.position.x - p0.x
+	p0 = M.player.position
+	pad_axis(JOY_AXIS_LEFT_X, -0.5); await secs(1.0); pad_axis(JOY_AXIS_LEFT_X, 0.0); await fr(2)
+	var half: float = p0.x - M.player.position.x
+	check(full > 1.0 and half > 0.2 and half < full * 0.8, "left stick walks, slower on a half push (%.2f vs %.2f tiles in 1 s)" % [full, half])
+	p0 = M.player.position
+	pad_btn(JOY_BUTTON_DPAD_DOWN, true); await secs(0.6); pad_btn(JOY_BUTTON_DPAD_DOWN, false); await fr(2)
+	check(M.player.position.y > p0.y + 0.5, "D-pad walks")
+	# a shop: A at the door, move around with the D-pad, B to leave
+	if await walk(M.lou_door, 200.0, "to the tackle shop", true):
+		if M.hud.is_open(): pad_tap(JOY_BUTTON_B); await fr(4)
+		await fr(3)
+		if M.near == "shop":
+			pad_tap(JOY_BUTTON_A); await fr(6)
+			check(M.hud.is_open(), "A at the door opens the shop")
+			var fa := focused()
+			pad_tap(JOY_BUTTON_DPAD_DOWN); await fr(3)
+			var fb := focused()
+			pad_tap(JOY_BUTTON_DPAD_DOWN); await fr(3)
+			L("shop focus: %s -> %s -> %s" % [fa, fb, focused()])
+			check(fa != "<none>" and (fb != fa or focused() != fa), "the D-pad moves between the shop's buttons")
+			pad_tap(JOY_BUTTON_B); await fr(4)
+			check(not M.hud.is_open(), "B leaves the shop")
+		else: ISSUE("at Lou's door but near=%s" % M.near)
+	# fishing at the pond by Lou's: cast, steer the marker, twitch, hook, reel, all on the pad
+	var bait_before = Game.S.bait
+	await tapp("bait")
+	check(Game.S.bait != bait_before or Game.owned_baits().size() < 2, "X switches bait (%s -> %s)" % [bait_before, Game.S.bait])
+	var got := await fish_spot(1, 4)
+	L("pad fishing: %d caught, events %s" % [got, JSON.stringify(events)])
+	check(int(events.get("cast", 0)) > 0, "A casts")
+	check(int(events.get("hooked", 0)) > 0, "A hooks a fish")
+	# pause, map, journal
+	pad_tap(JOY_BUTTON_START); await fr(4)
+	check(M.hud.is_open() and "Gone fishin'" in card_text(), "Start opens the pause menu (focus %s)" % focused())
+	pad_tap(JOY_BUTTON_B); await fr(4)
+	check(not M.hud.is_open(), "B closes the pause menu")
+	pad_tap(JOY_BUTTON_BACK); await fr(10)
+	check(M.hud.is_open() and is_instance_valid(M.map_view), "Back opens the map")
+	if M.hud.is_open() and is_instance_valid(M.map_view):
+		var z: float = M.map_view.zoom
+		pad_tap(JOY_BUTTON_RIGHT_SHOULDER); await fr(3)
+		check(M.map_view.zoom > z, "RB zooms the map in")
+		var c0: Vector2 = M.map_view.center
+		pad_axis(JOY_AXIS_RIGHT_X, 1.0); await secs(0.5); pad_axis(JOY_AXIS_RIGHT_X, 0.0)
+		check(M.map_view.center.x > c0.x, "the right stick moves the map")
+		pad_tap(JOY_BUTTON_BACK); await fr(4)
+		check(not M.hud.is_open(), "Back closes the map")
+	pad_axis(JOY_AXIS_TRIGGER_LEFT, 1.0); await fr(3); pad_axis(JOY_AXIS_TRIGGER_LEFT, 0.0); await fr(3)
+	check(M.hud.is_open() and "FISHING JOURNAL" in card_text(), "LT opens the journal (%s)" % card_text().substr(0, 60))
+	pad_tap(JOY_BUTTON_B); await fr(4)
+	# rebinding: switch bait onto Y. Y was the boat button, so the boat gets X
+	M.menu.show_controls(); await fr(4)
+	L("controls card focus: " + focused())
+	var slot: Button = null
+	for b in buttons():
+		if b.text == "X" and b.get_parent().get_child(0) is Label and (b.get_parent().get_child(0) as Label).text == "Switch bait": slot = b
+	check(slot != null, "the controls card shows X for Switch bait")
+	if slot:
+		slot.grab_focus(); await fr(2)
+		pad_tap(JOY_BUTTON_A); await fr(3)
+		check(Controls.capturing == "bait", "A on a slot waits for a new button")
+		await secs(0.5)
+		pad_tap(JOY_BUTTON_Y); await fr(4)
+		L("bait: %s, boat: %s" % [Controls.binds.bait, Controls.binds.boat])
+		check(Controls.binds.bait[2] == "b:%d" % JOY_BUTTON_Y and Controls.binds.boat[2] == "b:%d" % JOY_BUTTON_X, "Y now switches bait and X launches the boat (swapped)")
+		check(M.hud.is_open() and "Controls" in card_text(), "the controls card stays open after rebinding")
+		var cf := ConfigFile.new(); cf.load("user://settings.cfg")
+		check(cf.get_value("controls", "bait", [])[2] == "b:%d" % JOY_BUTTON_Y, "the new binding is saved in settings.cfg")
+		check(cf.get_value("settings", "gfx", -1) == 0, "the other settings are still in settings.cfg")
+		pad_tap(JOY_BUTTON_B); await fr(4)
+		bait_before = Game.S.bait
+		pad_tap(JOY_BUTTON_Y); await fr(3)
+		check(Game.S.bait != bait_before or Game.owned_baits().size() < 2, "Y switches bait after rebinding")
+		# a keyboard slot: Q for bait
+		M.menu.show_controls(); await fr(4)
+		Controls.capture("bait", 1, func(): pass); await secs(0.5)
+		key(KEY_Q, true); await fr(2); key(KEY_Q, false); await fr(2)
+		check(Controls.binds.bait[1] == "k:%d" % KEY_Q, "Q bound to bait from the keyboard")
+		Controls.reset(); await fr(2)
+		check(Controls.binds.bait[2] == "b:%d" % JOY_BUTTON_X, "Reset to defaults puts bait back on X")
+		pad_tap(JOY_BUTTON_B); await fr(4)

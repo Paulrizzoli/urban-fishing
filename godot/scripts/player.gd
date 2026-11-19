@@ -168,6 +168,8 @@ func speed() -> float:
 
 func step(dt: float, input_dir: Vector2) -> void:
 	var dir := input_dir
+	# a gentle push on the stick walks slower; keys are always full speed
+	var mag := clampf(input_dir.length(), 0.35, 1.0) if input_dir != Vector2.ZERO else 1.0
 	if dir != Vector2.ZERO: path.clear()
 	elif path.size():
 		var to: Vector2 = path[0] - position
@@ -176,7 +178,7 @@ func step(dt: float, input_dir: Vector2) -> void:
 	if dir != Vector2.ZERO:
 		dir = dir.normalized()
 		var before := position
-		var sp := speed()
+		var sp := speed() * mag
 		var f := dir.angle()
 		# already pressed into a car or a boat (it drove up to you, or you loaded in beside one): you can
 		# always step clear, but not further in
@@ -321,7 +323,7 @@ func toggle_boat() -> String:
 		face = float(v[2]) + (PI if l[1] == "kayak" else 0.0)
 		pk.erase(l[1])
 	position = l[0]; Game.S.boat = true; Game.S.boat_kind = l[1]
-	return "The outboard coughs twice and catches. Steer with the arrow keys or click the water." if l[1] == "skiff" else "You push off. Paddle with the arrow keys or click the water."
+	return ("The outboard coughs twice and catches. Steer with %s." if l[1] == "skiff" else "You push off. Paddle with %s.") % ("the left stick" if Controls.pad else "the arrow keys or click the water")
 
 func _draw() -> void:
 	if in_boat():

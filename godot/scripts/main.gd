@@ -10,7 +10,7 @@ const ROSA := Vector2(34.4, 165.6)
 const STORY_LINES_OK := ["Lou whistles. The regulars nod.", "Somebody buys you a soda.", "Lou writes it on the whiteboard."]
 const STORY_LINES_NO := ["Lou laughs so hard he has to sit down.", "A regular holds his hands two inches apart.", "\"Sure it was, buddy.\""]
 ## Lou's bait chart: shown the first time you walk into Lou's, and in the Gear tab.
-const BAIT_TIP := "\"Worms catch a bit of everything. Bread for mullet, tilapia and koi. Hot dogs for catfish. Lures for bass. Live shrimp for snook, tarpon and redfish. Press B to switch.\""
+const BAIT_TIP := "\"Worms catch a bit of everything. Bread for mullet, tilapia and koi. Hot dogs for catfish. Lures for bass. Live shrimp for snook, tarpon and redfish. Press %s to switch.\""
 const GROUND_SHADER := preload("res://shaders/ground.gdshader")
 const SEE_THROUGH := preload("res://shaders/see_through.gdshader")
 
@@ -633,21 +633,19 @@ func _process(dt: float) -> void:
 	_audio(dt)
 	if not hud.is_open():
 		Game.advance(dt)
+		var stick := _move_vector()
 		var dir := Vector2.ZERO
 		if fishing.state == "idle":
-			if Input.is_physical_key_pressed(KEY_LEFT) or Input.is_physical_key_pressed(KEY_A): dir.x -= 1
-			if Input.is_physical_key_pressed(KEY_RIGHT) or Input.is_physical_key_pressed(KEY_D): dir.x += 1
-			if Input.is_physical_key_pressed(KEY_UP) or Input.is_physical_key_pressed(KEY_W): dir.y -= 1
-			if Input.is_physical_key_pressed(KEY_DOWN) or Input.is_physical_key_pressed(KEY_S): dir.y += 1
+			dir = stick
 			if test_dir != Vector2.ZERO: dir = test_dir
 		player.step(dt if fishing.state == "idle" else 0.0, dir)
-		var l := Input.is_physical_key_pressed(KEY_LEFT) or Input.is_physical_key_pressed(KEY_A)
-		var r := Input.is_physical_key_pressed(KEY_RIGHT) or Input.is_physical_key_pressed(KEY_D)
-		fishing.turn = int(r) - int(l)
-		var u := Input.is_physical_key_pressed(KEY_UP) or Input.is_physical_key_pressed(KEY_W)
-		var dn := Input.is_physical_key_pressed(KEY_DOWN) or Input.is_physical_key_pressed(KEY_S)
-		fishing.steer = Vector2(int(r) - int(l), int(dn) - int(u)) if fishing.state == "power" else Vector2.ZERO
-		fishing.pull = int(r) - int(l)
+		var lr := signi(roundi(stick.x * 1.4)) if absf(stick.x) > 0.35 else 0
+		fishing.turn = lr
+		fishing.steer = stick if fishing.state == "power" else Vector2.ZERO
+		fishing.pull = lr
+		if fishing.state == "wait":
+			if Input.is_action_just_pressed("move_left") or Input.is_action_just_pressed("twitch_left"): fishing.twitch_side(-1)
+			elif Input.is_action_just_pressed("move_right") or Input.is_action_just_pressed("twitch_right"): fishing.twitch_side(1)
 		fishing.update(dt)
 		guards.update(dt)
 		if guards.plane_hint: guards.plane_hint = false; hud.flash("A jet roars overhead. Nobody's looking!")
@@ -677,13 +675,13 @@ func _process(dt: float) -> void:
 		elif fishing.near_water(): near = "fish"
 	hud.boat_text = ""
 	if fishing.state == "idle":
-		if player.in_boat(): hud.boat_text = ("Tie up the skiff (K)" if player.boat_kind() == "skiff" else "Beach the kayak (K)") if player.beach_spot() != null else ""
+		if player.in_boat(): hud.boat_text = ("Tie up the skiff (%s)" if player.boat_kind() == "skiff" else "Beach the kayak (%s)") % Controls.k("boat") if player.beach_spot() != null else ""
 		else:
 			var ls = player.launch_spot()
-			if ls != null: hud.boat_text = "Launch the skiff (K)" if ls[1] == "skiff" else "Launch kayak (K)"
+			if ls != null: hud.boat_text = ("Launch the skiff (%s)" if ls[1] == "skiff" else "Launch kayak (%s)") % Controls.k("boat")
 			else:
 				var fs = player.fetch_spot()
-				if fs != null: hud.boat_text = "Have the %s brought here, %s (K)" % [fs[1], Game.money(fs[2])]
+				if fs != null: hud.boat_text = "Have the %s brought here, %s (%s)" % [fs[1], Game.money(fs[2]), Controls.k("boat")]
 	hud.chips = _chips()
 	_camera(dt)
 	_lighting()
@@ -993,33 +991,54 @@ func _glow(ci: CanvasItem, c: Vector2, r: float, col: Color) -> void:
 	ci.draw_texture_rect(glow_tex, Rect2(c - Vector2(r, r), Vector2(r, r) * 2), false, col)
 
 # ---------- input ----------
+## Where the walk keys or the stick point: full length for keys, shorter for a gentle push on the stick.
+## Small sideways drift on the stick is dropped, so walking along a wall or a street stays straight.
+func _move_vector() -> Vector2:
+	var v := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	if absf(v.x) < 0.2: v.x = 0.0
+	if absf(v.y) < 0.2: v.y = 0.0
+	return v.limit_length(1.0)
+
+var held := {}   # action -> down, to turn sticks and triggers into presses and releases
+
+## True when the event pushes the action down (once, not again while it's held), false when it lets go,
+## null when it's about something else or nothing changed.
+func _edge(e: InputEvent, a: String) -> Variant:
+	if not e.is_action(a): return null
+	var down := Input.is_action_pressed(a)
+	if down == bool(held.get(a, false)): return null
+	held[a] = down
+	return down
+
 func _unhandled_input(e: InputEvent) -> void:
-	if e is InputEventKey and e.pressed and not e.echo and e.physical_keycode == KEY_F11:
+	if e is InputEventKey and e.echo: return
+	if Controls.capturing != "": return
+	if _edge(e, "fullscreen") == true:
 		menu.toggle_fullscreen(); return
 	if hud.is_open():
-		if e is InputEventKey and e.pressed and e.keycode == KEY_ESCAPE: hud.close()
-		elif e is InputEventKey and e.pressed and is_instance_valid(map_view) and map_view.is_visible_in_tree():
-			match e.physical_keycode:
-				KEY_EQUAL, KEY_KP_ADD: map_view.zoom_by(1.5)
-				KEY_MINUS, KEY_KP_SUBTRACT: map_view.zoom_by(1 / 1.5)
-				KEY_M: hud.close()
+		var ed := {}
+		for a in ["action", "map", "journal", "pause", "back", "zoom_in", "zoom_out", "bait", "boat"]: ed[a] = _edge(e, a)
+		if ed.pause == true or ed.back == true: hud.close()
+		elif is_instance_valid(map_view) and map_view.is_visible_in_tree():
+			if ed.zoom_in == true: map_view.zoom_by(1.5)
+			elif ed.zoom_out == true: map_view.zoom_by(1 / 1.5)
+			elif ed.map == true: hud.close()
 		return
 	if menu.title_open: return
-	if e is InputEventKey and e.pressed and not e.echo and e.physical_keycode == KEY_ESCAPE:
+	if _edge(e, "pause") == true:
 		if fishing.state == "idle": menu.show_pause()
 		else: fishing.cancel(); hud.flash("You reel in your line.")
 		return
-	if e is InputEventKey and not e.echo:
-		var k: int = e.physical_keycode
-		if k == KEY_SPACE or k == KEY_F or k == KEY_E:
-			if e.pressed: _action_down()
-			else: fishing.action_up()
-		elif e.pressed and k == KEY_B: _cycle_bait()
-		elif e.pressed and k == KEY_K: _toggle_boat()
-		elif e.pressed and k == KEY_J and fishing.state == "idle": open_journal()
-		elif e.pressed and k == KEY_M and fishing.state == "idle": open_map()
-		elif e.pressed and fishing.state == "wait" and (k == KEY_LEFT or k == KEY_A): fishing.twitch_side(-1)
-		elif e.pressed and fishing.state == "wait" and (k == KEY_RIGHT or k == KEY_D): fishing.twitch_side(1)
+	if _edge(e, "back") == true:
+		if fishing.state != "idle": fishing.cancel(); hud.flash("You reel in your line.")
+		return
+	var act = _edge(e, "action")
+	if act == true: _action_down(); return
+	if act == false: fishing.action_up(); return
+	if _edge(e, "bait") == true: _cycle_bait()
+	elif _edge(e, "boat") == true: _toggle_boat()
+	elif _edge(e, "journal") == true and fishing.state == "idle": open_journal()
+	elif _edge(e, "map") == true and fishing.state == "idle": open_map()
 	elif e is InputEventMouseMotion and fishing.state == "power" and not hud.is_open():
 		fishing.set_mark(get_global_mouse_position() / TS)
 	elif e is InputEventMouseButton and e.button_index == MOUSE_BUTTON_LEFT:
@@ -1068,7 +1087,7 @@ func _toggle_boat() -> void:
 		for k in ["kayak", "skiff"]:
 			if Game.S.gear.has(k) and pk.has(k): left.append(k)
 		var all_left := left.size() == int(Game.S.gear.has("kayak")) + int(Game.S.gear.has("skiff"))
-		if all_left: hud.flash("Your %s is where you left it. It's marked on the map (M)." % " and ".join(left))
+		if all_left: hud.flash("Your %s is where you left it. It's marked on the map (%s)." % [" and ".join(left), Controls.k("map")])
 		else: hud.flash("Stand right at the edge of a canal, the river or the bay to launch.")
 	else: hud.flash(["You don't have a boat. Lou sells kayaks; the marina downtown sells a skiff.", "You don't have a boat. Dot sells kayaks; skiffs are back at the marina in Port Mullet.", "You don't have a boat. Sal at Pier 6 sells kayaks and skiffs."][Town.level])
 
@@ -1085,7 +1104,7 @@ func _cycle_bait() -> void:
 func _intro() -> void:
 	hud.open([["h3", "Port Mullet, Florida · pop. 8,214"], ["h2", "You've got a garage-sale rod, $30, and no shame."],
 		["p", "Every pond, canal and storm drain in this town has fish in it. Half of them say NO FISHING. Figure out how to get in, catch something, get out, and sell it to Lou."],
-		["sub", "Walk with WASD or the arrow keys, or click where you want to go. Stand by water and press F or Space to cast: release in the green, hook it when the bobber dips, then hold to reel and keep the needle in the green. Press B to switch bait. Lou's Bait & Tackle is the red roof just north of the main road."],
+		["sub", ("Walk with the left stick. Stand by water and press %s to cast: release in the green, hook it when the bobber dips, then hold to reel and keep the needle in the green. Press %s to switch bait. Lou's Bait & Tackle is the red roof just north of the main road." % [Controls.k("action"), Controls.k("bait")]) if Controls.pad else ("Walk with %s, or click where you want to go. Stand by water and press %s to cast: release in the green, hook it when the bobber dips, then hold to reel and keep the needle in the green. Press %s to switch bait. Lou's Bait & Tackle is the red roof just north of the main road." % [Controls.move_text(), Controls.k2("action"), Controls.k("bait")])],
 		["row", [["Go fishing", func(): Game.S.started = true; Game.save_game(); hud.close(); Game.add_news("Local Angler Buys Garage-Sale Rod, Announces 'Big Plans'"), true, "hot"]]]])
 
 func _on_landed(c: Dictionary) -> void:
@@ -1143,7 +1162,7 @@ func open_shop() -> void:
 		S.bait_tip = true; Game.save_game()
 		hud.open([["h3", "Lou's Bait & Tackle · since 1977"], ["h2", "\"First time? Listen up.\""],
 			["p", "Lou taps the bait chart behind the counter. \"Every fish wants something different. Put the wrong thing on and you'll sit there all day.\""],
-			["quote", BAIT_TIP],
+			["quote", BAIT_TIP % Controls.k("bait")],
 			["sub", "You start with worms. Lou sells the rest in the Gear tab, and the bait chart is up there too."],
 			["row", [["Into the shop", func(): open_shop(), true, "hot"]]]])
 		return
@@ -1176,7 +1195,7 @@ func open_shop() -> void:
 				parts.append(["row", [["Hand it over" if have >= o.count else "Not enough yet", _fill_order, have >= o.count, "go"]]])
 		"gear":
 			parts.append(_kit_part())
-			parts.append(["sub", "Lou's bait chart: " + BAIT_TIP.trim_prefix("\"").trim_suffix("\"")])
+			parts.append(["sub", "Lou's bait chart: " + (BAIT_TIP % Controls.k("bait")).trim_prefix("\"").trim_suffix("\"")])
 			_gear_list(parts, Game.gear.filter(func(g): return not g.has("where")))
 			parts.append(["sub", "Your rod: %s." % Game.rod().name + (" Boats, squid and big-game tackle are at the marina downtown." if S.visited.has("dt") else "")])
 		"note":
@@ -2072,7 +2091,7 @@ func open_journal() -> void:
 					var leg: bool = f.get("legend", false)
 					var txt: String = (f.n if j != null or not leg else "???") + (" · %s lb" % str(j.w) if j != null else "") + journal_bait(f)
 					return [txt, "got" if j != null else "leg" if leg else ""])])
-	parts.append(["row", [["Close", func(): hud.close(), true, "hot"], ["Map (M)", open_map]]])
+	parts.append(["row", [["Close", func(): hud.close(), true, "hot"], ["Map (%s)" % Controls.k("map"), open_map]]])
 	hud.open(parts)
 
 ## The bait a fish bites best on, for its journal tag: " · on bread", " · on worms or bread".
@@ -2091,9 +2110,9 @@ func open_map() -> void:
 	var subs := ["Zoom in for street names and how many of each spot's fish you've caught. Lou's is on US-1; downtown and the bay are way down south. Every place is open from day one. The red-striped places are private and watched, so go when the guards are away, or bring a disguise.",
 		"Zoom in for street names and how many of each spot's fish you've caught. The dam and the spillway are at the top, the I-90 viaduct crosses the middle, and the coach station is at the bottom on the west bank. The red-striped places are private and watched, so go when the guards are away, or bring a disguise.",
 		"Zoom in for street names and how many of each spot's fish you've caught. The city is on the west side and the harbor on the east. The fish market wharf and the ferry slip are off the Harbor Walk, the Narrows Bridge crosses the middle, and the container port and Union Station are at the bottom. The red-striped places are private and watched, so go when the guards are away, or bring a disguise."]
-	hud.open([["h3", Town.NAMES[Town.level] + " · drag to move, scroll or + and − to zoom"], ["node", map_view],
+	hud.open([["h3", Town.NAMES[Town.level] + (" · right stick to move, %s and %s to zoom" % [Controls.k("zoom_out"), Controls.k("zoom_in")] if Controls.pad else " · drag to move, scroll or + and − to zoom")], ["node", map_view],
 		["sub", subs[Town.level]],
-		["row", [["Close", func(): hud.close(), true, "hot"], ["Journal (J)", open_journal]]]], true)
+		["row", [["Close", func(): hud.close(), true, "hot"], ["Journal (%s)" % Controls.k("journal"), open_journal]]]], true)
 
 # ---------- the bus (the Harbor Line subway in Gannet Harbor) and the coaches between towns ----------
 func open_bus(i: int) -> void:
