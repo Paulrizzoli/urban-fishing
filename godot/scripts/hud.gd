@@ -343,7 +343,9 @@ func _draw_meters() -> void:
 		meters.draw_string(font, Vector2(W - 40, 88), "far", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, MUTED)
 		return
 	var title := "Something HUGE is on!" if f.fish.pull > 0.85 else "Something big is on!" if f.fish.pull > 0.55 else "Fish on!"
-	meters.draw_string(font, Vector2(0, 22), title, HORIZONTAL_ALIGNMENT_CENTER, W, 16, INK)
+	var slipping: bool = f.strain > 0 and f.tension >= 1.0
+	if slipping: title = "DRAG SLIPPING! Ease off!"
+	meters.draw_string(font, Vector2(0, 22), title, HORIZONTAL_ALIGNMENT_CENTER, W, 16, CORAL if slipping else INK)
 	var rows := [["TENSION", 34], ["REELED IN", 58], ["FISH RUN", 82]]
 	for row in rows:
 		meters.draw_string(font, Vector2(14, row[1] + 12), row[0], HORIZONTAL_ALIGNMENT_LEFT, -1, 11, MUTED)

@@ -8,12 +8,14 @@ To make a new version, bump `config/version` in `godot/project.godot` (and the f
 
 ## In progress
 
-Nothing right now.
+- **Hand-drawn art, the next stages.** The fish are done in v0.9.48. Next: the player, the people around town, the cars, and key props, in the same pixel-art style.
 
 ## Versions at a glance
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.49 | Nov 19, 2026 | A fairer fight with big fish: the drag slips before the line snaps, better rods turn a running fish harder, and a new rod goes straight in your hands |
+| v0.9.48 | Nov 19, 2026 | Hand-drawn art, part 1: every fish (and crab, ray, python, gator, rat and shrimp) is now a detailed pixel-art sprite |
 | v0.9.47 | Nov 19, 2026 | Controller support, and every control can be changed in Settings |
 | v0.9.46 | Nov 19, 2026 | Traffic gets out of Heron Lakes: cars no longer pile up on the loop road behind the gate |
 | v0.9.45 | Nov 18, 2026 | A playtest pass through all three towns: walks that keep to the sidewalk and go around parked cars, a cast marker that starts on the water, and the right shop names in Ironwater and Gannet Harbor |
@@ -71,6 +73,31 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.49 · A fairer fight with big fish
+
+_Nov 19, 2026 · Builds: `UrbanFishing-v0.9.49-windows.zip`, `UrbanFishing-v0.9.49-godot-project.zip`_
+
+The fight itself hadn't changed in any recent update, but it was much too twitchy for strong fish: offshore and Outer Harbor fish (pull 0.8 to 1.0) snapped the line the instant the needle touched the end, which a perfect bot could manage but a person reacting at normal speed mostly couldn't, even with the big-game rod.
+
+- **The drag slips before the line breaks.** At full tension the line no longer snaps at once. The drag slips and pays out a little line, the meter says DRAG SLIPPING, and you have a moment to let go or steer the fish back: half a second on the garage-sale rod, up to 1.1 seconds on the big-game rod. Hold on past that and it still snaps.
+- **Better rods turn a running fish harder.** Pulling against a run (◀ ▶ or the stick) is stronger with every rod up, about twice as strong on the big-game rod as on the garage-sale rod, so a big fish can't drag the line sideways faster than you can pull it back.
+- **Big fish give up line a bit more easily**, and slip away a bit more slowly while you let off the reel.
+- **A new rod goes straight in your hands.** If you were fishing with your home-built rod, buying a rod from Lou's or the marina (like the big-game rod) still left the home-built one in your hands, so the new rod did nothing until you swapped at home. Now buying a rod switches you to it.
+- Legends with the strongest pull (Bluefin Tuna, The Codfather, Goliath Grouper and the like) are still a real fight.
+- Tested with the playtest bot set to react half a second late, from the skiff: before, it landed 17 of 24 fish in Offshore and the Outer Harbor; now 24 of 24.
+
+## v0.9.48 · Hand-drawn art, part 1: the fish
+
+_Nov 19, 2026 · Builds: `UrbanFishing-v0.9.48-windows.zip`, `UrbanFishing-v0.9.48-godot-project.zip`_
+
+- **Every catch is a pixel-art sprite.** The fish used to be drawn from simple shapes (an oval body, triangle fins). Now each one is a detailed sprite in one style, shaded pixel by pixel: a dark back fading to a pale belly with the light from above, rows of scales, spiny and soft fins with their rays, the gill cover, the mouth, and an eye with a catchlight. 99 sprites in all:
+  - All 77 kinds of fish across Port Mullet, Ironwater and Gannet Harbor, each with its own body shape, fins and markings: the largemouth's ragged stripe and big jaw, a perch's bars, a trout's spots and pink band, a striper's lines, a tarpon's big silver scales, a mahi's tall forehead and long dorsal fin, a sailfish's sail and bill, a shark's gill slits, the sturgeon's bony plates, an eel's S-curve, a monkfish's lure.
+  - 16 legends and oddballs that don't look like the rest of their kind: the gold ones (Mr. Chairman, The Golden Arowana, The Mayor's Pet, The Key to the City), the glowing ones (Glowing Bass, The Isotope, Reactor Goliath, The Volcano Pacu), Something From Another Dimension, the Three-Eyed Tilapia, the Two-Headed Catfish, Escaped Koi, Old Glory, The Gray Ghost, Giant Tilapia and Snook XL.
+  - The six catches that aren't fish: blue crab, stingray, Burmese python, baby gator, sewer rat and the glow-in-the-dark shrimp.
+- **Where you see them:** the catch card, the cooler and Lou's Sell tab, the restaurants' and fish markets' boards, your legends on the living-room wall, and the fish swimming in your tank and goldfish bowl. On the catch card the sprite is shown at a whole-number size, so the pixels stay sharp and square, and it bobs gently. Legends get a soft gold glow and glints, and the glowing fish glow in their own color.
+- Fish shadows in the water are unchanged: they're still dark shapes, as you see them from the bank.
+- **For making more art:** the sprites are painted by `tools/sprites/fish_sprites.py` (fish) and `tools/sprites/creatures.py` (the rest) into `godot/art/fish/`, using the kind's colors from `fish_art.gd` plus a shape for each kind. Run them again after changing a fish. The old shape drawing stays in `fish_art.gd` as a fallback if a sprite is ever missing.
 
 ## v0.9.47 · Controller support, and change any control
 
