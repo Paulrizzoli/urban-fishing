@@ -409,6 +409,7 @@ func _run() -> void:
 		"journey": await journey()
 		"spots": await all_spots()
 		"cars": await cars()
+		"traffic": await traffic()
 		"probe": await probe()
 		"reach": await reach()
 		"boats": await boats()
@@ -528,6 +529,43 @@ func cars() -> void:
 					await teleport(tp)
 			var b1 := int(Game.S.get("bumps", 0)) - b0; var k1 := int(Game.S.get("knockdowns", 0)) - k0
 			L("street %s %s: %d bumps, %d knockouts in 40 s" % [Town.NAMES[lv], str(tp), b1, k1]); ev("bumps", b1); ev("knockouts", k1)
+
+## Let the traffic in each town drive for a while with nobody in the street, and look for cars that
+## never get out: every car should reach a dead end or the map edge and pull in somewhere new.
+func traffic() -> void:
+	await new_game()
+	var mins := 8.0
+	for x in OS.get_cmdline_user_args():
+		if x.begins_with("--mins="): mins = float(x.substr(7))
+	for lv in [0, 1, 2]:
+		await goto_town(lv, Story.bus_list(lv)[0][1])
+		Game.quality = 2
+		await secs(2)
+		# park the player out of the way: on the coach stop's sidewalk, never in a lane
+		var oldest := 0.0
+		var t := 0.0
+		var stuck_s := {}
+		while t < mins * 60.0:
+			await secs(10); t += 10.0
+			if M.hud.is_open(): await popups()
+			for c in M.traffic.cars:
+				if not c.visible: continue
+				if c.speed < 0.1 and not c.leaving: stuck_s[c] = float(stuck_s.get(c, 0.0)) + 10.0
+				else: stuck_s[c] = 0.0
+		var groups := {}
+		var n := 0
+		for c in M.traffic.cars:
+			if not c.visible: continue
+			n += 1
+			oldest = maxf(oldest, c.age)
+			if c.age > 240.0:
+				var k := "%d,%d" % [int(c.position.x) / 8 * 8, int(c.position.y) / 8 * 8]
+				groups[k] = int(groups.get(k, 0)) + 1
+			if float(stuck_s.get(c, 0.0)) >= 30.0: ISSUE("%s: a car has stood still for %ds at %s" % [Town.NAMES[lv], int(stuck_s[c]), str(c.position)])
+		var old_n := 0
+		for k in groups: old_n += int(groups[k])
+		L("traffic %s: %d cars out, oldest %ds, %d older than 4 min %s" % [Town.NAMES[lv], n, int(oldest), old_n, JSON.stringify(groups)])
+		if old_n > 2: ISSUE("%s: %d of %d cars have been driving for over 4 minutes without getting out, around %s" % [Town.NAMES[lv], old_n, n, JSON.stringify(groups)])
 
 func goto_town(lv: int, p: Vector2) -> void:
 	Game.S.started = true; Game.S.sneak_lesson = true

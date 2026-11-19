@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.46 | Nov 19, 2026 | Traffic gets out of Heron Lakes: cars no longer pile up on the loop road behind the gate |
 | v0.9.45 | Nov 18, 2026 | A playtest pass through all three towns: walks that keep to the sidewalk and go around parked cars, a cast marker that starts on the water, and the right shop names in Ironwater and Gannet Harbor |
 | v0.9.44 | Nov 18, 2026 | Gannet Harbor, a third town: a big harbor city with a suspension bridge, a fish market wharf, a container port and a subway |
 | v0.9.43 | Nov 18, 2026 | Seafood restaurants and fish markets in both towns: chefs who pay extra for today's catch, and market prices that change every morning |
@@ -69,6 +70,14 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.46 · Traffic gets out of Heron Lakes
+
+_Nov 19, 2026 · Builds: `UrbanFishing-v0.9.46-windows.zip`, `UrbanFishing-v0.9.46-godot-project.zip`_
+
+- **Cars stuck in Heron Lakes.** The loop road behind the Heron Lakes gate doesn't join any other road, so a car that pulled in there drove round and round and never left. Cars that leave town pull back in on a random road, so over a few game hours more and more of them ended up inside, until about half the town's traffic was queued up on the loop by the pond while the main roads sat empty. Now only two residents' cars ever drive in there, and the rest of the traffic stays on the town's streets.
+- Ironwater and Gannet Harbor were checked the same way and have no roads like that: every car there gets out within about two minutes of play.
+- **For checking future builds:** `tools/playtest.sh <godot> traffic` lets each town's traffic drive for 8 minutes of play and reports any cars that never get out, or that have stood still in a jam for 30 seconds or more.
 
 ## v0.9.45 · A playtest pass through all three towns
 

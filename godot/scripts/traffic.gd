@@ -6,6 +6,9 @@ extends Node
 ## after the horn they knock you down (main handles that). A car never hits you without honking first,
 ## and every car stops for you while you have a line in the water.
 ## Cars leave at the map edge or a dead end and a new one pulls in somewhere you can't see.
+## Roads with no way out to the map edge (the Heron Lakes loop, behind its gate) only ever get a
+## couple of cars: a car there drives round and round and never leaves, so without a limit every car
+## that pulled in there over time stayed, until most of the town's traffic was jammed inside.
 
 signal hit_player(car)
 
@@ -18,6 +21,9 @@ var player: Player
 var test_hold := false          # test hook: the first car stands still where it was put
 var holder: Node2D              # the y-sorted node the cars are drawn in
 var cars: Array = []            # Car nodes
+var shut_in := PackedByteArray()  # 1 on road tiles that don't join up with a road off the map edge
+
+const SHUT_IN_MAX := 2          # cars at most on roads like that, all of them together
 
 class Car extends Node2D:
 	var d := Vector2i(1, 0)     # heading, one of the four directions
@@ -40,6 +46,7 @@ class Car extends Node2D:
 	var horn_age := -1.0       # seconds since it honked at you, -1 if it hasn't
 	var horn_cd := 0.0
 	var horn_fx := 0.0        # the horn lines in front of it fade out over this
+	var age := 0.0            # seconds since it last pulled in (the playtest bot looks for cars that never leave)
 
 	func along() -> float: return position.dot(Vector2(d))
 
@@ -68,8 +75,30 @@ static func _run(x: int, y: int, s: Vector2i, cap := 8) -> Vector2i:
 
 static func _right(d: Vector2i) -> Vector2i: return Vector2i(-d.y, d.x)
 
+## Which road tiles can't be driven to from the map edge: a flood along the roads from every road
+## tile on the edge, and whatever road it doesn't reach.
+func _find_shut_in() -> void:
+	shut_in.resize(Town.MW * Town.MH)
+	shut_in.fill(1)
+	var todo: Array[Vector2i] = []
+	for y in Town.MH:
+		for x in Town.MW:
+			if (x == 0 or y == 0 or x == Town.MW - 1 or y == Town.MH - 1) and _road(x, y):
+				shut_in[Town.idx(x, y)] = 0; todo.append(Vector2i(x, y))
+	while not todo.is_empty():
+		var p: Vector2i = todo.pop_back()
+		for s in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var q: Vector2i = p + s
+			if Town.inb(q.x, q.y) and shut_in[Town.idx(q.x, q.y)] == 1 and _road(q.x, q.y):
+				shut_in[Town.idx(q.x, q.y)] = 0; todo.append(q)
+
+func is_shut_in(p: Vector2) -> bool:
+	var x := floori(p.x); var y := floori(p.y)
+	return Town.inb(x, y) and shut_in[Town.idx(x, y)] == 1 and _road(x, y)
+
 func setup(ents: Node2D) -> void:
 	holder = ents
+	_find_shut_in()
 	for i in COUNT:
 		var c := Car.new()
 		var hue: String = Art.CAR_COLORS[i % Art.CAR_COLORS.size()]
@@ -89,6 +118,11 @@ func _spawn(c: Car, hidden := true) -> void:
 		var x := randi_range(1, Town.MW - 2)
 		var y := randi_range(1, Town.MH - 2)
 		if not _road(x, y): continue
+		if shut_in[Town.idx(x, y)] == 1:
+			var inside := 0
+			for o in cars:
+				if o != c and o.visible and not o.leaving and is_shut_in(o.position): inside += 1
+			if inside >= SHUT_IN_MAX: continue
 		var hr := _run(x, y, Vector2i(1, 0))
 		var vr := _run(x, y, Vector2i(0, 1))
 		var d := Vector2i.ZERO
@@ -117,6 +151,7 @@ func _spawn(c: Car, hidden := true) -> void:
 		c.careful = randf() < 0.3
 		c.horn_age = -1.0
 		c.fade = 0.0 if hidden else 1.0
+		c.age = 0.0
 		return
 
 func _view() -> Rect2:
@@ -140,6 +175,7 @@ func _process(dt: float) -> void:
 		_drive(c, dt)
 
 func _drive(c: Car, dt: float) -> void:
+	c.age += dt
 	var fw := Vector2(c.d)
 	var side := Vector2(_right(c.d))
 	if c.leaving:
