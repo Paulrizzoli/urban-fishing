@@ -197,7 +197,9 @@ static func _x(m: float) -> String:
 ## Everything in the cooler this buyer would take right now, best first, up to what the kitchen has room for.
 static func takes(b: Dictionary) -> Array:
 	var out := []
+	var hold := Story.held_fish()
 	for c in Game.S.cooler:
+		if hold.has(c): continue  # kept, or it counts for today's Slam
 		var o := offer(b, c)
 		if int(o[0]) > 0: out.append([c, int(o[0])])
 	out.sort_custom(func(x, y): return x[1] > y[1])

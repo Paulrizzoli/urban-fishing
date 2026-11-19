@@ -346,6 +346,23 @@ static func tour_score(fmt: String) -> float:
 	if fmt == "big": return w[0] if w.size() else 0.0
 	return w.slice(0, 3).reduce(func(s, x): return s + x, 0.0)
 
+## The fish in your cooler that make up today's Slam score, while you're signed up and haven't weighed in.
+static func slam_fish() -> Array:
+	var S: Dictionary = Game.S
+	if S.tour.is_empty() or int(S.tour.day) != int(S.day) or not S.tour.get("signed", false) or S.tour.get("done", false): return []
+	var at: float = S.tour.at
+	var fmt := tour_fmt(int(S.day))
+	var mine: Array = S.cooler.filter(func(c): return int(c.get("day", 0)) == int(S.day) and float(c.get("tm", 0)) >= at and bool(c.junk) == (fmt == "junk"))
+	if fmt == "junk": mine.sort_custom(func(x, y): return float(x.value) > float(y.value))
+	else: mine.sort_custom(func(x, y): return float(x.w) > float(y.w))
+	return mine.slice(0, 1 if fmt == "big" else 3)
+
+## What "Sell everything" (and "Sell all" at the markets) leaves in your cooler: fish you pressed Keep on,
+## and the fish that count for today's Slam until you weigh in.
+static func held_fish() -> Array:
+	var slam := slam_fish()
+	return Game.S.cooler.filter(func(c): return c.get("keep", false) or slam.has(c))
+
 static func rival_scores(day: int, fmt: String) -> Array:
 	var n := int(day / 7.0)
 	var base: float = 22.0 + n * 9 if fmt == "junk" else 14.0 + n * 6 if fmt == "bag" else 7.0 + n * 3.5
@@ -373,7 +390,7 @@ static func slam_parts(sign_cb: Callable, weigh_cb: Callable) -> Array:
 		var nd := d + ((6 - d % 7) + 7) % 7
 		var f := tour_fmt(nd)
 		return [["p", "The Mullet Bay Slam runs every seventh day. Next one: day %d, %s. %s" % [nd, TFMT[f][0], TFMT[f][1]]],
-			["sub", "Sign up here before noon that day for $20 and weigh in by 7 PM. Prizes: $400, $150 and $60, plus rep."]]
+			["sub", "Sign up here before noon that day for $20, then go fishing: only fish you catch after you sign up count, so there's no need to save big fish from earlier days. Weigh in by 7 PM. Prizes: $400, $150 and $60, plus rep."]]
 	var ts := tour_state()
 	var fmt := tour_fmt(d)
 	if ts.done: return [["p", ("You finished %s today." % ordinal(int(ts.place)) if int(ts.place) else "You didn't weigh anything in today.") + " The next Slam is in a week."]]
