@@ -17,7 +17,7 @@ var wake: Array = []
 func _ready() -> void:
 	position = Vector2(Game.S.x, Game.S.y)
 	face = Game.S.face
-	walk_grid = _grid(func(x, y): return walk_solid(x, y))
+	rebuild_grids()
 
 func _grid(solid: Callable) -> AStarGrid2D:
 	var g := AStarGrid2D.new()
@@ -39,6 +39,15 @@ static func walk_solid(x: int, y: int) -> bool:
 ## Call after the walkable map changes.
 func rebuild_grids() -> void:
 	walk_grid = _grid(func(x, y): return walk_solid(x, y))
+	# walks go around parked cars (you'd only bump into them and stop)
+	var here := Vector2i(floori(position.x), floori(position.y))
+	for t in Obstacles.parked_tiles():
+		if t != here and walk_grid.region.has_point(t): walk_grid.set_point_solid(t)
+	# and keep to the sidewalk: a click across town walks the sidewalks and crosses the street
+	# where it has to, instead of strolling down the middle of the road into the traffic
+	for y in Town.MH:
+		for x in Town.MW:
+			if Town.tile[Town.idx(x, y)] == Town.T.ROAD: walk_grid.set_point_weight_scale(Vector2i(x, y), 4.0)
 	boat_grids.clear()
 
 static func zone_of(p: Vector2) -> int:

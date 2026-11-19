@@ -7,11 +7,23 @@ extends SceneTree
 ## Prints each problem and exits with 1 if there are any.
 
 const FOOT := 0.3   # how far from the middle of their feet a walker takes up, in tiles
-const BLOCK := [Town.T.BLD, Town.T.WALL, Town.T.HWALL, Town.T.FENCE, Town.T.TREE]
+var BLOCK: Array
 
 var bad := 0
+var frames := 0
+# The game's scripts use the Game autoload, which a --script run only has once the tree is up, so
+# Town is loaded on the first frame rather than named in this file (that would compile it too early).
+var Town
 
-func _initialize() -> void:
+func _process(_dt: float) -> bool:
+	frames += 1
+	if frames == 1:
+		Town = load("res://scripts/town.gd")
+		BLOCK = [Town.T.BLD, Town.T.WALL, Town.T.HWALL, Town.T.FENCE, Town.T.TREE]
+		_check()
+	return false
+
+func _check() -> void:
 	for lv in [0, 1, 2]:
 		# Town.build() on its own: Town.ensure() also resets the ground and map pictures, which
 		# need the whole game loaded
@@ -31,7 +43,7 @@ func _initialize() -> void:
 		# the sidewalks and park paths people stroll on (town_life.gd)
 		for y in Town.MH:
 			for x in Town.MW:
-				var t := Town.t_at(x, y)
+				var t: int = Town.t_at(x, y)
 				if (t == Town.T.WALK or t == Town.T.PATH) and Town.is_water_t(t):
 					bad += 1; print("%s: walkway tile %d,%d is water" % [tname, x, y])
 	print("routes checked: %d problem(s)" % bad)
@@ -46,7 +58,7 @@ func _seg(tname: String, id: String, what: String, a: Vector2, b: Vector2) -> vo
 			var q: Vector2 = p + o
 			var x := floori(q.x)
 			var y := floori(q.y)
-			var t := Town.t_at(x, y)
+			var t: int = Town.t_at(x, y)
 			var why := ""
 			if Town.is_water_t(t) and not Town.in_bridge(x, y): why = "water"
 			elif t in BLOCK: why = Town.T.keys()[t].to_lower()

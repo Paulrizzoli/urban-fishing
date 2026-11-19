@@ -77,6 +77,7 @@ Everything is drawn in tile units. The `World` node is scaled to 32 pixels per t
 - `scripts/map_view.gd` is the big map (M); `scripts/map_art.gd` draws its detailed picture once, into a texture
 - `scripts/hud.gd` is the UI; `scripts/main.gd` wires it all together
 - `data/*.json` holds the fish, gear and bait tables, exported from the browser version
+- `../tools/playtest.sh <godot binary> <scenario>` plays the game headless with a bot that presses keys and buttons like a player (a new game through all three towns, every fishing spot, the skiff, every door and stop, cars and guards) and prints anything that goes wrong; `../tools/check_routes.gd` checks that guards and walkers stay on land
 
 ## Testing from the command line
 

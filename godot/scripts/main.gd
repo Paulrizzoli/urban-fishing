@@ -1070,11 +1070,11 @@ func _toggle_boat() -> void:
 		var all_left := left.size() == int(Game.S.gear.has("kayak")) + int(Game.S.gear.has("skiff"))
 		if all_left: hud.flash("Your %s is where you left it. It's marked on the map (M)." % " and ".join(left))
 		else: hud.flash("Stand right at the edge of a canal, the river or the bay to launch.")
-	else: hud.flash("You don't have a boat. Lou sells kayaks; the marina downtown sells a skiff.")
+	else: hud.flash(["You don't have a boat. Lou sells kayaks; the marina downtown sells a skiff.", "You don't have a boat. Dot sells kayaks; skiffs are back at the marina in Port Mullet.", "You don't have a boat. Sal at Pier 6 sells kayaks and skiffs."][Town.level])
 
 func _cycle_bait() -> void:
 	var o := Game.owned_baits()
-	if o.size() < 2: hud.flash("Only worms so far. Lou sells shrimp, lures, hot dogs and bread."); return
+	if o.size() < 2: hud.flash("Only worms so far. %s sells shrimp, lures, hot dogs and bread%s." % [Buyers.baseline(), ", and squid" if Town.level == 2 else ""]); return
 	var i := 0
 	for j in o.size():
 		if o[j].id == Game.S.bait: i = j
@@ -1541,7 +1541,7 @@ func _busted(w: Dictionary) -> void:
 	var zn: String = guards.znames.get(z, "private property")
 	hud.open([["h3", "Busted at " + zn], ["h2", w.who + " spotted you"], ["quote", w.caught],
 		["p", ("You paid a %s fine" % Game.money(fine) if paid >= fine else "You paid what you had, %s, and got a stern look" % Game.money(paid) if paid > 0 else "You were broke, so they let you off with a warning") + " and got walked back out. Your cooler is safe."],
-		["sub", "Offense #%d here. Fines go up each time. Try hiding in bushes, waiting for patrols to turn, or a disguise from Lou's." % n],
+		["sub", "Offense #%d here. Fines go up each time. Try hiding in bushes, waiting for patrols to turn, or a disguise from %s's." % [n, Buyers.baseline()]],
 		["row", [["Walk it off", func(): hud.close(), true, "hot"]]]])
 
 const DRIVER_SHOUTS := ["\"Get out of the road!\"", "\"Sidewalk's right there, pal!\"", "\"You're gonna get yourself killed!\"", "\"Hey! I'm walkin' here! I mean, drivin'!\"", "\"Watch it, bait-for-brains!\""]
@@ -1666,7 +1666,7 @@ func _chips() -> Array:
 	var g := Story.goal_text()
 	if g != "": out.append([g, "coral"])
 	var o = Game.cur_order()
-	if o != null:
+	if o != null and Town.level == 0:   # Lou's order can only be handed over at Lou's, back home
 		out.append(["Lou's order: done ✓" if Game.S.order.done else "Lou wants: %s (%d/%d)" % [o.s, mini(Game.order_matches().size(), int(o.count)), int(o.count)], "paper"])
 	if Town.level != 0: pass
 	elif Game.tide_day():
@@ -2204,6 +2204,7 @@ func _take_coach(to: int) -> void:
 func _coach_arrival() -> void:
 	if not Game.S.get("coach_in", false): return
 	Game.S.coach_in = false
+	Game.save_game()   # so quitting right away doesn't greet you off the coach again next time
 	Sound.play("bus")
 	if Town.level == 0:
 		hud.flash("The coach pulls in at Lou's. Port Mullet smells like low tide. It's good to be home."); return

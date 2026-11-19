@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.45 | Nov 18, 2026 | A playtest pass through all three towns: walks that keep to the sidewalk and go around parked cars, a cast marker that starts on the water, and the right shop names in Ironwater and Gannet Harbor |
 | v0.9.44 | Nov 18, 2026 | Gannet Harbor, a third town: a big harbor city with a suspension bridge, a fish market wharf, a container port and a subway |
 | v0.9.43 | Nov 18, 2026 | Seafood restaurants and fish markets in both towns: chefs who pay extra for today's catch, and market prices that change every morning |
 | v0.9.42 | Nov 18, 2026 | A sound polish: splashes sized to your bait and your fish, the drag and the line under strain, guards who shout, engines and motors, the sounds of each place, and footsteps |
@@ -68,6 +69,19 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.45 · A playtest pass through all three towns
+
+_Nov 18, 2026 · Builds: `UrbanFishing-v0.9.45-windows.zip`, `UrbanFishing-v0.9.45-godot-project.zip`_
+
+A full playtest from a new save: Port Mullet until the coach north runs, Ironwater, Gannet Harbor and the coach home, selling at every restaurant, market and tackle shop on the way. Every fishing spot in all three towns was also fished by day and at night, from the shore and from the skiff, and every one of them has fish and gives up a catch. These are the things that were broken, stuck or confusing:
+
+- **Walking out of the Ironwater Public Market and Calder River Outfitters:** the parking lot right outside each door had cars parked across it, so clicking somewhere to walk to sent you straight into a parked car, where you stopped. Lots now leave the space in front of a door empty, and walks you click for go around parked cars.
+- **Walks keep to the sidewalk.** Clicking across town used to walk you down the middle of the street, into the traffic, and a car that stopped for you could leave you stuck nose to nose with it. Walks now follow the sidewalks and cross the street where they have to.
+- **The cast marker starts on the water.** With no fish in reach, it used to start halfway out the way you were facing, which on a narrow canal or the mill race is the far bank. It now starts in the middle of the water you're facing (or the nearest water in reach).
+- **The right names away from home.** In Ironwater and Gannet Harbor the game said to sell at Lou's, that Lou sells the pry bar and the bait, and to get a disguise from Lou's. It now names Dot or Sal, and says who sells boats in each town. Lou's daily order chip only shows in Port Mullet, where you can hand it over.
+- Getting off the coach saves right away, so quitting just after arriving doesn't greet you off the coach again next time.
+- **For checking future builds:** `tools/playtest.sh` plays the game with a bot (`tools/playtest.gd`) that presses the keys and buttons a player would: a whole new game through all three towns, every spot, the skiff, every door and stop, the cars and the guards. It prints anything that goes wrong. `tools/check_routes.gd` (guards stay on land) runs again: it had stopped compiling once the towns started using the game's save data.
 
 ## v0.9.44 · Gannet Harbor
 
