@@ -3233,5 +3233,307 @@
     "note": "A cod the size of a canoe from the deep ledge at the harbor mouth. The old draggermen say he runs the harbor and takes a cut of every catch."
    }
   ]
+ },
+ "38": {
+  "name": "Mill Creek",
+  "access": "A tidal creek down the far west side of the city, behind the row houses, from the North End all the way to Union Station. The towpath is public the whole way. It widens into the mill basin at Ferry St, where the old tide mill still turns its wheel, and a kayak can paddle the length of it under the street bridges.",
+  "fish": [
+   {
+    "n": "White Perch",
+    "w": [
+     0.3,
+     2
+    ],
+    "pp": 4,
+    "pull": 0.35,
+    "r": 24
+   },
+   {
+    "n": "Striped Bass",
+    "w": [
+     2,
+     18
+    ],
+    "pp": 5,
+    "pull": 0.78,
+    "r": 12,
+    "note": "A schoolie that came up the creek on the tide and forgot to leave."
+   },
+   {
+    "n": "American Eel",
+    "w": [
+     0.5,
+     4
+    ],
+    "pp": 6,
+    "pull": 0.6,
+    "r": 14,
+    "t": [
+     "low",
+     "night"
+    ]
+   },
+   {
+    "n": "Winter Flounder",
+    "w": [
+     0.4,
+     3
+    ],
+    "pp": 7,
+    "pull": 0.4,
+    "r": 10
+   },
+   {
+    "n": "Mummichog",
+    "w": [
+     0.05,
+     0.2
+    ],
+    "pp": 10,
+    "pull": 0.15,
+    "r": 14
+   },
+   {
+    "n": "Common Carp",
+    "w": [
+     3,
+     18
+    ],
+    "pp": 1,
+    "pull": 0.64,
+    "r": 8
+   },
+   {
+    "n": "Shopping Cart",
+    "w": [
+     28,
+     34
+    ],
+    "flat": 8,
+    "pull": 0.35,
+    "r": 5,
+    "junk": true,
+    "note": "From the market on Kestrel Ave. It's been down here long enough to have regulars."
+   },
+   {
+    "n": "Bicycle",
+    "w": [
+     18,
+     24
+    ],
+    "flat": 5,
+    "pull": 0.3,
+    "r": 3,
+    "junk": true
+   },
+   {
+    "n": "The Millwright",
+    "w": [
+     90,
+     140
+    ],
+    "pp": 0,
+    "pull": 1,
+    "r": 2,
+    "t": [
+     "low"
+    ],
+    "legend": true,
+    "release": true,
+    "rep": 20,
+    "near": "wheel",
+    "note": "An Atlantic sturgeon older than the tide mill, which is saying something. It noses along the bottom of the basin under the wheel at dawn and dusk. Protected: a photo, and back it goes."
+   }
+  ]
+ },
+ "39": {
+  "name": "Public Garden Lagoon",
+  "access": "The lagoon in the Gannet Public Garden on Kestrel Ave, with the footbridge and the swan boats. Public, day and night. The swan boats go round 10 AM to 6 PM, so cast between them.",
+  "fish": [
+   {
+    "n": "Bluegill",
+    "w": [
+     0.2,
+     1.1
+    ],
+    "pp": 5,
+    "pull": 0.3,
+    "r": 26
+   },
+   {
+    "n": "Pumpkinseed",
+    "w": [
+     0.2,
+     0.8
+    ],
+    "pp": 5,
+    "pull": 0.3,
+    "r": 22
+   },
+   {
+    "n": "Yellow Perch",
+    "w": [
+     0.3,
+     1.3
+    ],
+    "pp": 6,
+    "pull": 0.3,
+    "r": 16
+   },
+   {
+    "n": "Largemouth Bass",
+    "w": [
+     1,
+     7
+    ],
+    "pp": 5,
+    "pull": 0.6,
+    "r": 12
+   },
+   {
+    "n": "Golden Shiner",
+    "w": [
+     0.1,
+     0.6
+    ],
+    "pp": 4,
+    "pull": 0.2,
+    "r": 14
+   },
+   {
+    "n": "Common Carp",
+    "w": [
+     3,
+     16
+    ],
+    "pp": 1,
+    "pull": 0.62,
+    "r": 8
+   },
+   {
+    "n": "Rubber Duck",
+    "w": [
+     0.1,
+     0.2
+    ],
+    "flat": 1,
+    "pull": 0.05,
+    "r": 5,
+    "junk": true,
+    "note": "It squeaks. The real ducks are not impressed."
+   },
+   {
+    "n": "Lost Sunglasses",
+    "w": [
+     0.1,
+     0.1
+    ],
+    "flat": 5,
+    "pull": 0.05,
+    "r": 3,
+    "junk": true,
+    "note": "Knocked off a swan boat by a very proud seven-year-old."
+   },
+   {
+    "n": "The Commodore",
+    "w": [
+     13,
+     18
+    ],
+    "pp": 10,
+    "pull": 0.95,
+    "r": 2,
+    "t": [
+     "low"
+    ],
+    "legend": true,
+    "note": "A largemouth as old as the swan boats. It lives under the footbridge and has bitten exactly one tourist, who had it coming."
+   }
+  ]
+ },
+ "40": {
+  "name": "Kettle Bank Plaza Pool",
+  "access": "The reflecting pool in front of Kettle Bank Tower, between Kestrel Ave and Commercial St. Bank security walks the plaza 7 AM to 8 PM (a suit gets you by 8 to 6), and a camera on the tower sweeps it 8 PM to 7 AM. Mind the sweep.",
+  "fish": [
+   {
+    "n": "Goldfish",
+    "w": [
+     0.2,
+     1.2
+    ],
+    "pp": 10,
+    "pull": 0.1,
+    "r": 24
+   },
+   {
+    "n": "Koi",
+    "w": [
+     3,
+     10
+    ],
+    "pp": 12,
+    "pull": 0.45,
+    "r": 18
+   },
+   {
+    "n": "Butterfly Koi",
+    "w": [
+     4,
+     9
+    ],
+    "pp": 18,
+    "pull": 0.5,
+    "r": 10
+   },
+   {
+    "n": "Golden Shiner",
+    "w": [
+     0.1,
+     0.6
+    ],
+    "pp": 4,
+    "pull": 0.2,
+    "r": 10
+   },
+   {
+    "n": "Wishing Coins",
+    "w": [
+     0.3,
+     0.5
+    ],
+    "flat": 3,
+    "pull": 0.05,
+    "r": 10,
+    "junk": true,
+    "note": "Mostly quarters, and one Canadian dime. Somebody wished for a raise."
+   },
+   {
+    "n": "Executive's Rolex",
+    "w": [
+     0.3,
+     0.4
+    ],
+    "flat": 220,
+    "pull": 0.1,
+    "r": 1,
+    "junk": true,
+    "note": "Somebody on the 30th floor threw it in after a bad quarter. It's still keeping time."
+   },
+   {
+    "n": "The Gold Reserve",
+    "w": [
+     7,
+     10
+    ],
+    "pp": 30,
+    "pull": 0.9,
+    "r": 2,
+    "t": [
+     "night"
+    ],
+    "legend": true,
+    "note": "A goldfish the size of a house cat. The bank had it appraised, twice, and keeps the paperwork in the vault."
+   }
+  ]
  }
 }

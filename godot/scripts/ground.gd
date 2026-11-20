@@ -12,7 +12,8 @@ const WPAL := {
 	25: ["#86d8ec", "#2fa2cc"], 26: ["#64ac9c", "#2e7466"],
 	# Gannet Harbor: a cold grey-green harbor, the darker rip in the Narrows, the oily market slip and the brown outfall
 	30: ["#5c8f98", "#24536a"], 31: ["#4f8492", "#1b4660"], 32: ["#6a8a84", "#2f5458"], 33: ["#557f8c", "#22485e"], 34: ["#7f8a6a", "#4a5a44"],
-	35: ["#5a8e96", "#25556a"], 36: ["#7fd2dc", "#3a9cbd"], 37: ["#4a8298", "#123e5e"] }
+	35: ["#5a8e96", "#25556a"], 36: ["#7fd2dc", "#3a9cbd"], 37: ["#4a8298", "#123e5e"],
+	38: ["#6f8f80", "#2c5048"], 39: ["#6fa08c", "#2d5e52"], 40: ["#86d6dc", "#3f9fbc"] }
 
 ## Forget everything worked out from the map, after the map changes (going to the other town).
 static func reset() -> void:

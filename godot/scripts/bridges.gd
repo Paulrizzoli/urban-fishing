@@ -277,10 +277,16 @@ static func _deck(ci: CanvasItem, e: Dictionary) -> void:
 			ci.draw_rect(Rect2(x0, y0, w, 0.12), Color("#8b8f96", A)); ci.draw_rect(Rect2(x0, r.end.y - 0.12, w, 0.12), Color("#8b8f96", A))
 			ci.draw_rect(Rect2(x0, r.end.y, w, 0.3), Color(0, 0, 0, 0.25 * A))
 		return
-	ci.draw_rect(Rect2(x0 + 1, y0, w - 2, hh), asphalt)
-	ci.draw_rect(Rect2(x0, y0, 1, hh), walk); ci.draw_rect(Rect2(r.end.x - 1, y0, 1, hh), walk)
-	_dashes(ci, Vector2(x0 + w / 2.0, y0), Vector2(0, 1), hh, dash)
-	ci.draw_rect(Rect2(x0 + 0.97, y0, 0.06, hh), Color(0, 0, 0, 0.18 * A)); ci.draw_rect(Rect2(r.end.x - 1.03, y0, 0.06, hh), Color(0, 0, 0, 0.18 * A))
+	if e.foot:   # a footbridge running up and down: a plank deck between the rails
+		ci.draw_rect(r, Color("#d8d1c1", A))
+		var py := y0 + 0.5
+		while py < r.end.y:
+			ci.draw_rect(Rect2(x0 + 0.2, py, w - 0.4, 0.04), Color(0, 0, 0, 0.08 * A)); py += 0.5
+	else:
+		ci.draw_rect(Rect2(x0 + 1, y0, w - 2, hh), asphalt)
+		ci.draw_rect(Rect2(x0, y0, 1, hh), walk); ci.draw_rect(Rect2(r.end.x - 1, y0, 1, hh), walk)
+		_dashes(ci, Vector2(x0 + w / 2.0, y0), Vector2(0, 1), hh, dash)
+		ci.draw_rect(Rect2(x0 + 0.97, y0, 0.06, hh), Color(0, 0, 0, 0.18 * A)); ci.draw_rect(Rect2(r.end.x - 1.03, y0, 0.06, hh), Color(0, 0, 0, 0.18 * A))
 	for xx in [x0, r.end.x - 0.18]:
 		ci.draw_rect(Rect2(xx, y0, 0.18, hh), rail)
 		ci.draw_rect(Rect2(xx, y0, 0.05, hh), rail_top)

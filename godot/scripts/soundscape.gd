@@ -47,6 +47,9 @@ func setup() -> void:
 		areas.append({ "k": "hum", "stream": "hum", "r": Rect2(42, 136, 36, 28), "reach": 10.0, "gain": 0.8 })
 		areas.append({ "k": "outfall", "stream": "spillway", "r": Rect2(Gannet.PIPE - Vector2(1, 1), Vector2(2, 2)), "reach": 9.0, "gain": 0.55 })
 		areas.append({ "k": "market", "stream": "crowd", "r": Rect2(42, 32, 45, 12), "reach": 10.0, "gain": 0.45, "when": func(): return Game.hour() >= 3 and Game.hour() < 11 })
+		# the tide mill's wheel, and the fountains in Kettle Bank Plaza's pool
+		areas.append({ "k": "mill", "stream": "mill", "r": Rect2(Gannet.WHEEL - Vector2(1.5, 1.5), Vector2(2, 3)), "reach": 9.0, "gain": 0.6 })
+		areas.append({ "k": "fountain", "stream": "fountain", "r": Rect2(22, 51, 12, 3), "reach": 6.0, "gain": 0.6 })
 	else:
 		areas.append({ "k": "spill", "stream": "spillway", "r": Rect2(44, 29, 24, 20), "reach": 38.0, "gain": 1.0 })
 		areas.append({ "k": "mill", "stream": "mill", "r": Rect2(16, 39, 22, 15), "reach": 14.0, "gain": 0.9, "when": func(): return Game.hour() >= 6 and Game.hour() < 21 })

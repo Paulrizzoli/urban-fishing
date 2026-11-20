@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.51 | Nov 19, 2026 | Fishing on Gannet Harbor's west side: Mill Creek and the old tide mill, the Public Garden lagoon with its swan boats, and the Kettle Bank Plaza pool |
 | v0.9.47 | Nov 19, 2026 | Controller support, and every control can be changed in Settings |
 | v0.9.46 | Nov 19, 2026 | Traffic gets out of Heron Lakes: cars no longer pile up on the loop road behind the gate |
 | v0.9.45 | Nov 18, 2026 | A playtest pass through all three towns: walks that keep to the sidewalk and go around parked cars, a cast marker that starts on the water, and the right shop names in Ironwater and Gannet Harbor |
@@ -71,6 +72,21 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.51 · Fishing on Gannet Harbor's west side
+
+_Nov 19, 2026 · Builds: `UrbanFishing-v0.9.51-windows.zip`, `UrbanFishing-v0.9.51-godot-project.zip`_
+
+The whole west half of Gannet Harbor, from Kestrel Ave to the edge of the map, had nothing to fish but the guarded rooftop pond. Now it has three new spots, each with its own legend, and more to look at.
+
+- **Mill Creek** runs the full length of the far west side, behind the row houses, from the North End down to Union Station. A towpath with gas lamps and street trees follows it, and every cross street crosses it on a low stone bridge you can paddle under. It's public, and you can launch a kayak on it. White perch, schoolie stripers, eels at dawn, dusk and night, winter flounder, mummichogs and carp, plus a shopping cart or two.
+  - **The Old Tide Mill.** At Ferry St the creek opens into the mill basin, with a lawn, benches and the old stone mill, its wheel still turning. **The Millwright**, an Atlantic sturgeon older than the mill, feeds under the wheel at dawn and dusk. It's protected, so it goes back, for reputation instead of cash.
+- **The Public Garden** replaces a block of row houses on Kestrel Ave: a lawn with willows, benches, a loop path and a lagoon with a footbridge across the middle. The **swan boats** pedal round it 10 AM to 6 PM (not in a downpour) and tie up at the west shore the rest of the time. Public, with bluegill, pumpkinseed, perch, bass, shiners and carp, and **The Commodore**, a largemouth that lives under the footbridge (dawn and dusk, on a lure).
+- **Kettle Bank Plaza** replaces the Old State House strip in the financial district: a granite plaza in front of Kettle Bank Tower with a long reflecting pool and two fountains. It's guarded: bank security walks it 7 AM to 8 PM (a suit gets you by 8 to 6), and a camera on the tower sweeps it 8 PM to 7 AM. Goldfish, koi, butterfly koi, wishing coins, and at night **The Gold Reserve**, a goldfish the size of a house cat.
+- **A new Harbor Line stop**, Public Garden on Kestrel Ave, so the west side is a $2 ride from anywhere.
+- The map, the arrival card in Gannet Harbor and the journal list the new spots. Fountain and mill-wheel sounds play near them.
+- **Note:** there are three more legends now, so a save that had every legend will show three to go.
+- **For checking future builds:** the `spots` playtest covers the three new spots, and the `journey` playtest now fishes Mill Creek and the Public Garden lagoon on its way through Gannet Harbor.
 
 ## v0.9.47 · Controller support, and change any control
 

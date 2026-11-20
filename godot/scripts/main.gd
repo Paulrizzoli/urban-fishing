@@ -329,7 +329,7 @@ func _ready() -> void:
 	town_life.setup(ents)
 	var flags: Array = [FLAGS, [[Vector2(81.4, 105.7), "town"], [Vector2(36.6, 88.6), "shop"], [Vector2(84.5, 85.2), "golf"]],
 		[[Vector2(36.6, 55.6), "town"], [Vector2(56.4, 70.6), "marina"], [Vector2(52.6, 51.6), "shop"], [Vector2(64.0, 102.0), "town"]]][Town.level]
-	var fountains: Array = FOUNTAINS if Town.level == 0 else []
+	var fountains: Array = [FOUNTAINS, [], [[Vector2(24.5, 52.2), 0.55], [Vector2(31.5, 52.2), 0.55]]][Town.level]
 	for fl in flags:
 		var fp: Vector2 = fl[0]
 		var fs: String = fl[1]
@@ -2109,7 +2109,7 @@ func open_map() -> void:
 	map_view.custom_minimum_size = Vector2(0, get_viewport_rect().size.y - 250)
 	var subs := ["Zoom in for street names and how many of each spot's fish you've caught. Lou's is on US-1; downtown and the bay are way down south. Every place is open from day one. The red-striped places are private and watched, so go when the guards are away, or bring a disguise.",
 		"Zoom in for street names and how many of each spot's fish you've caught. The dam and the spillway are at the top, the I-90 viaduct crosses the middle, and the coach station is at the bottom on the west bank. The red-striped places are private and watched, so go when the guards are away, or bring a disguise.",
-		"Zoom in for street names and how many of each spot's fish you've caught. The city is on the west side and the harbor on the east. The fish market wharf and the ferry slip are off the Harbor Walk, the Narrows Bridge crosses the middle, and the container port and Union Station are at the bottom. The red-striped places are private and watched, so go when the guards are away, or bring a disguise."]
+		"Zoom in for street names and how many of each spot's fish you've caught. The city is on the west side and the harbor on the east, with Mill Creek running down the far west edge. The fish market wharf and the ferry slip are off the Harbor Walk, the Narrows Bridge crosses the middle, and the container port and Union Station are at the bottom. The red-striped places are private and watched, so go when the guards are away, or bring a disguise."]
 	hud.open([["h3", Town.NAMES[Town.level] + (" · right stick to move, %s and %s to zoom" % [Controls.k("zoom_out"), Controls.k("zoom_in")] if Controls.pad else " · drag to move, scroll or + and − to zoom")], ["node", map_view],
 		["sub", subs[Town.level]],
 		["row", [["Close", func(): hud.close(), true, "hot"], ["Journal (%s)" % Controls.k("journal"), open_journal]]]], true)
@@ -2233,7 +2233,7 @@ func _coach_arrival() -> void:
 		Game.S.gh_seen = true; Game.save_game()
 		hud.open([["h3", "Gannet Harbor · pop. 680,000 · on Gannet Bay"], ["h2", "\"Mind the gulls. They'll take a sandwich right out of your hand.\""],
 			["p", "A long way up the coast, Gannet Harbor is an old fishing city that never stopped: a fish market on a wharf, ferries crossing the inner harbor, a container port, and the Gannet Narrows Bridge hung high over the tide rip."],
-			["sub", "The Harbor Walk runs the whole waterfront, with piers by the subway stations, and it's all public. Stripers and bluefish are everywhere. Fish under the bridge at night, where the big stripers wait in the lights. The fish market wharf is busy 3 to 11 AM, and the container port, the bridge tower yard and the rooftop garden all have someone watching."],
+			["sub", "The Harbor Walk runs the whole waterfront, with piers by the subway stations, and it's all public. Stripers and bluefish are everywhere. Fish under the bridge at night, where the big stripers wait in the lights. Over on the west side, Mill Creek runs behind the row houses past the old tide mill, and the Public Garden lagoon is free for anyone. The fish market wharf is busy 3 to 11 AM, and the container port, the bridge tower yard, the rooftop garden and the Kettle Bank Plaza pool all have someone watching."],
 			["sub", "Pier 6 Bait & Tackle by the fish market buys your catch and sells everything, squid and boats included. Next door, the Gannet Fish Exchange posts new prices every morning, and the Pilot St Chowder House pays most for today's catch. The Seamen's Hostel has bunks. The Harbor Line subway runs along the waterfront, and the coaches leave from Union Station."],
 			["row", [["Let's fish", func(): hud.close(), true, "hot"]]]])
 		return
@@ -2266,18 +2266,22 @@ func _ironwater_props() -> void:
 	dam.z_index = -7
 	world.add_child(dam)
 
-## Gannet Harbor's things that stand up: the quay cranes, the lighthouse and the ferry.
+## Gannet Harbor's things that stand up: the quay cranes, the lighthouse, the tide mill's wheel, the ferry and the swan boats.
 func _gannet_props() -> void:
 	for d in Town.decor:
 		var p := Vector2(d.get("x", 0.0), d.get("y", 0.0))
 		if d.k == "crane": ents.add_child(Drawer.make(func(ci): Gannet.draw_crane(ci, p, Time.get_ticks_msec() / 1000.0), p.y + 0.9, true, Rect2(p - Vector2(3, 9), Vector2(14, 11))))
 		elif d.k == "lighthouse": ents.add_child(Drawer.make(func(ci): Gannet.draw_lighthouse(ci, p, Time.get_ticks_msec() / 1000.0), p.y + 0.9, true, Rect2(p - Vector2(2, 6), Vector2(4, 7))))
+		elif d.k == "wheel": ents.add_child(Drawer.make(func(ci): Ironwater.draw_wheel(ci, p, Time.get_ticks_msec() / 1000.0), p.y + 1.4, true, Rect2(p - Vector2(2, 2.5), Vector2(4, 5))))
 	var ground := Drawer.make(func(ci): Gannet.draw_ground(ci), 0, false)
 	ground.z_index = -8
 	world.add_child(ground)
 	var ferry := Drawer.make(func(ci): Gannet.draw_ferry(ci, Time.get_ticks_msec() / 1000.0), 0, true)
 	ferry.z_index = -4
 	world.add_child(ferry)
+	var swans := Drawer.make(func(ci): Gannet.draw_swans(ci, Time.get_ticks_msec() / 1000.0), 0, true)
+	swans.z_index = -4
+	world.add_child(swans)
 
 ## Calder River Outfitters: Dot buys your catch and sells the same gear as Lou.
 func open_outfitter() -> void:

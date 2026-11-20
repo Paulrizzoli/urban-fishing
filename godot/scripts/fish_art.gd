@@ -107,6 +107,7 @@ const NAMES := {
 	"White Perch": "whiteperch", "Conger Eel": "conger", "Mummichog": "mummichog", "Golden Shiner": "shiner", "Atlantic Sturgeon": "sturgeon",
 	"The Harbormaster": "striper", "The Toll Taker": "striper", "The Fishmonger": "monkfish", "The Stowaway": "bluefin", "The Big Flush": "conger",
 	"The Commuter": "tautog", "The Penthouse": "ogon", "The Codfather": "cod",
+	"The Millwright": "sturgeon", "The Commodore": "bass", "The Gold Reserve": "goldfish",
 }
 const WORDS := ["Bluegill", "Tilapia", "Peacock", "Bass", "Catfish", "Mullet", "Snook", "Tarpon", "Bowfin", "Goldfish", "Koi", "Eel", "Redfish", "Oscar",
 	"Pacu", "Ladyfish", "Pinfish", "Sheepshead", "Barracuda", "Shark", "Kingfish", "Sailfish"]

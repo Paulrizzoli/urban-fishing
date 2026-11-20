@@ -4,12 +4,15 @@ class_name Gannet
 ## streets with a subway (the Harbor Line) under it. The harbor fills the east side: the inner harbor at the
 ## top, the fish market wharf and the ferry slip off the Harbor Walk, then the Narrows, where the huge Gannet
 ## Narrows suspension bridge crosses to Fort Kettle Island, and below it the outer harbor, the container port
-## and the harbor mouth.
+## and the harbor mouth. Mill Creek runs down the far west side behind the row houses, with the old tide mill
+## in its basin; the Public Garden and its lagoon are on Kestrel Ave, and Kettle Bank Plaza has its pool.
 ## Built by Town.build() when the save is in Gannet Harbor (Town.level == 2). Same map size as the others.
 ##
 ## Fishing spots (water regions): 30 Inner Harbor, 31 The Narrows, 32 Fish Market Wharf, 33 Container Port,
-## 34 The Outfall, 35 Ferry Slip, 36 Rooftop Garden Pond, 37 Outer Harbor.
-## Guarded zones: 30 the fish market wharf, 31 the container port, 32 the rooftop garden, 33 the bridge tower yard.
+## 34 The Outfall, 35 Ferry Slip, 36 Rooftop Garden Pond, 37 Outer Harbor, 38 Mill Creek, 39 Public Garden Lagoon,
+## 40 Kettle Bank Plaza Pool.
+## Guarded zones: 30 the fish market wharf, 31 the container port, 32 the rooftop garden, 33 the bridge tower yard,
+## 34 Kettle Bank Plaza.
 
 const T := Town.T
 const HARBOR := 30
@@ -20,6 +23,9 @@ const OUTFALL := 34
 const FERRY := 35
 const ROOF := 36
 const OUTER := 37
+const CREEK := 38
+const LAGOON := 39
+const BANKPOOL := 40
 
 const BRICK := ["#9a4e3e", "#a8604a", "#8a4636", "#b5735a", "#7f4a3c", "#a5574a", "#94604e", "#b0806a"]
 const SHORE := 65            # the first column of harbor water along the seawall
@@ -28,6 +34,12 @@ const BR_Y0 := 96
 const BR_Y1 := 100
 const TOWERS := [77, 95]
 const PIERS := [6, 27, 48]   # the approach piers on land
+## Mill Creek: the water is columns 0..CREEK_X1, with the towpath beside it.
+const CREEK_X1 := 4
+const TOWPATH := 5
+## The old tide mill's waterwheel in the creek basin (frame against the mill's west wall), and the lagoon.
+const WHEEL := Vector2(10.0, 69.0)
+const LAGOON_C := Vector2(27.5, 123.0)
 ## The container ship tied up at the port, in tiles.
 const SHIP := Rect2(68, 139, 10, 22)
 ## The outfall pipe in the seawall.
@@ -38,6 +50,9 @@ const SLIP := Rect2(65, 64, 16, 9)
 static func build() -> void:
 	# ---------- the harbor: everything east of the seawall ----------
 	Town.rect(SHORE, 0, Town.MW - 1, Town.MH - 1, T.WATER, HARBOR)
+	# ---------- Mill Creek, down the west edge, and its towpath ----------
+	Town.rect(0, 0, CREEK_X1, Town.MH - 1, T.WATER, CREEK)
+	Town.rect(TOWPATH, 0, TOWPATH, Town.MH - 1, T.PATH)
 	# ---------- streets ----------
 	# the avenues, top to bottom: Kestrel Ave, Commercial St and Harbor Ave along the waterfront
 	for ax in [16, 38, 59]:
@@ -47,9 +62,10 @@ static func build() -> void:
 	# the cross streets
 	for y0 in [27, 57, 79, 111, 132, 164]:
 		Town.rect(0, y0, 61, y0, T.WALK); Town.rect(0, y0 + 1, 61, y0 + 2, T.ROAD); Town.rect(0, y0 + 3, 61, y0 + 3, T.WALK)
+		Town.bridges.append({ "x0": 0, "x1": TOWPATH, "y0": y0, "y1": y0 + 3, "h": true })   # a low stone bridge over the creek
 	# ---------- the North End and downtown ----------
 	_rooftop()
-	_rowhouses(0, 0, 14, 26)
+	_rowhouses(TOWPATH + 1, 0, 14, 26)
 	Town.rect(41, 0, 57, 26, T.CONC)
 	Town.sky(42, 2, 7, 7, "#6a8aa0", 18, "HARBOR TRUST", { "glass": true, "ant": true })
 	Town.sky(51, 1, 6, 6, "#8a6a5a", 11)
@@ -61,11 +77,11 @@ static func build() -> void:
 	Town.sky(29, 32, 7, 7, "#a8604a", 9, "CUSTOM HOUSE")
 	Town.sky(20, 42, 6, 6, "#8c7c9c", 12)
 	Town.sky(28, 42, 8, 6, "#2f5a7a", 20, "KETTLE BANK TOWER", { "glass": true, "ant": true })
-	Town.bld(20, 51, 16, 4, "#c8b89a", "flat", "OLD STATE HOUSE")
-	_rowhouses(0, 31, 14, 56)
+	_bank_plaza()
+	_rowhouses(TOWPATH + 1, 31, 14, 56)
 	_market()
 	# ---------- the ferry terminal and the middle of town ----------
-	_rowhouses(0, 61, 14, 78)
+	_tide_mill()
 	Town.rect(19, 61, 36, 78, T.CONC)
 	Town.bld(20, 62, 9, 6, "#a8604a", "flat", "SEAMEN'S HOSTEL", { "motel": true, "home": true }); Town.set_t(24, 67, T.DOOR)
 	Town.sky(31, 62, 5, 6, "#6f7f86", 10)
@@ -74,7 +90,7 @@ static func build() -> void:
 	_ferry()
 	# ---------- the bridge and Narrows Park ----------
 	_bridge()
-	_rowhouses(0, 83, 14, 110)
+	_rowhouses(TOWPATH + 1, 83, 14, 110)
 	Town.rect(19, 83, 36, 110, T.CONC)
 	Town.bld(20, 84, 8, 5, "#8a4636", "flat", "ST. BRENDAN'S")
 	Town.bld(30, 84, 6, 6, "#9aa6ad", "flat")
@@ -87,17 +103,17 @@ static func build() -> void:
 	_narrows_park()
 	_island()
 	# ---------- south of the bridge: the outfall, the port, the station and the beach ----------
-	_rowhouses(0, 115, 14, 131)
-	_rowhouses(19, 115, 36, 131)
+	_rowhouses(TOWPATH + 1, 115, 14, 131)
+	_public_garden()
 	_outfall()
-	_rowhouses(0, 136, 14, 163)
+	_rowhouses(TOWPATH + 1, 136, 14, 163)
 	Town.rect(19, 136, 36, 163, T.CONC)
 	Town.bld(20, 137, 16, 7, "#9aa6ad", "flat", "HARBOR COLD STORAGE")
 	Town.bld(20, 147, 7, 6, "#8a4636", "flat"); Town.bld(29, 147, 7, 6, "#7f4a3c", "flat", "SAIL LOFT")
 	Town.decor.append({ "k": "parking", "x0": 20, "y0": 156, "x1": 35, "y1": 162 })
 	_port()
 	_station()
-	_rowhouses(0, 168, 14, 183)
+	_rowhouses(TOWPATH + 1, 168, 14, 183)
 	# Kettle Point Beach, at the bottom of the Harbor Walk
 	Town.rect(41, 168, 64, 183, T.SAND)
 	Town.rect(41, 168, 57, 170, T.GRASS)
@@ -109,6 +125,7 @@ static func build() -> void:
 		for x in range(SHORE + 4, Town.MW):
 			if Town.tile[Town.idx(x, y)] == T.WATER: Town.tile[Town.idx(x, y)] = T.DEEP
 	_regions()
+	_creek_side()
 	# street trees along the avenues, lamps along everything
 	for y in range(2, Town.MH - 1, 7):
 		if y >= BR_Y0 - 1 and y <= BR_Y1 + 1: continue
@@ -117,13 +134,67 @@ static func build() -> void:
 	for y in range(3, Town.MH, 8):
 		if y >= BR_Y0 - 1 and y <= BR_Y1 + 1: continue
 		Town.lamps.append(Vector2(63.0, y + 0.5))
+	for y in range(6, Town.MH, 10):   # gas lamps along the towpath
+		if y >= BR_Y0 - 1 and y <= BR_Y1 + 1: continue
+		if Town.tile[Town.idx(TOWPATH, y)] == T.PATH: Town.lamps.append(Vector2(TOWPATH + 0.5, y + 0.5))
 	for y0 in [27, 57, 79, 111, 132, 164]:
-		for x in range(4, 60, 9): Town.lamps.append(Vector2(x + 0.5, y0 + 0.5))
+		for x in range(4, 60, 9):
+			if x > TOWPATH: Town.lamps.append(Vector2(x + 0.5, y0 + 0.5))   # the creek bridges have their own
 	Town.lamps = Town.lamps.filter(func(l): var t := Town.t_at(floori(l.x), floori(l.y)); return not Town.is_water_t(t) and t != T.BLD and t != T.FENCE and t != T.ROAD)
 	Town.labels.append_array([{ "t": "INNER HARBOR", "x": 90.0, "y": 16.0 }, { "t": "OUTER HARBOR", "x": 90.0, "y": 128.0 }, { "t": "HARBOR MOUTH · SKIFF ONLY", "x": 90.0, "y": 177.0 },
-		{ "t": "HARBOR WALK", "x": 63.5, "y": 20.0 }])
-	Town.launch_k = [HARBOR, NARROWS, FERRY, OUTER, MARKET]
+		{ "t": "HARBOR WALK", "x": 63.5, "y": 20.0 }, { "t": "MILL CREEK", "x": 2.5, "y": 44.0 }, { "t": "MILL CREEK", "x": 2.5, "y": 148.0 }])
+	Town.launch_k = [HARBOR, NARROWS, FERRY, OUTER, MARKET, CREEK]
 	Town.launch_s = [HARBOR, NARROWS, OUTER]
+
+## The Old Tide Mill: Mill Creek widens into the mill basin at Ferry St, with a lawn round it and the old stone
+## mill on its east side, its wheel still turning on the tide.
+static func _tide_mill() -> void:
+	Town.rect(TOWPATH + 1, 61, 14, 78, T.GRASS)
+	Town.blob(4.5, 69.5, 6.2, 5.6, T.WATER, 2.1, CREEK)
+	Town.rect(8, 66, 10, 72, T.WATER, CREEK)    # deep water right under the wheel
+	Town.bld(11, 65, 4, 9, "#a39a86", "flat", "OLD TIDE MILL", { "mill": true })
+	Town.rect(11, 74, 14, 75, T.PATH); Town.rect(11, 63, 14, 64, T.PATH)
+	Town.trees([[13, 62], [7, 77], [13, 77]])
+	Town.bushes([[14, 76], [12, 62]])
+	Town.decor.append({ "k": "wheel", "x": WHEEL.x, "y": WHEEL.y })
+	Town.decor.append({ "k": "bench", "x": 12.0, "y": 75.6 }); Town.decor.append({ "k": "bench", "x": 12.5, "y": 63.0 })
+	Town.labels.append({ "t": "MILL BASIN", "x": 4.5, "y": 70.0 })
+
+## The Gannet Public Garden: a lawn with a lagoon in the middle, a footbridge across it, willows round the
+## edge and the swan boats going round all afternoon. Kestrel Ave runs past the west gate.
+static func _public_garden() -> void:
+	Town.rect(19, 115, 36, 131, T.GRASS)
+	# the loop path round the lagoon and the four gates onto the streets
+	Town.rect(20, 117, 35, 117, T.PATH); Town.rect(20, 129, 35, 129, T.PATH)
+	Town.rect(20, 117, 20, 129, T.PATH); Town.rect(35, 117, 35, 129, T.PATH)
+	Town.rect(19, 123, 19, 123, T.PATH); Town.rect(36, 123, 36, 123, T.PATH)
+	Town.rect(27, 115, 28, 116, T.PATH); Town.rect(27, 130, 28, 131, T.PATH)
+	Town.blob(LAGOON_C.x, LAGOON_C.y, 5.6, 3.3, T.WATER, 0.7, LAGOON)
+	# the footbridge, north to south across the middle of the lagoon
+	for y in range(118, 129):
+		for x in [27, 28]:
+			if Town.is_water_t(Town.tile[Town.idx(x, y)]): Town.set_t(x, y, T.PATH)
+	Town.bridges.append({ "x0": 27, "x1": 28, "y0": 118, "y1": 128, "foot": true })
+	Town.trees([[21, 116], [34, 116], [21, 130], [34, 130], [19, 119], [36, 127], [24, 118], [31, 128], [19, 128], [36, 118]])
+	Town.bushes([[22, 128], [33, 118], [25, 130], [30, 116]])
+	for b in [[23.0, 117.6], [32.0, 117.6], [23.5, 129.6], [31.5, 129.6]]: Town.decor.append({ "k": "bench", "x": b[0], "y": b[1] })
+	Town.labels.append({ "t": "PUBLIC GARDEN", "x": 27.5, "y": 116.2 })
+
+## Kettle Bank Plaza: a granite plaza in front of Kettle Bank Tower with a long reflecting pool and two
+## fountains. Bank security walks it by day, and a camera on the tower watches it at night.
+static func _bank_plaza() -> void:
+	Town.rect(20, 49, 35, 55, T.PLAZA)
+	Town.rect(22, 51, 33, 53, T.WATER, BANKPOOL)
+	Town.bushes([[20, 49], [35, 49], [20, 55], [35, 55]])
+	Town.zrect(20, 49, 35, 55, 34)
+	Town.signs.append_array([Vector2(21.5, 56.4), Vector2(34.5, 56.4)])
+	Town.labels.append({ "t": "KETTLE BANK PLAZA", "x": 27.5, "y": 49.8 })
+
+## Along Mill Creek: street trees between the towpath and the row houses.
+static func _creek_side() -> void:
+	for y in range(3, Town.MH - 1, 6):
+		if y >= BR_Y0 - 2 and y <= BR_Y1 + 2: continue
+		if Town.tile[Town.idx(TOWPATH + 1, y)] == T.CONC and Town.hash2(y, 41) < 0.7: Town.set_t(TOWPATH + 1, y, T.TREE)
 
 ## A block of brick row houses, the city's own: narrow, tall and close together, in rows across the block.
 static func _rowhouses(x0: int, y0: int, x1: int, y1: int) -> void:
@@ -258,13 +329,21 @@ static func _station() -> void:
 	Town.bld(20, 168, 16, 6, "#c8a46a", "flat", "UNION STATION")
 	Town.rect(19, 175, 36, 175, T.WALK)
 
+## True if (x, y) is under one of the low bridges (not the big suspension bridge).
+static func _on_low_bridge(x: int, y: int) -> bool:
+	for b in Town.bridges:
+		if b.get("high", false): continue
+		if x >= b.x0 and x <= b.x1 and y >= b.y0 and y <= b.y1: return true
+	return false
+
 ## Which spot each bit of harbor water belongs to.
 static func _regions() -> void:
 	for y in Town.MH:
 		for x in Town.MW:
 			var i := Town.idx(x, y)
 			if not Town.is_water_t(Town.tile[i]):
-				Town.region[i] = 0; continue
+				if not (Town.region[i] in [CREEK, LAGOON] and _on_low_bridge(x, y)): Town.region[i] = 0   # the creek and lagoon run on under their bridges
+				continue
 			if x < SHORE: continue
 			var r := HARBOR
 			if x <= 90 and y >= 27 and y <= 52: r = MARKET
@@ -478,3 +557,45 @@ static func draw_beam(ci: CanvasItem, p: Vector2, t: float, a: float) -> void:
 	var w := 2.6
 	ci.draw_polygon(PackedVector2Array([c, c + dir * far + sd * w, c + dir * far - sd * w]),
 		PackedColorArray([Color(1, 0.95, 0.75, 0.32 * a), Color(1, 0.95, 0.75, 0.0), Color(1, 0.95, 0.75, 0.0)]))
+
+## Whether the swan boats are out on the lagoon: 10 AM to 6 PM, not in a downpour.
+static func swans_out() -> bool:
+	var h := Game.hour()
+	return h >= 10.0 and h < 18.0 and float(Game.wx.rain) < 0.5
+
+## Where swan boat i is at time t: { p, a }. They pedal slowly round the lagoon, under the footbridge, one
+## behind the other; out of hours they're tied up at the landing on the west shore.
+static func swan_at(i: int, t: float) -> Dictionary:
+	if not swans_out(): return { "p": Vector2(22.6, 121.6 + i * 1.5), "a": PI / 2 }
+	var u := t * 0.045 + i * PI
+	var p := LAGOON_C + Vector2(cos(u) * 3.8, sin(u) * 1.7)
+	return { "p": p, "a": u + PI / 2 }
+
+## The swan boats: a flat white pontoon with three benches and a big white swan at the stern.
+static func draw_swans(ci: CanvasItem, t: float) -> void:
+	for i in 2:
+		var s := swan_at(i, t)
+		var p: Vector2 = s.p
+		var fw := Vector2.from_angle(s.a)
+		var sd := fw.orthogonal()
+		var L := 1.7
+		var W := 0.8
+		Art.ellipse(ci, p + Vector2(0.15, 0.2), L * 0.55, W * 0.6, Color(0, 0, 0, 0.16), s.a)
+		var hull := PackedVector2Array([p + fw * L * 0.5 + sd * W * 0.25, p + fw * L * 0.4 + sd * W * 0.5, p - fw * L * 0.5 + sd * W * 0.5,
+			p - fw * L * 0.5 - sd * W * 0.5, p + fw * L * 0.4 - sd * W * 0.5, p + fw * L * 0.5 - sd * W * 0.25])
+		ci.draw_colored_polygon(hull, Color("#3d6e5a"))
+		ci.draw_polyline(hull + PackedVector2Array([hull[0]]), Color("#e8e0cc"), 0.06)
+		for k in 3:   # the benches, with a passenger or two
+			var c := p + fw * (L * 0.32 - k * L * 0.26)
+			ci.draw_line(c + sd * W * 0.38, c - sd * W * 0.38, Color("#8a5a35"), 0.12)
+			if Town.hash2(i * 7 + k, 3) < 0.7: ci.draw_circle(c + sd * W * (0.18 if k % 2 == 0 else -0.18) - fw * 0.08, 0.1, Color(["#c0392b", "#2b7ea6", "#e3a23c", "#f4f2ea"][(i + k) % 4]))
+		# the swan: a white body at the stern, its neck curving up and the orange beak
+		var b := p - fw * L * 0.42
+		Art.ellipse(ci, b, 0.42, 0.34, Color("#f6f4ee"), s.a)
+		Art.ellipse(ci, b - fw * 0.12 + Vector2(0, -0.08), 0.3, 0.2, Color("#ffffff"), s.a)
+		var bob := sin(t * 2.0 + i) * 0.03
+		var neck := [b + fw * 0.05, b + fw * 0.12 + Vector2(0, -0.4), b + fw * 0.02 + Vector2(0, -0.72 + bob)]
+		ci.draw_polyline(PackedVector2Array(neck), Color("#f6f4ee"), 0.14)
+		ci.draw_circle(neck[2], 0.1, Color("#f6f4ee"))
+		ci.draw_line(neck[2], neck[2] + fw * 0.2 + Vector2(0, 0.04), Color("#e8873a"), 0.07)
+		ci.draw_circle(neck[2] + fw * 0.03 + Vector2(0, -0.03), 0.025, Color("#22313a"))

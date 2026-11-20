@@ -15,13 +15,18 @@
   "33": [
    71.5,
    102.5
+  ],
+  "34": [
+   27.5,
+   57.5
   ]
  },
  "zname": {
   "30": "the fish market wharf",
   "31": "the container port",
   "32": "Skyline Commons",
-  "33": "the bridge tower yard"
+  "33": "the bridge tower yard",
+  "34": "Kettle Bank Plaza"
  },
  "watchers": [
   {
@@ -370,6 +375,69 @@
     6
    ],
    "caught": "A speaker on the tower crackles: \"You are in a restricted area under the bridge.\" A patrol car's already pulling up.",
+   "who": "The tower camera"
+  },
+  {
+   "id": "bankguard",
+   "kind": "guard",
+   "zone": 34,
+   "path": [
+    [
+     21.0,
+     50.0
+    ],
+    [
+     34.4,
+     50.0
+    ],
+    [
+     34.4,
+     54.6
+    ],
+    [
+     21.0,
+     54.6
+    ]
+   ],
+   "speed": 1.1,
+   "hours": [
+    7,
+    20
+   ],
+   "home": [
+    31.5,
+    48.5
+   ],
+   "r": 6,
+   "fov": 80,
+   "disguise": "suit",
+   "dHours": [
+    8,
+    18
+   ],
+   "caught": "\"Sir, that pool is a corporate water feature. The fish are on the balance sheet.\"",
+   "who": "Bank security"
+  },
+  {
+   "id": "bankcam",
+   "kind": "cam",
+   "zone": 34,
+   "fixed": [
+    31.0,
+    48.6
+   ],
+   "sweep": [
+    0.5,
+    2.6
+   ],
+   "period": 11,
+   "r": 9,
+   "fov": 34,
+   "hours": [
+    20,
+    7
+   ],
+   "caught": "A speaker on Kettle Bank Tower crackles: \"Plaza is closed. Step away from the asset.\" A security car is there in a minute.",
    "who": "The tower camera"
   }
  ]

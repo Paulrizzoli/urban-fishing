@@ -463,7 +463,7 @@ func new_game() -> void:
 
 func journey() -> void:
 	await new_game()
-	var plan := { 0: [1, 2, 9, 13, 14, 17, 3, 11], 1: [26, 22, 21, 20, 24, 25, 23], 2: [30, 35, 31, 32, 37, 34, 33, 36] }
+	var plan := { 0: [1, 2, 9, 13, 14, 17, 3, 11], 1: [26, 22, 21, 20, 24, 25, 23], 2: [30, 35, 39, 31, 32, 38, 37, 34, 33, 36, 40] }
 	var goal := { 0: M.COACH_SPECIES, 1: M.COACH_SPECIES_GH, 2: 8 }
 	for lv in [0, 1, 2]:
 		var round_ := 0

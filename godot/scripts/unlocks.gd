@@ -16,7 +16,7 @@ const SPECIES_EARLY := 5
 const EASY := [1, 2, 9, 13, 14, 17]
 ## Zones with guards, staff or cameras (golf course, office park, power station, Sunsplash,
 ## Heron Lakes, the airport, Marlowe Tower). The marina docks only count at night.
-const GUARDED_ZONES := [1, 2, 3, 5, 6, 7, 8, 20, 21, 22, 23, 30, 31, 32, 33]
+const GUARDED_ZONES := [1, 2, 3, 5, 6, 7, 8, 20, 21, 22, 23, 30, 31, 32, 33, 34]
 
 ## Who's watching each guarded zone and when it's your turn. Shown when you walk in.
 const WATCH := {
@@ -34,6 +34,7 @@ const WATCH := {
 	30: "The Gannet Fish Pier. The market runs 3 to 11 AM and the dockmaster walks the wharf (a lanyard passes for a buyer's badge). After eleven nobody minds you.",
 	31: "Gannet Marine Terminal. Port police drive the quay day and night, and cameras ride the cranes. A lanyard passes for a port pass 7 AM to 7 PM. Watch the truck's lights.",
 	32: "Skyline Commons rooftop garden. The attendant lets in anyone in a suit 8 AM to 8 PM, and security walks it 10 PM to 6 AM. From 8 to 10 at night and 6 to 8 in the morning, nobody's up here.",
+	34: "Kettle Bank Plaza. Bank security walks the pool 7 AM to 8 PM (a suit gets you by 8 to 6), and a camera on the tower sweeps it 8 PM to 7 AM. Fish between sweeps.",
 	33: "The bridge tower yard. Restricted. A bridge authority officer walks it 6 AM to 10 PM, and a camera on the tower watches the yard all night.",
 	23: "Riverhawks Field. The groundskeeper drives the outfield 7 AM to 5 PM (a polo gets you by), and security drives it 10 PM to 6 AM. Game time, 5 to 10 PM, nobody's looking.",
 }
