@@ -432,7 +432,8 @@ const BUS2 := [["Ironwater Station", Vector2(25.5, 172.5), "The coach to Port Mu
 ## Gannet Harbor's subway, the Harbor Line, along the waterfront. The first stop is Union Station, where the coaches come in.
 const BUS3 := [["Union Station", Vector2(26.5, 175.5), "The coaches, Kettle Point Beach."], ["Commons, Pilot St", Vector2(24.5, 25.6), "The rooftop garden, the North End."],
 	["Fish Market, Harbor Ave", Vector2(58.5, 45.5), "The fish market wharf, Pier 6 Bait & Tackle."], ["Ferry Terminal, Harbor Ave", Vector2(58.5, 75.5), "The ferry slip, the Seamen's Hostel."],
-	["Narrows, Harbor Ave", Vector2(58.5, 104.5), "Narrows Park and the pier, under the bridge."], ["Port Rd", Vector2(46.5, 132.5), "The container port, the outfall, Cold Storage."]]
+	["Narrows, Harbor Ave", Vector2(58.5, 104.5), "Narrows Park and the pier, under the bridge."], ["Port Rd", Vector2(46.5, 132.5), "The container port, the outfall, Cold Storage."],
+	["Public Garden, Kestrel Ave", Vector2(18.5, 121.5), "The lagoon and the swan boats, Mill Creek."]]
 
 ## The bus stops in town lv (the current town by default).
 static func bus_list(lv := -1) -> Array:
