@@ -14,6 +14,7 @@ Nothing right now.
 
 | Version | Date | What it was about |
 |---|---|---|
+| v0.9.52 | Nov 21, 2026 | Every fish and every bit of junk is now a 3D model made in Blender, shown as a pixel-art sprite |
 | v0.9.51 | Nov 19, 2026 | Fishing on Gannet Harbor's west side: Mill Creek and the old tide mill, the Public Garden lagoon with its swan boats, and the Kettle Bank Plaza pool |
 | v0.9.47 | Nov 19, 2026 | Controller support, and every control can be changed in Settings |
 | v0.9.46 | Nov 19, 2026 | Traffic gets out of Heron Lakes: cars no longer pile up on the loop road behind the gate |
@@ -72,6 +73,19 @@ Nothing right now.
 | Browser | Nov 16, 2026 | The original game in one web page (`index.html`) |
 
 v0.1.0 to v0.3.0 were numbered afterwards; the version label started showing in the game with v0.4.0.
+
+## v0.9.52 · Fish and junk made in 3D
+
+_Nov 21, 2026 · Builds: `UrbanFishing-v0.9.52-windows.zip`, `UrbanFishing-v0.9.52-godot-project.zip`_
+
+- **Every catch is a 3D model now.** Each fish was modelled in Blender: a rounded body with a painted skin (the back-to-belly colors, scales, bars, spots, stripes and blotches of its kind), fins with rays, glossy eyes, and the parts that make it that fish, like a catfish's whiskers, a sailfish's sail and bill, a shark's gill slits, a gar's beak, the sturgeon's bony plates and the monkfish's lure. Each one is rendered side-on with real light and shade, then turned into a pixel-art sprite with a small palette and an outline, so it still fits the game's look. 99 in all:
+  - All 77 kinds of fish across Port Mullet, Ironwater and Gannet Harbor.
+  - The 16 legends and oddballs that don't look like the rest of their kind: the gold ones, the glowing ones, Something From Another Dimension, the Three-Eyed Tilapia, the Two-Headed Catfish (really two heads), Escaped Koi, Old Glory, The Gray Ghost, Giant Tilapia and Snook XL.
+  - The six catches that aren't fish: blue crab, stingray, Burmese python, baby gator, sewer rat and the glow-in-the-dark shrimp.
+- **All 52 bits of junk are 3D models too**, from the shopping cart (every wire of it) and the bicycle to the rubber duck, the Rolex, the HOA violation notice and the lobster trap. Labels keep their writing: TOLL, SAL'S, 40 × LEFT, FLORIDA MAN'S GREATEST HITS.
+- **Where you see them:** the catch card, the cooler and Lou's Sell tab, the restaurants' and fish markets' boards, your legends on the living-room wall, and the fish in your tank and goldfish bowl. Sprites are shown at a whole-number size so the pixels stay square, and bob gently on the catch card. Legends get a gold glow and glints, and the glowing fish glow in their own color. Junk still drips.
+- This builds on the sprite code from the hand-drawn fish (v0.9.48, never merged): the same files in `godot/art/fish/`, now from Blender instead of painted pixel by pixel.
+- **For making more art:** `tools/blender/` has the scripts. They run Blender as a Python module (`pip install bpy==5.3.0`), no Blender install needed: `fish3d.py` builds every fish from its numbers in `fish_art.gd` plus a shape table, `creatures3d.py` the six non-fish, and `junk3d.py` the junk (into `godot/art/junk/`). Each takes `--only=` to redo some and `--glb=DIR` to also save the 3D models. The old shape drawings stay as a fallback if a sprite is ever missing.
 
 ## v0.9.51 · Fishing on Gannet Harbor's west side
 

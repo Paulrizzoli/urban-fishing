@@ -303,7 +303,7 @@ static func _tank(ci: Control, t: float) -> void:
 			var dir := 1.0 if ph < 1.0 else -1.0
 			var u := ph if ph < 1.0 else 2.0 - ph
 			var p := Vector2(r.position.x + 14 + u * (r.size.x - 28), r.position.y + 10 + fmod(i * 7.3, 20.0) + sin(t * 2 + i) * 2)
-			ItemIcons._fish_at(ci, p, -0.28 * dir, ItemIcons.fish_color(str(kinds[i])))
+			if not FishArt.draw_at(ci, str(kinds[i]), p, 24.0, dir > 0, Transform2D(0.0, Vector2(_s, _s), 0.0, _o)): ItemIcons._fish_at(ci, p, -0.28 * dir, ItemIcons.fish_color(str(kinds[i])))
 		var cs := PackedVector2Array([Vector2(98, 192), Vector2(98, 178), Vector2(101, 178), Vector2(101, 181), Vector2(104, 181), Vector2(104, 176), Vector2(108, 176), Vector2(108, 181), Vector2(111, 181), Vector2(111, 178), Vector2(114, 178), Vector2(114, 192)])
 		ci.draw_colored_polygon(cs, Color("#b8bcb8")); ci.draw_polyline(cs + PackedVector2Array([cs[0]]), INK, 1.1, true)
 		ci.draw_rect(Rect2(104, 186, 4, 6), Color("#3a4a52"))
@@ -321,7 +321,8 @@ static func _tank(ci: Control, t: float) -> void:
 		ci.draw_circle(Vector2(80, 170), 17, Color("#bfe3ea", 0.9))
 		ci.draw_rect(Rect2(64, 155, 32, 6), Color("#e9d7b3"))
 		var gx := 80 + sin(t * 0.9) * 8
-		ItemIcons._fish_at(ci, Vector2(gx, 172), 0.2 * signf(cos(t * 0.9)), Color("#f29a2e"))
+		if not FishArt.draw_at(ci, "Goldfish", Vector2(gx, 172), 18.0, cos(t * 0.9) < 0.0, Transform2D(0.0, Vector2(_s, _s), 0.0, _o)):
+			ItemIcons._fish_at(ci, Vector2(gx, 172), 0.2 * signf(cos(t * 0.9)), Color("#f29a2e"))
 		ci.draw_arc(Vector2(80, 170), 17, deg_to_rad(-60), deg_to_rad(240), 24, INK, 2)
 
 ## Your legends, mounted on little wooden shields above the couch, heaviest first.
@@ -337,7 +338,8 @@ static func _mounts(ci: Control) -> void:
 		if i < m.size():
 			ci.draw_colored_polygon(sh, Color("#8a5a35")); ci.draw_polyline(sh + PackedVector2Array([sh[0]]), INK, 1.6, true)
 			var hue := Town.hash2(m[i].n.length(), i)
-			ItemIcons._fish_at(ci, c + Vector2(1, -3), 0.42, Color("#e9b23a").lerp(Color("#f2d27a") if hue > 0.5 else Color("#d98a2a"), 0.5))
+			if not FishArt.draw_at(ci, str(m[i].n), c + Vector2(0, -3), 31.0, true, Transform2D(0.0, Vector2(_s, _s), 0.0, _o)):
+				ItemIcons._fish_at(ci, c + Vector2(1, -3), 0.42, Color("#e9b23a").lerp(Color("#f2d27a") if hue > 0.5 else Color("#d98a2a"), 0.5))
 			ci.draw_rect(Rect2(c + Vector2(-8, 8), Vector2(16, 4)), Color("#d6b25c"))
 		elif i == m.size() and i < MAX_MOUNTS:
 			# an empty hook waiting for the next one
