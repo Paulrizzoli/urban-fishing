@@ -26,8 +26,33 @@ static func _fns() -> Dictionary:
 		"Lost Keycard": _keycard, "Champagne Cork": _cork, "Lobster Trap": _trap,
 	}
 
+## The sprite file for the junk named n: art/junk/<name in snake_case>.png (made by tools/blender/junk3d.py).
+static func sprite_key(n: String) -> String:
+	var re := RegEx.create_from_string("[^a-z0-9]+")
+	return re.sub(n.to_lower(), "_", true).strip_edges().trim_prefix("_").trim_suffix("_")
+
+static var _tex := {}
+static var _soft := {}
+
+## The pixel-art sprite for the junk named n, or null if there isn't one.
+static func sprite(n: String) -> Texture2D:
+	var key := sprite_key(n)
+	if not _tex.has(key):
+		var path := "res://art/junk/%s.png" % key
+		var ct: CanvasTexture = null
+		if ResourceLoader.exists(path):
+			ct = CanvasTexture.new()
+			ct.diffuse_texture = load(path)
+			ct.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		_tex[key] = ct
+	return _tex[key]
+
 ## Draw the junk named n into r. False if there's no picture for it.
 static func draw(ci: CanvasItem, n: String, r: Rect2, t := 0.0) -> bool:
+	var sp := sprite(n)
+	if sp != null:
+		_draw_sprite(ci, sp, sprite_key(n), r, t)
+		return true
 	var fns := _fns()
 	if not fns.has(n): return false
 	var s := minf(r.size.x / 100.0, r.size.y / 64.0)
@@ -43,6 +68,28 @@ static func draw(ci: CanvasItem, n: String, r: Rect2, t := 0.0) -> bool:
 	return true
 
 static var _base := Transform2D.IDENTITY
+
+## The sprite as big as fits in r: at a whole-number scale when that's at least 1x, so the pixels
+## stay square; smaller than that it's scaled down smoothly. It bobs a little and drips.
+static func _draw_sprite(ci: CanvasItem, sp: CanvasTexture, key: String, r: Rect2, t: float) -> void:
+	var ts := Vector2(sp.diffuse_texture.get_size())
+	var s := minf(r.size.x / ts.x, r.size.y / ts.y)
+	var tex: Texture2D = sp
+	if s >= 1.0: s = floorf(s)
+	else:
+		if not _soft.has(key):
+			var lt := CanvasTexture.new(); lt.diffuse_texture = sp.diffuse_texture; lt.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+			_soft[key] = lt
+		tex = _soft[key]
+	var sz := ts * s
+	var bob := roundf(sin(t * 1.6) * s * 0.5) if t > 0.0 and s >= 2.0 else 0.0
+	var pos := (r.get_center() - sz * 0.5 + Vector2(0, bob)).round()
+	ci.draw_texture_rect(tex, Rect2(pos, sz), false)
+	if t > 0.0:
+		for i in 3:
+			var k := fmod(t * 0.7 + i * 0.33, 1.0)
+			var d := pos + Vector2(sz.x * (0.3 + 0.2 * i), sz.y * 0.92 + k * 8.0 * maxf(1.0, s * 0.5))
+			ci.draw_circle(d, maxf(1.2, s * 0.7) * (1.0 - k), Color(0.45, 0.7, 0.85, 0.6 * (1.0 - k)))
 
 ## Tilt what's drawn next by a radians (inside the fitted box).
 static func _rot(ci: CanvasItem, a: float) -> void:
